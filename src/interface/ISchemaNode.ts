@@ -1,19 +1,12 @@
 import { SchemaType } from "../enum/SchemaType";
+import { ISchemaNodeConfig } from "./ISchemaNodeConfig";
 
 /**
  * The schema node interface.
  */
 export default interface ISchemaNode 
 {
-    /**
-     * The name of the node.
-     */
-    name: string
-
-    /**
-     * The type of the node.
-     */
-    type: string
+    //#region Properties
 
     /**
      * The schema type of the node.
@@ -21,14 +14,66 @@ export default interface ISchemaNode
     schemaType: SchemaType
 
     /**
-     * The label of the node.
+     * The config of the node.
      */
-    display?: string
+    config: ISchemaNodeConfig
+
+    //#endregion
+
+    //#region Data State
 
     /**
-     * The description of the node.
+     * The data of the node.
      */
-    description?: string;
+    data: any
 
-    
+    /**
+     * The data is changed.
+     */
+    changed: boolean
+
+    /**
+     * The data is valid.
+     */
+    valid: boolean
+
+    /**
+     * The error data of the node.
+     */
+    error?: any
+
+    //#endregion
+
+    //#region Relationships
+
+    /**
+     * The parent node of the node.
+     */
+    parent?: ISchemaNode
+
+    //#endregion
+
+    //#region Methods
+
+    /**
+     * Reset the change state of the node and children.
+     */
+    resetChanges(): void
+
+    /**
+     * Re-calc the valid state of the node and children.
+     */
+    validate(): void
+
+    /**
+     * Dispose the node and children.
+     */
+    dispose(): void
+
+    /**
+     * Subscribe a data change handler
+     */
+    watch(func: Function): Function
+
+    //#endregion
 }
