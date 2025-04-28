@@ -1,3 +1,5 @@
+import { LocaleString } from "../utils/Locale"
+
 /**
  * The schema of the scalar type
 */
@@ -11,22 +13,22 @@ export interface IScalarSchema
   /**
    * The default unit of the scalar value
   */
-  unit?: string
+  unit?: string | LocaleString
 
   /**
-   * The low limit of the scalar value
+   * The default low limit of the scalar value
   */
   lowLimit?: number | null
 
   /**
-   * The up limit of the scalar value
+   * The default up limit of the scalar value
   */
   upLimit?: number | null
 
   /**
-   * The error message of the scalar value
+   * The default error message of the scalar value
   */
-  error?: string
+  error?: string | LocaleString
 
   /**
    * The regex of the scalar value

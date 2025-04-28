@@ -8,7 +8,7 @@ export class ScalarSchemaNode implements ISchemaNode
 {
     //#region Implementation
 
-    // Readonly properties
+    // properties
     get data(): any { return this._data }
     get schemaType(): SchemaType { return SchemaType.Scalar }
     get config(): IScalarSchemaNodeConfig { return this._config }
@@ -16,6 +16,16 @@ export class ScalarSchemaNode implements ISchemaNode
     get valid(): boolean { return this._valid }
     get error(): string | undefined { return this._error }
     get parent(): ISchemaNode | undefined { return this._parent }
+
+    /**
+     * Set the data of the node.
+     */
+    set data(value: any)
+    {
+        this._data = value
+        this.validate()
+        this.watchter.notify(value)
+    }
 
     // Methods
     resetChanges(): void { this.original = this.data}
@@ -27,16 +37,6 @@ export class ScalarSchemaNode implements ISchemaNode
     }
     watch(func: Function): Function {
         return this.watchter.addWatcher(func)
-    }
-
-    /**
-     * Set the data of the node.
-     */
-    set data(value: any)
-    {
-        this._data = value
-        this.validate()
-        this.watchter.notify(value)
     }
 
     //#endregion

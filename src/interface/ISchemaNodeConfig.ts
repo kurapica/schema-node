@@ -1,3 +1,5 @@
+import { LocaleString } from "../utils/Locale"
+
 /**
  * The config of the schema node.
  */
@@ -16,12 +18,12 @@ export interface ISchemaNodeConfig
     /**
      * The label of the node.
      */
-    display?: string
+    display?: string | LocaleString
 
     /**
      * The description of the node.
      */
-    description?: string
+    desc?: string | LocaleString
 
     /**
      * The node data is readonly.

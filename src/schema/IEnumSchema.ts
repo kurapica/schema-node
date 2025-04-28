@@ -51,3 +51,24 @@ export interface IEnumValueInfo
   */
   subList?: IEnumValueInfo[]
 }
+
+/**
+ * The enum value access info
+ */
+export interface IEnumValueAccess
+{
+  /**
+   * The cascade name
+  */
+  name: string
+
+  /**
+   * The enum value of the cascade
+  */
+  value: any
+
+  /**
+   * The sublist of the enum value
+  */
+  subList: IEnumValueInfo[]
+}

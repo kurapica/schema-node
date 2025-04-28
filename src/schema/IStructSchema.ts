@@ -13,26 +13,5 @@ export interface IStructSchema
   /**
    * The struct fields.
   */
-  fields: IStructFieldSchema[]
-}
-
-/**
- * The struct field schema.
-*/
-export interface IStructFieldSchema
-{
-  /**
-   * The field name.
-  */
-  name: string
-
-  /**
-   * The field node type.
-  */
-  type: string
-
-  /**
-   * The field node config.
-   */
-  config: ISchemaNodeConfig
+  fields: ISchemaNodeConfig[]
 }
