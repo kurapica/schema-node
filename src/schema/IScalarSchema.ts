@@ -44,4 +44,9 @@ export interface IScalarSchema
    * The eval function to convert the scalar value
   */
   conv?: string
+
+  /**
+   * The array type
+   */
+  arrayType?: string
 }

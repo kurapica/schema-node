@@ -10,8 +10,20 @@
     "dev": "tsup --watch",
     "lint": "eslint . --ext .ts"
   },
-  "keywords": ["typescript", "schema", "node", "data", "relation", "json"],
-  "files": ["dist"],
+  "keywords": [
+    "typescript",
+    "schema",
+    "node",
+    "data",
+    "relation",
+    "json"
+  ],
+  "files": [
+    "dist"
+  ],
   "author": "kurapica125@outlook.com",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bignumber.js": "^9.3.0"
+  }
 }

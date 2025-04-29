@@ -14,4 +14,9 @@ export interface IStructSchema
    * The struct fields.
   */
   fields: ISchemaNodeConfig[]
+
+  /**
+   * The array type
+   */
+  arrayType?: string
 }

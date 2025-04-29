@@ -95,15 +95,29 @@ export async function getSchema(name: string): Promise<ISchemaInfo>
 {
     // all schema names should be case insensitive
     name = name.toLowerCase()
-    if (schemaCache[name])
-        return schemaCache[name]
+    if (schemaCache[name]) return schemaCache[name]
+    if (!schemaProvider) throw new Error("Schema provider is not set")
 
-    if (!schemaProvider)
-        throw new Error("Schema provider is not set")
-
+    // load schema from provider
     const schema = await schemaProvider.loadSchema(name)
     schemaCache[name] = schema
     return schema
+}
+
+//#endregion
+
+//#region schema function call
+
+/**
+ * Call the function schema from the server with the arguments and type, gets the result
+ * @param schemaName The name of the function schema
+ * @param args The arguments of the function
+ * @param generic The generic type of the function
+ * @returns The schema information
+ */
+export function callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
+{
+    
 }
 
 //#endregion

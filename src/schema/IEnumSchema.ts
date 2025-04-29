@@ -16,9 +16,14 @@ export interface IEnumSchema
   cascade: string[]
 
   /**
-   * 枚举字段信息列表
+   * The enum values
   */
   values: IEnumValueInfo[]
+
+  /**
+   * The array type
+   */
+  arrayType?: string
 }
 
 /**

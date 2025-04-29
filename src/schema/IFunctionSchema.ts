@@ -23,7 +23,12 @@ export interface IFunctionSchema
   /**
    * The basic type of generic types
    */
-  generic?: string | string[]
+  generic?: string | string[],
+
+  /**
+   * Call server if provided
+   */
+  server?: boolean,
 
   /**
    * The function registered by the frontend
@@ -89,10 +94,10 @@ export interface IFunctionCallArgument {
   /**
    * 选择函数参数名或者表达式名
   */
-  name: string
+  name?: string
 
   /**
    * 常量
   */
-  value: any
+  value?: any
 }
