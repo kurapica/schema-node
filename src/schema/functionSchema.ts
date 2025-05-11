@@ -1,4 +1,4 @@
-import { ExpressionType } from "../enum/ExpressionType"
+import { ExpressionType } from "../enum/expressionType"
 
 /**
  * The schema of function
@@ -21,14 +21,20 @@ export interface IFunctionSchema
   exps: IFunctionExpression[]
 
   /**
-   * The basic type of generic types
+   * The basic type of generic types, provided to T(single generic type), 
+   * T1, T2(for multi generic type)
    */
   generic?: string | string[],
 
   /**
-   * Call server if provided
+   * Call server if server provided
    */
   server?: boolean,
+
+  /**
+   * The client should not cache the result
+   */
+  nocache?: boolean,
 
   /**
    * The function registered by the frontend
@@ -88,16 +94,16 @@ export interface IFunctionExpression {
 }
   
 /**
- * 函数调用参数
+ * The function call argument
 */
 export interface IFunctionCallArgument {
   /**
-   * 选择函数参数名或者表达式名
+   * The argument name or expression name
   */
   name?: string
 
   /**
-   * 常量
+   * The const value
   */
   value?: any
 }

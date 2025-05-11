@@ -1,5 +1,6 @@
-import { SchemaType } from "../enum/SchemaType";
-import { ISchemaNodeConfig } from "./ISchemaNodeConfig";
+import { SchemaType } from "../enum/schemaType"
+import { ISchemaNodeConfig } from "./schemaNodeConfig"
+import { ISchemaNodeRule, ISchemaNodeRuleSchema } from "./schemaNodeRule"
 
 /**
  * The schema node interface.
@@ -51,6 +52,16 @@ export default interface ISchemaNode
      */
     parent?: ISchemaNode
 
+    /**
+     * The schema node rule
+     */
+    rule: ISchemaNodeRule
+
+    /**
+     * The schema node rule schema
+     */
+    ruleSchema: ISchemaNodeRuleSchema
+    
     //#endregion
 
     //#region Methods
@@ -73,7 +84,7 @@ export default interface ISchemaNode
     /**
      * Subscribe a data change handler
      */
-    watch(func: Function): Function
+    subscribe(func: Function): Function
 
     //#endregion
 }

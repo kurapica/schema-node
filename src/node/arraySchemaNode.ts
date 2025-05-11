@@ -1,21 +1,17 @@
-import { SchemaType } from '../enum/schemaType'
-import { IScalarSchemaNodeConfig } from '../nodeconfig/scalarSchemaNodeConfig'
-import ISchemaNode from '../nodeconfig/schemaNode'
-import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
-import { ISchemaNodeRule, ISchemaNodeRuleSchema } from '../nodeconfig/schemaNodeRule'
-import { DataChangeWatcher } from '../utils/dataChangeWatcher'
-import { isEqual, isNull } from '../utils/toolset'
+import { SchemaType } from "../enum/schemaType";
+import { IScalarSchemaNodeConfig } from "../nodeconfig/scalarSchemaNodeConfig";
+import ISchemaNode from "../nodeconfig/schemaNode";
+import { ISchemaNodeConfig } from "../nodeconfig/schemaNodeConfig";
+import { ISchemaNodeRule, ISchemaNodeRuleSchema } from "../nodeconfig/schemaNodeRule";
+import { DataChangeWatcher } from "../utils/dataChangeWatcher";
+import { isEqual, isNull } from "../utils/toolset";
 
-/**
- * The scalar schema data node
- */
-export class ScalarSchemaNode implements ISchemaNode
-{
+export class ArraySchemaNode implements ISchemaNode {
     //#region Implementation
 
     // properties
     get data(): any { return this._data }
-    get schemaType(): SchemaType { return SchemaType.Scalar }
+    get schemaType(): SchemaType { return SchemaType.Array }
     get config(): IScalarSchemaNodeConfig { return this._config }
     get changed(): boolean { return isEqual(this._original, this.data) }
     get valid(): boolean { return this._valid }

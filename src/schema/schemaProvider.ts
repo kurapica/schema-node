@@ -1,0 +1,700 @@
+import { EnumValueType } from "../enum/enumValueType"
+import { ExpressionType } from "../enum/expressionType"
+import { SchemaType } from "../enum/schemaType"
+import { NS_SYSTEM_ARRAY, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT } from "../utils/schema"
+import { generateGuidPart, isNull, useQueueQuery } from "../utils/toolset"
+import { IEnumValueAccess, IEnumValueInfo } from "./enumSchema"
+import { IFunctionSchema } from "./functionSchema"
+import { ISchemaInfo } from "./schemaInfo"
+
+/**
+ * The schema information provider interface
+ *
+ * The schema can be provied by json file or by server.
+ * If schema all provied by json file, the provider is not needed.
+ *
+ * But for enums like administrative divisions code of China, it
+ * could be more then 700,000, it's not possible to load all in the json file.
+ *
+ * For that case, the server should provide apis to fetch the sub list of enum values,
+ * and an api to fetch the access list of enum values for displaying.
+ *
+ * Also some function schema that provided data fetching should be provided
+ * by a server.
+ */
+export interface ISchemaProvider {
+    /**
+     * Call the function schema from the server with the arguments and type, gets the result
+     * @param schemaName The name of the function schema
+     * @param args The arguments of the function
+     * @param generic The generic type of the function
+     * @returns The schema information
+     */
+    callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
+
+    /**
+     * Load the schema information
+     * @param schemaName The name of the schema
+     * @returns The schema information
+     */
+    loadSchema(schemaName: string): Promise<ISchemaInfo>
+
+    /**
+     * Load the enum value sub list from the server
+     * @param schemaName The name of the enum schema
+     * @param value The root enum value if provided
+     * @param fullList Whether load the full list of enum values
+     */
+    loadEnumSubList(schemaName: string, value?: any, fullList?: boolean): Promise<IEnumValueInfo[]>
+
+    /**
+     * Load enum enum value access list from the server
+     * @param schemaName the name of the enum schema
+     * @param value the enum value to be queried
+     * @param noSubList no sub list should be loaded
+     */
+    loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean): Promise<IEnumValueAccess[]>
+}
+
+//#region Methods
+
+let schemaProvider: ISchemaProvider | null = null
+const schemaCache: { [key: string]: ISchemaInfo } = {}
+const arraySchemaMap: { [key: string]: ISchemaInfo } = {}
+const serverCallOnly: Set<string> = new Set()
+
+/**
+ * Sets the schema provider
+ * @param provider The schema provider
+ */
+export function useSchemaProvider(provider: ISchemaProvider): void {
+    schemaProvider = provider
+}
+
+/**
+ * Gets the schema provider
+ * @returns The schema provider
+ */
+export function getSchemaProvider(): ISchemaProvider | null {
+    return schemaProvider
+}
+
+/**
+ * Register the frontend schemas
+ * @param schemas The schemas to be registered
+ */
+export function registerSchema(schemas: ISchemaInfo[]): void {
+    for (const schema of schemas) {
+        schemaCache[schema.name.toLowerCase()] = schema
+        if (schema.type === SchemaType.Array)
+            arraySchemaMap[schema.array!.element.toLowerCase()] = schema
+    }
+}
+
+/**
+ * Gets the schema information
+ * @param schemaName The name of the schema
+ * @param generic the generic types
+ * @returns The schema information
+ */
+export async function getSchema(name: string, generic?: string | string[]): Promise<ISchemaInfo | undefined> {
+    // all schema names should be case insensitive
+    name = name.toLowerCase()
+
+    // generic type
+    if (/^t\d*$/.test(name)) {
+        const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
+        if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
+        name = Array.isArray(generic) ? generic[index] : generic
+    }
+
+    if (schemaCache[name]) return schemaCache[name]
+    if (!schemaProvider) throw new Error("Schema provider not provided")
+
+    // load schema from provider
+    const schema = await schemaProvider.loadSchema(name)
+    registerSchema([schema])
+    return schema
+}
+
+/**
+ * Gets an array schema that use the target as element
+ */
+export async function getArraySchema(name: string | ISchemaInfo): Promise<ISchemaInfo | undefined> {
+    const schema = typeof name === "string" ? await getSchema(name) : name
+    if (!schema) return undefined
+    name = schema.name.toLowerCase()
+    if (arraySchemaMap[name]) return arraySchemaMap[name]
+
+    // provide a default one
+    arraySchemaMap[name] = {
+        name: `${name}s_${generateGuidPart()}`,
+        type: SchemaType.Array,
+        desc: `Anonmous array for ${name}`,
+        array: {
+            element: schema.name
+        }
+    }
+
+    return arraySchemaMap[name]
+}
+
+/**
+ * Whether the schema type can be used as the target schema
+ * @param name the schema type
+ * @param target the target schema type
+ * @param array check the element type if target is array
+ */
+export async function isSchemaCanBeUseAs(name: string, target: string, array?: boolean): Promise<boolean> {
+    let schemaInfo = await getSchema(name)
+    let tarSchemInfo = await getSchema(target)
+    if (!schemaInfo || !tarSchemInfo) return false
+    if (schemaInfo === tarSchemInfo) return true
+
+    // Compares by type
+    if (schemaInfo.type === SchemaType.Enum) {
+        // Enum > Scalar
+        if (tarSchemInfo.type === SchemaType.Scalar) {
+            // Enum > string
+            if (schemaInfo.enum?.type === EnumValueType.String) {
+                return await isSchemaCanBeUseAs(target, NS_SYSTEM_STRING)
+            }
+            // Enum > number
+            else {
+                return await isSchemaCanBeUseAs(target, NS_SYSTEM_NUMBER)
+            }
+        }
+    }
+    else if (schemaInfo.type === SchemaType.Scalar) {
+        // Scalar > Enum
+        if (tarSchemInfo.type === SchemaType.Enum) {
+            // String > enum
+            if (tarSchemInfo.enum?.type === EnumValueType.String) {
+                return await isSchemaCanBeUseAs(name, NS_SYSTEM_STRING)
+            }
+            // Int > enum
+            else if (tarSchemInfo.enum?.type === EnumValueType.Int || tarSchemInfo.enum?.type === EnumValueType.Flags) {
+                return await isSchemaCanBeUseAs(name, NS_SYSTEM_INT)
+            }
+            // Number > enum
+            else {
+                return await isSchemaCanBeUseAs(name, NS_SYSTEM_NUMBER)
+            }
+        }
+        // Scalar > Scalar
+        else if (tarSchemInfo.type === SchemaType.Scalar) {
+            let isInt = false
+            let isTarInt = false
+
+            // Gets the base type
+            while (schemaInfo) {
+                if (schemaInfo.name === NS_SYSTEM_INT)
+                    isInt = true
+                if (!schemaInfo.scalar?.base)
+                    break
+                schemaInfo = await getSchema(schemaInfo.scalar.base)
+            }
+
+            while (tarSchemInfo) {
+                if (tarSchemInfo.name === NS_SYSTEM_INT)
+                    isInt = true
+                if (!tarSchemInfo.scalar?.base)
+                    break
+                tarSchemInfo = await getSchema(tarSchemInfo.scalar.base)
+            }
+
+            // All can be use as string
+            if (tarSchemInfo?.name === NS_SYSTEM_STRING) return true
+
+            // The root type must be the same
+            if (schemaInfo?.name !== tarSchemInfo?.name) return false
+
+            // number can be coverted
+            if (schemaInfo?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true
+        }
+        // Scalar > Array Element
+        else if (tarSchemInfo.type === SchemaType.Array && array) {
+            return await isSchemaCanBeUseAs(name, tarSchemInfo.array!.element)
+        }
+    }
+    else if (schemaInfo.type === SchemaType.Struct) {
+        // Array element
+        if (tarSchemInfo.type === SchemaType.Array && array)
+            tarSchemInfo = await getSchema(tarSchemInfo.array!.element)
+
+        // The target must be struct
+        if (tarSchemInfo?.type !== SchemaType.Struct) return false
+        if (schemaInfo.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
+
+        // Compare the field
+        for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
+            const tarfield = tarSchemInfo.struct!.fields[i]
+            const field = schemaInfo.struct!.fields.find(f => f.name === tarfield.name)
+            if (!field && !tarfield.require) continue // pass require field
+            if (!field || !await isSchemaCanBeUseAs(field.type, tarfield.type)) return false
+        }
+        return true
+    }
+    else if (schemaInfo.type === SchemaType.Array) {
+        if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schemaInfo.array!.element, target) : false
+        if (schemaInfo.name === NS_SYSTEM_ARRAY || tarSchemInfo.name === NS_SYSTEM_ARRAY) return true
+        return await isSchemaCanBeUseAs(schemaInfo.array!.element, tarSchemInfo.array!.element)
+    }
+    return false
+}
+
+//#endregion
+
+//#region schema function call
+
+const shareFuncCallResult: { [key: string]: any } = {}
+const pendingCall: {
+    [key: string]: {
+        resolve: Function,
+        reject: Function
+    }[]
+} = {}
+const pendingComplexCall: any = {}
+
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[]) => schemaProvider!.callFunction(schemaName, args, generic))
+
+/**
+ * Call the function schema from the server with the arguments and type, gets the result
+ * @param schemaName The name of the function schema
+ * @param args The arguments of the function
+ * @param generic The generic type of the function
+ * @returns The schema information
+ */
+export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any> {
+    const schema = await getSchema(schemaName)
+    if (!schema || schema.type !== SchemaType.Function) throw Error(`${schemaName} is not a function schema`)
+    const funcInfo = schema.function!
+
+    // Pre-check the function arguments
+    for (let i = 0; i < funcInfo.args.length; i++) {
+        if (isNull(args[i]) && !funcInfo.args[i].nullable) return null
+    }
+
+    // Try build the function
+    if (!(funcInfo.func || serverCallOnly.has(schema.name))) {
+        if (!await buildFunction(funcInfo)) serverCallOnly.add(schema.name)
+    }
+
+    // Client function call it direclty
+    if (funcInfo.func && (!funcInfo.server || !schemaProvider)) {
+        return await callFunc(funcInfo.func, args)
+    }
+
+    // Schema provider check
+    if (!schemaProvider) throw new Error("Schema provider not provided")
+
+    // Combine and queue
+    const token = (!args || !args.length) 
+        ? schema.name
+        : args.findIndex(a => a && typeof a === "object") < 0
+            ? `${schema.name}:${JSON.stringify(args)}` 
+            : null
+    if (token) {
+        const result = shareFuncCallResult[token]
+        if (result !== undefined) return result
+
+        // avoid repeat call in the same time
+        if (pendingCall[token])
+            return await new Promise((resolve, reject) => pendingCall[token].push({ resolve, reject }))
+
+        // init
+        pendingCall[token] = []
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        try {
+            const res = await callSchemaFunctionQueue(schema.name, args, generic)
+            if (!funcInfo.nocache) shareFuncCallResult[token] = res
+            pendingCall[token].forEach(c => c.resolve(res))
+            return res
+        }
+        catch (ex) {
+            pendingCall[token].forEach(c => c.reject(ex))
+            throw ex
+        }
+        finally {
+            delete pendingCall[token]
+            if (!funcInfo.nocache && !args.length) // reset
+                setTimeout(() => delete shareFuncCallResult[token], 1000);
+        }
+    }
+    else
+    {
+        // Complex arguments
+        let root = pendingComplexCall[schema.name]
+        if (!root) {
+            root = new Map()
+            pendingComplexCall[schema.name] = root
+        }
+        for (let i = 0; i < args.length; i++) {
+            const a = isNull(args[i]) ? "NULL_TOKEN" : args[i]
+            let next = root.get(a)
+            if (!next) {
+                next = new Map()
+                root.set(a, next)
+            }
+            root = next
+        }
+
+        // avoid multi call
+        let queue = root.get("CALL_QUEUE")
+        if (queue) return await new Promise((resolve, reject) => queue.push({ resolve, reject }))
+
+        // init
+        queue = []
+        root.set("CALL_QUEUE", queue)
+        await new Promise(resolve => setTimeout(resolve, 50))
+
+        // reset for next call
+        delete pendingComplexCall[schema.name]
+
+        try 
+        {
+            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), generic)
+            if (res === undefined) res = null
+            queue.forEach((c:any) => c.resolve(res))
+            return res
+        }
+        catch (ex) 
+        {
+            queue.forEach((c:any) => c.reject(ex))
+        }
+    }
+}
+
+//#endregion
+
+//#region helper
+
+// build the function schema to function
+async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
+    // server-side function
+    if (!funcInfo.exps.length || (funcInfo.server && schemaProvider)) return false
+
+    // arg or exp type map
+    const exptypes: { [key: string]: ISchemaInfo } = {}
+    for (let i = 0; i < funcInfo.args.length; i++) {
+        const expSchema = await getSchema(funcInfo.args[i].type, funcInfo.generic)
+        if (expSchema) exptypes[funcInfo.args[i].name] = expSchema
+    }
+
+    // build expressions
+    const exps: Expression[] = []
+    for (let i = 0; i < funcInfo.exps.length; i++) {
+        const fexp = funcInfo.exps[i]
+        const retSchema = await getSchema(fexp.type) // every expression must have a result type
+        exptypes[fexp.name] = retSchema!
+
+        // get the call func
+        const cfinfo = await getSchema(fexp.callFunc)
+        if (!cfinfo || !cfinfo.function || serverCallOnly.has(cfinfo.name) || (cfinfo.function.server && schemaProvider)) return false
+
+        // try buil the call func
+        const cfuncInfo = cfinfo.function
+        if (!cfuncInfo.func && !await buildFunction(cfuncInfo)) {
+            serverCallOnly.add(cfinfo.name)
+            return false
+        }
+
+        // array index
+        let arrayIndex: number = -1
+        if (fexp.callType !== ExpressionType.Call) {
+            // generic type check
+            const generic = cfuncInfo.generic ? Array.isArray(cfuncInfo.generic) ? [...cfuncInfo.generic] : [cfuncInfo.generic] : []
+
+            // use exp type if the ret type is generic
+            if (/^[tT]\d*$/.test(cfuncInfo.retType)) {
+                const gidx = cfuncInfo.retType.length > 1 ? parseInt(cfuncInfo.retType.substring(1)) - 1 : 0
+                if (retSchema) generic[gidx] = retSchema.name
+            }
+
+            // argument check
+            for (let j = 0; j < Math.min(cfuncInfo.args.length, fexp.args.length); j++) {
+                const carg = cfuncInfo.args[j]
+                let cargSchema = await getSchema(carg.type, generic) // null means any
+                const exp = fexp.args[j]
+                if (exp.name) {
+                    if (exptypes[exp.name]) {
+                        // Check if the exp is array for the arg, no type validation, should be done when define the exp
+                        if (exptypes[exp.name].type === SchemaType.Array && cargSchema?.type !== SchemaType.Array) {
+                            arrayIndex = j
+                        }
+                    }
+                    // for argument without type, write back
+                    else if (cargSchema) {
+                        exptypes[exp.name] = cargSchema
+                    }
+                }
+            }
+        }
+
+        // prepare
+        exps.push({
+            name: fexp.name,
+            type: fexp.callType,
+            func: cfuncInfo.func!,
+            args: fexp.args?.map((f, i) => ({ ...f, require: !(cfuncInfo.args.length > i && cfuncInfo.args[i]?.nullable) })),
+            retType: retSchema!,
+            arrIndex: arrayIndex
+        })
+    }
+
+    // check the return type if the func works as struct constructor
+    let objFields: string[] = []
+    if (funcInfo.retType) {
+        const retSchema = await getSchema(funcInfo.retType, funcInfo.generic)
+        if (retSchema?.type === SchemaType.Struct && !isSchemaCanBeUseAs(exps[exps.length - 1].retType.name, retSchema.name)) {
+            objFields = retSchema.struct!.fields.map(f => f.name)
+        }
+    }
+
+    // build the function
+    const args = funcInfo.args.map(a => a.name)
+    funcInfo.func = async function () {
+        const expValues: { [key: string]: any } = {}
+
+        // gets the arguments
+        for (let i = 0; i < args.length; i++) {
+            expValues[args[i]] = arguments[i]
+        }
+
+        // process
+        for (let i = 0; i < exps.length; i++) {
+            const exp = exps[i]
+            const val = []
+
+            if (exp.args) {
+                let valid = true
+
+                for (let j = 0; j < exp.args.length; j++) {
+                    const e = exp.args[j]
+                    const v = e.name ? expValues[e.name] : e.value
+
+                    if (isNull(v) && e.require && !(exp.type == ExpressionType.Reduce && j == 1)) {
+                        valid = false
+                        break
+                    }
+
+                    val.push(v)
+                }
+
+                // not valid, pass
+                if (!valid) {
+                    expValues[exp.name] = null
+                    continue
+                }
+            }
+
+            // call
+            switch (exp.type) {
+                // direct call
+                case ExpressionType.Call:
+                    expValues[exp.name] = await callFunc(exp.func, val)
+                    break
+
+                // map
+                case ExpressionType.Map:
+                    {
+                        const result = []
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            result.push(await callFunc(exp.func, val))
+                        }
+                        expValues[exp.name] = result
+                    }
+                    break
+
+                // reduce
+                case ExpressionType.Reduce:
+                    {
+                        let array = val[exp.arrIndex]
+                        let sumIndex = exp.arrIndex == 1 ? 0 : 1
+                        let hasInit = !isNull(val[sumIndex])
+
+                        if (!hasInit) {
+                            val[sumIndex] = array[0]
+                        }
+
+                        for (let j = hasInit ? 0 : 1; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            val[sumIndex] = await callFunc(exp.func, val)
+                        }
+                        expValues[exp.name] = val[sumIndex]
+                    }
+                    break
+
+                // first match
+                case ExpressionType.First:
+                    {
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            if (await callFunc(exp.func, val)) {
+                                expValues[exp.name] = array[j]
+                                break
+                            }
+                        }
+                    }
+                    break
+
+                // last match
+                case ExpressionType.Last:
+                    {
+                        const array = val[exp.arrIndex]
+                        for (let j = array.length - 1; j >= 0; j--) {
+                            val[exp.arrIndex] = array[j]
+                            if (await callFunc(exp.func, val)) {
+                                expValues[exp.name] = array[j]
+                                break
+                            }
+                        }
+                    }
+                    break
+
+                // filter
+                case ExpressionType.Filter:
+                    {
+                        const result = []
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            if (await callFunc(exp.func, val))
+                                result.push(array[j])
+                        }
+                        expValues[exp.name] = result
+                    }
+                    break
+            }
+        }
+
+        // generate result
+        if (objFields.length > 0) {
+            const result: any = {}
+            objFields.forEach(f => result[f] = expValues[f])
+            return result
+        }
+        else {
+            return expValues[exps[exps.length - 1].name]
+        }
+    }
+
+    return true
+}
+
+// parse args, reduce the size
+async function parseArgs(funcInfo: IFunctionSchema, args: any[]) {
+    if (!(funcInfo && funcInfo.args && funcInfo.args.length)) return args
+
+    const retArgs: any[] = []
+    for (let i = 0; i < funcInfo.args.length; i++) {
+        if (args.length <= i) break
+        retArgs[i] = args[i]
+
+        // only struct or struct array requrie conversion
+        let typeInfo = funcInfo.args[i].type ? await getSchema(funcInfo.args[i].type) : null
+        let isArray = false
+        if (typeInfo?.type === SchemaType.Array) {
+            isArray = true
+            typeInfo = typeInfo.array?.element ? await getSchema(typeInfo.array.element) : null
+        }
+        if (typeInfo?.type !== SchemaType.Struct || !typeInfo.struct || !typeInfo.struct.fields || !typeInfo.struct.fields.length) continue
+
+        // conversion
+        const fields = typeInfo.struct.fields.map(f => f.name)
+        const origin = args[i]
+        if (isArray) {
+            const maps: any[] = []
+            if (origin && Array.isArray(origin)) {
+                for (let j = 0; j < origin.length; j++) {
+                    const data = origin[j]
+                    if (data && typeof (data) === "object") {
+                        const map: any = {}
+                        for (let k = 0; k < fields.length; k++) {
+                            map[fields[k]] = data[fields[k]]
+                        }
+                        maps.push(map)
+                    }
+                }
+            }
+            retArgs[i] = maps
+        }
+        else if (origin && typeof (origin) == "object") {
+            const map: any = {}
+            for (let k = 0; k < fields.length; k++) {
+                map[fields[k]] = origin[fields[k]]
+            }
+            retArgs[i] = map
+        }
+    }
+    return retArgs
+}
+
+async function callFunc(func: Function, args: any[]): Promise<any> {
+    const res = func(...args)
+    if (res instanceof Promise)
+        return await res
+    else
+        return res
+}
+
+//#endregion
+
+//#region inner types
+
+interface Expression {
+    /**
+     * The exp name
+     */
+    name: string
+
+    /**
+     * The call type
+     */
+    type: ExpressionType
+
+    /**
+     * The call func
+     */
+    func: Function
+
+    /**
+     * The arguments
+     */
+    args: IExpressionArg[]
+
+    /**
+     * The return type
+     */
+    retType: ISchemaInfo
+
+    /**
+     * The array index
+     */
+    arrIndex: number
+}
+
+/**
+ * The expression argument
+ */
+interface IExpressionArg {
+    /**
+     * The exp name
+    */
+    name?: string
+
+    /**
+     * the const value
+    */
+    value?: any
+
+    /**
+     * require
+     */
+    require: boolean
+}
+
+//#endregion

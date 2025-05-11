@@ -1,9 +1,29 @@
 import { BigNumber } from "bignumber.js"
-import { SchemaType } from "../enum/SchemaType"
-import { registerSchema } from "../schema/ISchemaProvider"
-import { _LS } from "./Locale"
-import { isNull } from "./Toolset"
-import { ExpressionType } from "../enum/ExpressionType"
+import { SchemaType } from "../enum/schemaType"
+import { registerSchema } from "../schema/schemaProvider"
+import { _LS } from "./locale"
+import { isNull } from "./toolset"
+import { ExpressionType } from "../enum/expressionType"
+
+export const NS_SYSTEM_ARRAY = "system.array"
+export const NS_SYSTEM_STRUCT = "system.struct"
+export const NS_SYSTEM_BOOL = "system.bool"
+export const NS_SYSTEM_DATE = "system.date"
+export const NS_SYSTEM_NUMBER = "system.number"
+export const NS_SYSTEM_DOUBLE = "system.double"
+export const NS_SYSTEM_FLOAT = "system.float"
+export const NS_SYSTEM_FULLDATE = "system.fulldate"
+export const NS_SYSTEM_INT = "system.int"
+export const NS_SYSTEM_STRING = "system.string"
+export const NS_SYSTEM_YEAR = "system.year"
+export const NS_SYSTEM_YEARMONTH = "system.yearmonth"
+export const NS_SYSTEM_RANGEDATE = "system.rangedate"
+export const NS_SYSTEM_RANGEFULLDATE = "system.rangefulldate"
+export const NS_SYSTEM_RANGEMONTH = "system.rangemonth"
+export const NS_SYSTEM_RANGEYEAR = "system.rangeyear"
+export const NS_SYSTEM_STRINGS = "system.strings"
+export const NS_SYSTEM_NUMBERS = "system.numbers"
+export const NS_SYSTEM_INTS = "system.ints"
 
 /**
  * The default schemas
@@ -16,15 +36,15 @@ registerSchema([
         desc: _LS("system"),
     },
     {
-        name: "system.array",
+        name: NS_SYSTEM_ARRAY,
         type: SchemaType.Array,
         desc: _LS("system.array"),
         array: {
-            base: ""
+            element: ""
         }
     },
     {
-        name: "system.struct",
+        name: NS_SYSTEM_STRUCT,
         type: SchemaType.Struct,
         desc: _LS("system.struct"),
         struct: {
@@ -34,7 +54,7 @@ registerSchema([
 
     //#region scalar
     {
-        name: "system.bool",
+        name: NS_SYSTEM_BOOL,
         type: SchemaType.Scalar,
         desc: _LS("system.bool"),
         scalar: {
@@ -42,7 +62,7 @@ registerSchema([
         },
     },
     {
-        name: "system.date",
+        name: NS_SYSTEM_DATE,
         type: SchemaType.Scalar,
         desc: _LS("system.date"),
         scalar: {
@@ -50,7 +70,7 @@ registerSchema([
         },
     },
     {
-        name: "system.number",
+        name: NS_SYSTEM_NUMBER,
         type: SchemaType.Scalar,
         desc: _LS("system.number"),
         scalar: {
@@ -59,7 +79,7 @@ registerSchema([
         },
     },
     {
-        name: "system.double",
+        name: NS_SYSTEM_DOUBLE,
         type: SchemaType.Scalar,
         desc: _LS("system.double"),
         scalar: {
@@ -69,7 +89,7 @@ registerSchema([
         },
     },
     {
-        name: "system.float",
+        name: NS_SYSTEM_FLOAT,
         type: SchemaType.Scalar,
         desc: _LS("system.float"),
         scalar: {
@@ -79,7 +99,7 @@ registerSchema([
         },
     },
     {
-        name: "system.fulldate",
+        name: NS_SYSTEM_FULLDATE,
         type: SchemaType.Scalar,
         desc: _LS("system.fulldate"),
         scalar: {
@@ -88,7 +108,7 @@ registerSchema([
         },
     },
     {
-        name: "system.int",
+        name: NS_SYSTEM_INT,
         type: SchemaType.Scalar,
         desc: _LS("system.int"),
         scalar: {
@@ -98,13 +118,13 @@ registerSchema([
         },
     },
     {
-        name: "system.string",
+        name: NS_SYSTEM_STRING,
         type: SchemaType.Scalar,
         desc: _LS("system.string"),
         scalar: {},
     },
     {
-        name: "system.year",
+        name: NS_SYSTEM_YEAR,
         type: SchemaType.Scalar,
         desc: _LS("system.year"),
         scalar: {
@@ -115,7 +135,7 @@ registerSchema([
         },
     },
     {
-        name: "system.yearmonth",
+        name: NS_SYSTEM_YEARMONTH,
         type: SchemaType.Scalar,
         desc: _LS("system.yearmonth"),
         scalar: {
@@ -126,7 +146,7 @@ registerSchema([
 
     //#region struct
     {
-        name: "system.rangedate",
+        name: NS_SYSTEM_RANGEDATE,
         type: SchemaType.Struct,
         desc: _LS("system.rangedate"),
         struct: {
@@ -147,7 +167,7 @@ registerSchema([
         },
     },
     {
-        name: "system.rangefulldate",
+        name: NS_SYSTEM_RANGEFULLDATE,
         type: SchemaType.Struct,
         desc: _LS("system.rangefulldate"),
         struct: {
@@ -168,7 +188,7 @@ registerSchema([
         },
     },
     {
-        name: "system.rangemonth",
+        name: NS_SYSTEM_RANGEMONTH,
         type: SchemaType.Struct,
         desc: _LS("system.rangemonth"),
         struct: {
@@ -190,7 +210,7 @@ registerSchema([
         },
     },
     {
-        name: "system.rangeyear",
+        name: NS_SYSTEM_RANGEYEAR,
         type: SchemaType.Struct,
         desc: _LS("system.rangeyear"),
         struct: {
@@ -215,28 +235,28 @@ registerSchema([
 
     //#region array
     {
-        name: "system.strings",
+        name: NS_SYSTEM_STRINGS,
         type: SchemaType.Array,
         desc: _LS("system.strings"),
         array: {
-            base: "system.string",
+            element: "system.string",
             primary: [],
         },
     },
     {
-        name: "system.numbers",
+        name: NS_SYSTEM_NUMBERS,
         type: SchemaType.Array,
         desc: _LS("system.numbers"),
         array: {
-            base: "system.number",
+            element: "system.number",
         },
     },
     {
-        name: "system.ints",
+        name: NS_SYSTEM_INTS,
         type: SchemaType.Array,
         desc: _LS("system.ints"),
         array: {
-            base: "system.int",
+            element: "system.int",
         },
     },
     //#endregion

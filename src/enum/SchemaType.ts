@@ -29,7 +29,7 @@ export enum SchemaType
     Array = "array",
 
     /**
-     * The function node as relationship
+     * The function node
      */
     Function = "function",
 }

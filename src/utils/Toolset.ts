@@ -192,10 +192,10 @@ export function useQueueQuery<T>(queryFunc: (...args: any[]) => Promise<T>)
   let processing = 0
 
   const processQuery = async () => {
-    // 单执行-记录时间，避免卡死影响后续调度
+    // single thread - record time
     if (processing && (new Date().getTime() - processing) < 1000) return
 
-    // 循环执行
+    // process queue
     let task = queues.shift()
     while (task) {
       processing = new Date().getTime()
@@ -208,7 +208,7 @@ export function useQueueQuery<T>(queryFunc: (...args: any[]) => Promise<T>)
       task = queues.shift()
     }
 
-    // 重置交给下次执行
+    // reset
     processing = 0
   }
 
@@ -245,4 +245,26 @@ export function deepClone(value: any): any
   {
     return value
   }
+}
+
+/**
+ * Generate guid parts
+ */
+export function generateGuidPart(): string {
+  return 'xxxx'.replace(/x/g, c => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16).toUpperCase()
+  })
+}
+
+/**
+ * Generate a guid
+ */
+export function generateGuid(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16).toUpperCase()
+  })
 }

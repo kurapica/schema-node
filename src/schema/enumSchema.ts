@@ -1,4 +1,4 @@
-import { EnumValueType } from "../enum/EnumValueType"
+import { EnumValueType } from "../enum/enumValueType"
 
 /**
  * The enum type schema
@@ -13,17 +13,12 @@ export interface IEnumSchema
   /**
    * The cascades of the enum value
   */
-  cascade: string[]
+  cascade?: string[]
 
   /**
    * The enum values
   */
   values: IEnumValueInfo[]
-
-  /**
-   * The array type
-   */
-  arrayType?: string
 }
 
 /**
@@ -34,7 +29,7 @@ export interface IEnumValueInfo
   /**
    * The value
   */
-  value: any;
+  value: any
 
   /**
    * The name of the enum value
@@ -44,7 +39,7 @@ export interface IEnumValueInfo
   /**
    * Whether the enum value is disabled
   */
-  disable?: boolean
+  disabled?: boolean
 
   /**
    * Whether the enum value has sub enum values

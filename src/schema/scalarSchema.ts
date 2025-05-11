@@ -1,4 +1,4 @@
-import { LocaleString } from "../utils/Locale"
+import { LocaleString } from "../utils/locale"
 
 /**
  * The schema of the scalar type
@@ -44,9 +44,4 @@ export interface IScalarSchema
    * The eval function to convert the scalar value
   */
   conv?: string
-
-  /**
-   * The array type
-   */
-  arrayType?: string
 }

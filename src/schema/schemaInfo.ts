@@ -1,10 +1,10 @@
-import { SchemaType } from "../enum/SchemaType"
-import { LocaleString } from "../utils/Locale"
-import { IArraySchema } from "./IArraySchema"
-import { IEnumSchema } from "./IEnumSchema"
-import { IFunctionSchema } from "./IFunctionSchema"
-import { IScalarSchema } from "./IScalarSchema"
-import { IStructSchema } from "./IStructSchema"
+import { SchemaType } from "../enum/schemaType"
+import { LocaleString } from "../utils/locale"
+import { IArraySchema } from "./arraySchema"
+import { IEnumSchema } from "./enumSchema"
+import { IFunctionSchema } from "./functionSchema"
+import { IScalarSchema } from "./scalarSchema"
+import { IStructSchema } from "./structSchema"
 
 /**
  * The schema information
