@@ -20,7 +20,7 @@ export interface IStructSchema
   /**
    * The realtions between the fields
    */
-  relations: IStructFieldRelationInfo[]
+  relations?: IStructFieldRelationInfo[]
 }
 
 

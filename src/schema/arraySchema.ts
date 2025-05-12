@@ -17,5 +17,5 @@ export interface IArraySchema {
   /**
    * The realtions between the fields
    */
-  relations: IStructFieldRelationInfo[]
+  relations?: IStructFieldRelationInfo[]
 }

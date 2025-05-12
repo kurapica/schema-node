@@ -1,23 +1,25 @@
 import { SchemaType } from "../enum/schemaType"
+import { DataChangeWatcher } from "../utils/dataChangeWatcher"
+import { deepClone, isEqual, isNull } from "../utils/toolset"
 import { ISchemaNodeConfig } from "./schemaNodeConfig"
-import { ISchemaNodeRule, ISchemaNodeRuleSchema } from "./schemaNodeRule"
+import { activeRuleSchema, ISchemaNodeRule, ISchemaNodeRuleSchema, useRuleSchema } from "./schemaNodeRule"
 
 /**
- * The schema node interface.
+ * The abstract schema node.
  */
-export default interface ISchemaNode 
+export default abstract class SchemaNode<T extends ISchemaNodeConfig> 
 {
     //#region Properties
 
     /**
      * The schema type of the node.
      */
-    schemaType: SchemaType
+    get schemaType(): SchemaType { return SchemaType.Namespace }
 
     /**
      * The config of the node.
      */
-    config: ISchemaNodeConfig
+    get config(): T { return this._config }
 
     //#endregion
 
@@ -26,22 +28,28 @@ export default interface ISchemaNode
     /**
      * The data of the node.
      */
-    data: any
+    get data(): any { return this._data }
+    set data(value: any)
+    {
+        this._data = value
+        this.validate()
+        this._watchter.notify(value)
+    }
 
     /**
      * The data is changed.
      */
-    changed: boolean
+    get changed(): boolean { return !isEqual(this._original, this.data) }
 
     /**
      * The data is valid.
      */
-    valid: boolean
+    get valid(): boolean { return this._valid }
 
     /**
      * The error data of the node.
      */
-    error?: any
+    get error(): string | undefined { return this._error }
 
     //#endregion
 
@@ -50,17 +58,17 @@ export default interface ISchemaNode
     /**
      * The parent node of the node.
      */
-    parent?: ISchemaNode
+    get parent(): SchemaNode<ISchemaNodeConfig> | undefined { return this._parent }
 
     /**
      * The schema node rule
      */
-    rule: ISchemaNodeRule
+    get rule(): ISchemaNodeRule { return this._rule }
 
     /**
      * The schema node rule schema
      */
-    ruleSchema: ISchemaNodeRuleSchema
+    get ruleSchema(): ISchemaNodeRuleSchema { return this._ruleSchema }
     
     //#endregion
 
@@ -69,22 +77,71 @@ export default interface ISchemaNode
     /**
      * Reset the change state of the node and children.
      */
-    resetChanges(): void
+    resetChanges(): void { 
+        this._original = deepClone(this.data)
+    }
 
     /**
      * Re-calc the valid state of the node and children.
      */
-    validate(): void
+    abstract validate(): void
 
     /**
      * Dispose the node and children.
      */
-    dispose(): void
+    dispose(): void {
+        this._watchter.dispose()
+    }
 
     /**
      * Subscribe a data change handler
      */
-    subscribe(func: Function): Function
+    subscribe(func: Function): Function {
+        return this._watchter.addWatcher(func)
+    }
+
+    /**
+     * Notify the data, error, valid may changes
+     */
+    notify(): void {
+        return this._watchter.notify(this._data)
+    }
 
     //#endregion
+
+    //#region Field
+    
+    protected _watchter: DataChangeWatcher = new DataChangeWatcher()
+    protected _original: any
+    protected _parent: SchemaNode<ISchemaNodeConfig> | undefined
+    protected _config: T
+    protected _error: string | undefined
+    protected _valid: boolean = true
+    protected _data: any
+    protected _rule: ISchemaNodeRule = {}
+    protected _ruleSchema: ISchemaNodeRuleSchema = { type: '' }
+
+    //#endregion
+
+    /**
+     * Construct a scalar schema node.
+     * @param parent the parent node of the node.
+     * @param config the config of the node.
+     */
+    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any)
+    {
+        this._parent = parent
+        this._config = config as T
+        this._data = isNull(data) ? deepClone(config.default) : data
+        useRuleSchema(this, parent).then(r => {
+            this._ruleSchema = r
+
+            // Re do the active
+            if (this._rule._actived)
+            {
+                this._rule._actived = false
+                activeRuleSchema(this, true)
+            }
+        })
+    }
 }

@@ -1,4 +1,7 @@
 export default {
+
+    //#region Namespace
+
     // system
     "system": "系统类型",
     "system.array": "基础数组",
@@ -124,4 +127,15 @@ export default {
     "system.logic.notcontains": "不含有指定值",
     "system.logic.notequal": "不等于",
     "system.logic.orelse": "任一满足",
+
+    //#endregion
+
+    //#region Message
+
+    "ERR_CANT_BE_NULL": "{0}不能为空",
+    "ERR_LEN_CANT_BE_GREATTHAN" : "{0}长度不能大于{1}","ERR_LEN_CANT_BE_LESSTHAN" : "{0}长度不能小于{1}",
+    "ERR_REGEX_NOT_MATCH" : "{0}格式不正确",
+    "ERR_NOT_IN_ENUMLIST": "{0}必须从列表中选取",
+
+    //#endregion
 }

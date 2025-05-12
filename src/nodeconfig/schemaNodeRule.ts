@@ -704,11 +704,6 @@ export interface ISchemaNodeRule {
   useOriginForUplimit?: boolean
 
   /**
-   * As string as node data, for uni-app
-   */
-  asString?: boolean
-
-  /**
    * Already actived
    */
   _actived?: boolean

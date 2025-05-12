@@ -1,3 +1,4 @@
+import { ISchemaInfo } from "../schema/schemaInfo"
 import { LocaleString } from "../utils/locale"
 
 /**
@@ -14,6 +15,11 @@ export interface ISchemaNodeConfig
      * The type name of the node.
      */
     type: string
+
+    /**
+     * The schema info
+     */
+    schemaInfo: ISchemaInfo
 
     /**
      * The label of the node.
@@ -59,4 +65,10 @@ export interface ISchemaNodeConfig
      * The default value of the node.
      */
     default?: any
+
+    /**
+     * The validation provided by parent
+     * return error message if failed
+     */
+    validation?: Function
 }

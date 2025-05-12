@@ -1,3 +1,5 @@
+import { LocaleString } from "./locale"
+
 /**
  * is null
  */
@@ -60,6 +62,8 @@ export function debounceby(fn: Function, wait: Function)
  * Check is equal
  */
 export function isEqual(a: any, b: any, t: string | null = null) {
+  if (a === b) return true
+  
   // For date
   if (t === "system.date" || t === "system.fulldate" || t === "system.yearmonth") {
     if (a instanceof Date)
@@ -112,7 +116,23 @@ export function isEqual(a: any, b: any, t: string | null = null) {
   {
     return a.getTime() === b.getTime()
   }
-  return a === b
+  
+  // Object
+  if (typeof a === "object" && typeof b === "object")
+  {
+    const flds = new Set<string>()
+    for(let f in Object.getOwnPropertyNames(a))
+    {
+      if (!isEqual(a[f], b[f])) return false
+      flds.add(f)
+    }
+    for(let f in Object.getOwnPropertyNames(b))
+    {
+      if (!flds.has(f)) return false
+    }
+  }
+
+  return false
 }
 
 /**
@@ -267,4 +287,13 @@ export function generateGuid(): string {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16).toUpperCase()
   })
+}
+
+/**
+ * format string
+ */
+export function sformat(template: string | LocaleString, ...args: any[]) {
+  return `${template}`.replace(/{(\d+)}/g, (match, index) => {
+    return typeof args[index] !== 'undefined' ? args[index] : match;
+  });
 }
