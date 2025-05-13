@@ -3,7 +3,7 @@ import { IScalarSchemaNodeConfig } from '../nodeconfig/scalarSchemaNodeConfig'
 import SchemaNode from '../nodeconfig/schemaNode'
 import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
 import { getSchema } from '../schema/schemaProvider'
-import { _LS } from '../utils/locale'
+import { _L, _LS } from '../utils/locale'
 import { NS_SYSTEM_BOOL, NS_SYSTEM_STRING, NS_SYSTEM_DATE, NS_SYSTEM_YEAR, NS_SYSTEM_FULLDATE, NS_SYSTEM_YEARMONTH, NS_SYSTEM_NUMBER, NS_SYSTEM_INT } from '../utils/schema'
 import { isNull, sformat } from '../utils/toolset'
 
@@ -70,12 +70,12 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
         }
 
         // limit
-        const uplimit = !isNull(rule.upLimit)
+        let uplimit = !isNull(rule.upLimit)
             ? rule.upLimit
             : !isNull(config.upLimit)
                 ? config.upLimit
                 : scalarInfo?.upLimit
-        const lowlimit = !isNull(rule.lowLimit)
+        let lowlimit = !isNull(rule.lowLimit)
             ? rule.lowLimit
             : !isNull(config.lowLimit)
                 ? config.lowLimit
@@ -102,15 +102,70 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
         }
         // number
         else if (this.isNumber) {
-
-        }
-        // bool
-        else if (this.isBoolean) {
-
+            if (isNull(value))
+            {
+                this._valid = false
+                this._error = sformat(_LS("ERR_NOT_NUMBER"), config.display)
+            }
+            else if (!isNull(uplimit) && value > uplimit)
+            {
+                this._valid = false
+                this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+            }
+            else if (!isNull(lowlimit) && value < lowlimit)
+            {
+                this._valid = false
+                this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+            }
+            else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(`${this._data}`)) {
+                this._valid = false
+                this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
+            }
+            else if (!rule.asSuggest && rule.enumWhiteList && rule.enumWhiteList.length > 0 && rule.enumWhiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
+                this._valid = false
+                this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
+            }
         }
         // date
         else if (this.isDate) {
+            if (isNull(value))
+            {
+                this._valid = false
+                this._error = sformat(_LS("ERR_NOT_DATE"), config.display)
+            }
+            else 
+            {
+                if (!isNull(uplimit))
+                {
+                    if (typeof uplimit === "string")
+                    {
+                        uplimit = new Date(uplimit)
+                        if (isNaN(uplimit.getFullYear()))
+                            uplimit = null
+                    }
+                    if (uplimit instanceof Date && uplimit < value)
+                    {
+                        this._valid = false
+                        this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+                    }
+                }
 
+                if (!isNull(lowlimit) && this._valid)
+                {
+
+                    if (typeof lowlimit === "string")
+                    {
+                        lowlimit = new Date(lowlimit)
+                        if (isNaN(lowlimit.getFullYear()))
+                            lowlimit = null
+                    }
+                    if (lowlimit instanceof Date && lowlimit > value)
+                    {
+                        this._valid = false
+                        this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                    }
+                }
+            }
         }
     }
 

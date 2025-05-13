@@ -1,17 +1,18 @@
 import { RelationType } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
-import { ArraySchemaNode } from "../node/arraySchemaNode"
 import { getSchema } from "../schema/schemaProvider"
 import { IStructFieldRelationInfo, IStructSchema } from "../schema/structSchema"
 import { isNull } from "../utils/toolset"
-import ISchemaNode from "./schemaNode"
+import SchemaNode from "./schemaNode"
+import { ISchemaNodeConfig } from "./schemaNodeConfig"
 
 //#region apis
 
 /**
  * Generate the rule schema for node
  */
-export async function useRuleSchema(node: ISchemaNode, parent: ISchemaNode | null): Promise<ISchemaNodeRuleSchema> {
+export async function useRuleSchema(node: SchemaNode<ISchemaNodeConfig>, parent?: SchemaNode<ISchemaNodeConfig>): Promise<ISchemaNodeRuleSchema> {
+  parent = parent || node.parent
   const ruleSchema = parent
     ? (
       parent.schemaType == SchemaType.Array
@@ -28,7 +29,7 @@ export async function useRuleSchema(node: ISchemaNode, parent: ISchemaNode | nul
 /**
  * active rule schema
  */
-export function activeRuleSchema(node: ISchemaNode, deep?: boolean, isinit?: boolean) {
+export function activeRuleSchema(node: SchemaNode<ISchemaNodeConfig>, deep?: boolean, isinit?: boolean) {
   if (node.schemaType == SchemaType.Array) {
     const arrayNode = node as unknown as ArraySchemaNode
     if (arrayNode.enumArrayNode) {

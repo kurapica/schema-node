@@ -1,4 +1,6 @@
 import { SchemaType } from "../enum/schemaType"
+import { ISchemaInfo } from "../schema/schemaInfo"
+import { getSchema } from "../schema/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull } from "../utils/toolset"
 import { ISchemaNodeConfig } from "./schemaNodeConfig"
@@ -21,9 +23,10 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
      */
     get config(): T { return this._config }
 
-    //#endregion
-
-    //#region Data State
+    /**
+     * The schema info.
+     */
+    get schemaInfo(): ISchemaInfo { return this._typeinfo }
 
     /**
      * The data of the node.
@@ -51,10 +54,6 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
      */
     get error(): string | undefined { return this._error }
 
-    //#endregion
-
-    //#region Relationships
-
     /**
      * The parent node of the node.
      */
@@ -72,6 +71,20 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     
     //#endregion
 
+    //#region Abstract methods
+
+    /**
+     * Re-calc the valid state of the node and children.
+     */
+    abstract validate(): void
+    
+    /**
+     * initialize the node
+     */
+    abstract initialize(): Promise<void>
+
+    //#endregion
+
     //#region Methods
 
     /**
@@ -80,11 +93,6 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     resetChanges(): void { 
         this._original = deepClone(this.data)
     }
-
-    /**
-     * Re-calc the valid state of the node and children.
-     */
-    abstract validate(): void
 
     /**
      * Dispose the node and children.
@@ -120,6 +128,7 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     protected _data: any
     protected _rule: ISchemaNodeRule = {}
     protected _ruleSchema: ISchemaNodeRuleSchema = { type: '' }
+    protected _typeinfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
 
     //#endregion
 
@@ -133,6 +142,7 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
         this._parent = parent
         this._config = config as T
         this._data = isNull(data) ? deepClone(config.default) : data
+        getSchema(config.type).then(r => this._typeinfo = r! )
         useRuleSchema(this, parent).then(r => {
             this._ruleSchema = r
 

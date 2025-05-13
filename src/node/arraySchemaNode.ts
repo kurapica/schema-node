@@ -1,63 +1,54 @@
-import { SchemaType } from "../enum/schemaType";
-import { IScalarSchemaNodeConfig } from "../nodeconfig/scalarSchemaNodeConfig";
-import ISchemaNode from "../nodeconfig/schemaNode";
-import { ISchemaNodeConfig } from "../nodeconfig/schemaNodeConfig";
-import { ISchemaNodeRule, ISchemaNodeRuleSchema } from "../nodeconfig/schemaNodeRule";
-import { DataChangeWatcher } from "../utils/dataChangeWatcher";
-import { isEqual, isNull } from "../utils/toolset";
+import { SchemaType } from '../enum/schemaType'
+import { IArraySchemaNodeConfig } from '../nodeconfig/arraySchemaNodeConfig'
+import SchemaNode from '../nodeconfig/schemaNode'
+import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
+import { ISchemaInfo } from '../schema/schemaInfo'
+import { getSchema } from '../schema/schemaProvider'
+import { _L, _LS } from '../utils/locale'
 
-export class ArraySchemaNode implements ISchemaNode {
+/**
+ * The scalar schema data node
+ */
+export class ScalarSchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
     //#region Implementation
 
-    // properties
-    get data(): any { return this._data }
     get schemaType(): SchemaType { return SchemaType.Array }
-    get config(): IScalarSchemaNodeConfig { return this._config }
-    get changed(): boolean { return isEqual(this._original, this.data) }
-    get valid(): boolean { return this._valid }
-    get error(): string | undefined { return this._error }
-    get parent(): ISchemaNode | undefined { return this._parent }
-    get rule(): ISchemaNodeRule { return this._rule }
-    get ruleSchema(): ISchemaNodeRuleSchema { return this._ruleSchema }
 
     /**
-     * Set the data of the node.
+     * Validate the value
      */
-    set data(value: any)
-    {
-        this._data = value
-        this.validate()
-        this._watchter.notify(value)
-    }
-
-    // Methods
-    resetChanges(): void { this._original = this.data}
-
     validate(): void {
-        throw new Error('Method not implemented.');
     }
 
-    dispose(): void {
-        this._watchter.dispose()
-    }
+    //#endregion
 
-    subscribe(func: Function): Function {
-        return this._watchter.addWatcher(func)
-    }
+    //#region Properties    
+
+    /**
+     * The current page no
+     */
+    page?: number
+
+    /**
+     * The page count
+     */
+    pageCount?: number
+
+    /**
+     * The data total count
+     */
+    total?: number
+
+    /**
+     * Use descend order
+     */
+    descend?: boolean
 
     //#endregion
 
     //#region Fields
 
-    private _watchter: DataChangeWatcher = new DataChangeWatcher()
-    private _original: any
-    private _parent: ISchemaNode | undefined
-    private _config: IScalarSchemaNodeConfig
-    private _error: string | undefined
-    private _valid: boolean = true
-    private _data: any
-    private _rule: ISchemaNodeRule = {}
-    private _ruleSchema: ISchemaNodeRuleSchema = { type: '' }
+    private _eleSchemaInfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
 
     //#endregion
 
@@ -66,10 +57,14 @@ export class ArraySchemaNode implements ISchemaNode {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: ISchemaNode, config: ISchemaNodeConfig, data: any)
-    {
-        this._parent = parent
-        this._config = config as IScalarSchemaNodeConfig
-        this._data = isNull(data) ? config.default : data
+    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
+        super(parent, config, data)
+        getSchema(config.type).then(r => {
+            this._typeinfo = r!
+
+            getSchema(r!.array!.element).then(s => {
+                this._eleSchemaInfo = s!
+            })
+        })
     }
 }

@@ -136,6 +136,10 @@ export default {
     "ERR_LEN_CANT_BE_GREATTHAN" : "{0}长度不能大于{1}","ERR_LEN_CANT_BE_LESSTHAN" : "{0}长度不能小于{1}",
     "ERR_REGEX_NOT_MATCH" : "{0}格式不正确",
     "ERR_NOT_IN_ENUMLIST": "{0}必须从列表中选取",
+    "ERR_NOT_NUMBER": "{0}不是有效的数值",
+    "ERR_CANT_BE_GREATTHAN": "{0}不能大于{1}",
+    "ERR_CANT_BE_LESSTHAN": "{0}不能小于{1}",
+    "ERR_NOT_DATE": "{0}不是有效的日期",
 
     //#endregion
 }
