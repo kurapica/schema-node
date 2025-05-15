@@ -2,15 +2,14 @@ import { SchemaType } from '../enum/schemaType'
 import { IScalarSchemaNodeConfig } from '../nodeconfig/scalarSchemaNodeConfig'
 import SchemaNode from '../nodeconfig/schemaNode'
 import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
-import { getSchema } from '../schema/schemaProvider'
+import { getScalarValueType, ScalarValueType } from '../schema/schemaProvider'
 import { _L, _LS } from '../utils/locale'
-import { NS_SYSTEM_BOOL, NS_SYSTEM_STRING, NS_SYSTEM_DATE, NS_SYSTEM_YEAR, NS_SYSTEM_FULLDATE, NS_SYSTEM_YEARMONTH, NS_SYSTEM_NUMBER, NS_SYSTEM_INT } from '../utils/schema'
 import { isNull, sformat } from '../utils/toolset'
 
 /**
  * The scalar schema data node
  */
-export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
+export default class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Scalar }
@@ -53,7 +52,7 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
     validate(): void {
         const value = this.data
         const config = this._config
-        const scalarInfo = config.schemaInfo.scalar
+        const scalarInfo = this.schemaInfo.scalar
         const rule = this._rule
 
         // reset
@@ -228,56 +227,8 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
      */
     constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
         super(parent, config, data)
-        getValueType(config.type).then(v => this._valueType = v)
-    }
-}
+        getScalarValueType(config.type).then(v => this._valueType = v)
 
-// Scalar value type
-enum ScalarValueType {
-    None = 0,
-    String = 1,
-    Number = 2,
-    Integer = 4,
-    Boolean = 8,
-    Date = 16,
-    Year = 32,
-    FullDate = 64,
-    YearMonth = 128,
-}
-
-// Scan the scalar value type
-async function getValueType(type: string) {
-    let valueType = 0
-    let typeName: string | undefined = type.toLowerCase()
-    while (typeName) {
-        switch (typeName) {
-            case NS_SYSTEM_BOOL:
-                valueType |= ScalarValueType.Boolean
-                break;
-            case NS_SYSTEM_STRING:
-                valueType |= ScalarValueType.String
-                break;
-            case NS_SYSTEM_DATE:
-                valueType |= ScalarValueType.Date
-                break;
-            case NS_SYSTEM_YEAR:
-                valueType |= ScalarValueType.Date
-                valueType |= ScalarValueType.Year
-                break;
-            case NS_SYSTEM_FULLDATE:
-                valueType |= ScalarValueType.FullDate
-                break;
-            case NS_SYSTEM_YEARMONTH:
-                valueType |= ScalarValueType.YearMonth
-                break;
-            case NS_SYSTEM_NUMBER:
-                valueType |= ScalarValueType.Number
-                break;
-            case NS_SYSTEM_INT:
-                valueType |= ScalarValueType.Integer
-                break;
-        }
-        typeName = (await getSchema(typeName))?.scalar?.base
+        // @TODO: add primary check
     }
-    return valueType
 }

@@ -28,11 +28,11 @@ export class DataChangeWatcher
      * Notify all watchers with the given arguments.
      * @param args The arguments to pass to the watchers.
      */
-    public notify(args: any): void
+    public notify(...args: any[]): void
     {
         this.watchers.forEach(watcher => {
             try {
-                watcher(args)
+                watcher(...args)
             } catch (error) {
                 console.error("Error in watcher:", error)
             }

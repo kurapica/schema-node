@@ -1,6 +1,6 @@
 import { RelationType } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
-import { getSchema } from "../schema/schemaProvider"
+import { getCachedSchema } from "../schema/schemaProvider"
 import { IStructFieldRelationInfo, IStructSchema } from "../schema/structSchema"
 import { isNull } from "../utils/toolset"
 import SchemaNode from "./schemaNode"
@@ -11,7 +11,7 @@ import { ISchemaNodeConfig } from "./schemaNodeConfig"
 /**
  * Generate the rule schema for node
  */
-export async function useRuleSchema(node: SchemaNode<ISchemaNodeConfig>, parent?: SchemaNode<ISchemaNodeConfig>): Promise<ISchemaNodeRuleSchema> {
+export function useRuleSchema(node: SchemaNode<ISchemaNodeConfig>, parent?: SchemaNode<ISchemaNodeConfig>): ISchemaNodeRuleSchema {
   parent = parent || node.parent
   const ruleSchema = parent
     ? (
@@ -19,7 +19,7 @@ export async function useRuleSchema(node: SchemaNode<ISchemaNodeConfig>, parent?
         ? parent.ruleSchema
         : parent.ruleSchema.schemas![node.config.name]
     )
-    : await buildRuleSchema(node.config.name)
+    : buildRuleSchema(node.config.name)
 
   // init
   copyRule(ruleSchema, node.rule, true)
@@ -179,7 +179,6 @@ export function copyRule(from: ISchemaNodeRule, to: ISchemaNodeRule, override?: 
   if (source || !isNull(from.upLimit) && (override || isNull(to.upLimit))) to.upLimit = from.upLimit
   if (source || !isNull(from.invisible) && (override || isNull(to.invisible))) to.invisible = from.invisible
   if (source || !isNull(from.disable) && (override || isNull(to.disable))) to.disable = from.disable
-  if (source || !isNull(from.asString) && (override || isNull(to.asString))) to.asString = from.asString
   if (source || !isNull(from.asSuggest) && (override || isNull(to.asSuggest))) to.asSuggest = from.asSuggest
   if (source || !isNull(from.useOriginForUplimit) && (override || isNull(to.useOriginForUplimit))) to.useOriginForUplimit = from.useOriginForUplimit
 }
@@ -187,23 +186,23 @@ export function copyRule(from: ISchemaNodeRule, to: ISchemaNodeRule, override?: 
 /**
  * Build the rule schema
  */
-async function buildRuleSchema(type: string): Promise<ISchemaNodeRuleSchema> {
+function buildRuleSchema(type: string): ISchemaNodeRuleSchema {
   const ruleSchema: ISchemaNodeRuleSchema = { type }
-  const schemaInfo = await getSchema(type)
+  const schemaInfo = getCachedSchema(type)
   if (!schemaInfo) return ruleSchema
 
   if (schemaInfo.type == SchemaType.Array) {
     // The array and element share the rule schema
-    const eleRuleSchema = await buildRuleSchema(schemaInfo.array!.element)
+    const eleRuleSchema = buildRuleSchema(schemaInfo.array!.element)
     eleRuleSchema.isArrayElement = true
 
     // Register relations of the array
-    const elementInfo = await getSchema(schemaInfo.array!.element)
+    const elementInfo = getCachedSchema(schemaInfo.array!.element)
     if (elementInfo?.type === SchemaType.Struct && elementInfo.struct?.relations?.length)
     {
       for(let i = 0; i < elementInfo.struct.relations.length; i++)
       {
-        await registerRelation(eleRuleSchema, elementInfo.struct.relations[i], elementInfo.struct)
+        registerRelation(eleRuleSchema, elementInfo.struct.relations[i], elementInfo.struct)
       }
     }
     return eleRuleSchema
@@ -219,7 +218,7 @@ async function buildRuleSchema(type: string): Promise<ISchemaNodeRuleSchema> {
       const f = structTypeInfo.fields[i]
 
       // build rule schema for each field
-      const schema = await buildRuleSchema(f.type)
+      const schema = buildRuleSchema(f.type)
       schemas[f.name] = schema
 
       // init the schema
@@ -230,7 +229,7 @@ async function buildRuleSchema(type: string): Promise<ISchemaNodeRuleSchema> {
     if (structTypeInfo.relations && structTypeInfo.relations.length > 0) {
       for(let i = 0; i < structTypeInfo.relations.length; i++)
       {
-        await registerRelation(ruleSchema, registerRelation, structTypeInfo)
+        registerRelation(ruleSchema, structTypeInfo.relations[i], structTypeInfo)
       }
     }
   }
@@ -247,7 +246,7 @@ async function buildRuleSchema(type: string): Promise<ISchemaNodeRuleSchema> {
  */
 function registerRelation(rootSchema: ISchemaNodeRuleSchema, relation: IStructFieldRelationInfo, rootTypeInfo: IStructSchema) {
   // Location the target
-  const targetAccessPaths = await getAccessPath(rootSchema, relation.field!, rootTypeInfo)
+  const targetAccessPaths = getAccessPath(rootSchema, relation.field!, rootTypeInfo)
   if (!targetAccessPaths || targetAccessPaths.length == 0) {
     console.error(`路径${relation.field}对应的节点无法定位，请检查关联规则。`)
     return
@@ -468,7 +467,7 @@ function useTypeDataPushResult(node: ISchemaNode, func: string, args: ITypeDataP
 /**
  * Get the access path
  */
-async function getAccessPath(rootSchema: ISchemaNodeRuleSchema, path: string, rootTypeInfo: IStructSchema): Promise<IFieldAccessPath[]> {
+function getAccessPath(rootSchema: ISchemaNodeRuleSchema, path: string, rootTypeInfo: IStructSchema): IFieldAccessPath[] {
   // Check the array
   if (path.toLocaleLowerCase() === "$array") {
     if (rootSchema.isArrayElement) {
@@ -491,7 +490,7 @@ async function getAccessPath(rootSchema: ISchemaNodeRuleSchema, path: string, ro
 
   // Gets the start
   let field = rootTypeInfo.fields?.find(f => f.name.toLowerCase() == paths[0])
-  let fieldType = field ? await getSchema(field.type) : null
+  let fieldType = field ? getCachedSchema(field.type) : null
   if (!field || !fieldType) return accessPaths
 
   // init
@@ -502,12 +501,12 @@ async function getAccessPath(rootSchema: ISchemaNodeRuleSchema, path: string, ro
   for (let i = 1; i < paths.length; i++) {
     // array count the same with element
     if (fieldType?.type == SchemaType.Array) {
-      fieldType = await getSchema(fieldType.array!.element)
+      fieldType = getCachedSchema(fieldType.array!.element)
     }
 
     if (fieldType?.type == SchemaType.Struct) {
       field = fieldType.struct!.fields?.find(f => f.name.toLowerCase() == paths[i])
-      fieldType = field ? await getSchema(field.type) : null
+      fieldType = field ? getCachedSchema(field.type) : null
       if (!field || !fieldType) return []
 
       schema = schema.schemas![field.name]
@@ -762,7 +761,7 @@ interface ISchemaNodePushArg {
   /**
    * The node
    */
-  node?: ISchemaNode
+  node?: SchemaNode<ISchemaNodeConfig>
 
   /**
    * Whether check array node change

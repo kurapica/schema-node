@@ -61,8 +61,14 @@ export function debounceby(fn: Function, wait: Function)
 /**
  * Check is equal
  */
-export function isEqual(a: any, b: any, t: string | null = null) {
+export function isEqual(a: any, b: any, t: string | null = null): boolean {
   if (a === b) return true
+
+  // Array check
+  if (Array.isArray(a) || Array.isArray(b))
+  {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.findIndex((f, i) => !isEqual(f, b[i])) < 0
+  }
   
   // For date
   if (t === "system.date" || t === "system.fulldate" || t === "system.yearmonth") {

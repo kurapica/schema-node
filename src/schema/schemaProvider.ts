@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { NS_SYSTEM_ARRAY, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT } from "../utils/schema"
+import { NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH } from "../utils/schema"
 import { generateGuidPart, isNull, useQueueQuery } from "../utils/toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "./enumSchema"
 import { IFunctionSchema } from "./functionSchema"
@@ -115,6 +115,15 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     const schema = await schemaProvider.loadSchema(name)
     registerSchema([schema])
     return schema
+}
+
+/**
+ * Gets the cached schema info, when the schema node created, their info and all other required must be cached, avoid async codes
+ * @param name The schema name
+ * @returns The schema info
+ */
+export function getCachedSchema(name: string): ISchemaInfo | undefined {
+    return schemaCache[name.toLowerCase()]
 }
 
 /**
@@ -241,6 +250,258 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
         return await isSchemaCanBeUseAs(schemaInfo.array!.element, tarSchemInfo.array!.element)
     }
     return false
+}
+
+/**
+ * Validate the value by schema
+ * @param name the schema type
+ * @param value the value to be validation
+ */
+export async function validateSchemaValue(name: string, value: any): Promise<boolean>
+{
+    const schema = await getSchema(name)
+    if (!schema) return true
+
+    if (schema.type === SchemaType.Scalar)
+    {
+        const valueType = await getScalarValueType(name)
+        if (!schema.scalar || !valueType) return true
+        if (valueType && ScalarValueType.Boolean)
+        {
+            return typeof value === "boolean"
+        }
+        else if (valueType && ScalarValueType.Date)
+        {
+            return value instanceof Date
+        }
+        else if (valueType && ScalarValueType.Integer)
+        {
+            return typeof value === "number" && Math.floor(value) === value &&
+                (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
+                (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
+        }
+        else if (valueType && ScalarValueType.Number)
+        {
+            return typeof value === "number" &&
+                (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
+                (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
+        }
+        else if (valueType && ScalarValueType.String)
+        {
+            return typeof value === "string" &&
+                (isNull(schema.scalar.lowLimit) || value.length >= schema.scalar.lowLimit!) &&
+                (isNull(schema.scalar.upLimit) || value.length <= schema.scalar.upLimit!)
+        }
+    }
+    else if (schema.type === SchemaType.Enum)
+    {
+        const access = await getEnumAccessList(name, value)
+        return access.length > 0
+    }
+    else if(schema.type === SchemaType.Struct)
+    {
+        if (Array.isArray(value) || typeof value !== 'object') return false
+        for(let i = 0; i < schema.struct!.fields.length; i++)
+        {
+            const field = schema.struct!.fields[i]
+            const val = value[field.name]
+            if (isNull(val)) {
+                if (field.require) return false
+                continue
+            }
+            if (!await validateSchemaValue(field.type, val))
+                return false
+        }
+    }
+    else if(schema.type === SchemaType.Array)
+    {
+        if (!Array.isArray(value)) return false
+        for(let i = 0; i < value.length; i++)
+        {
+            if (!await validateSchemaValue(schema.array!.element, value[i]))
+                return false
+        }
+    }
+    return true
+}
+
+//#endregion
+
+//#region scalar
+
+const scalarValueMap:{ [key:string]: ScalarValueType } = {}
+
+/**
+ * Gets the value type from scalar type
+ * @param type The scalar type
+ * @returns the value type
+ */
+export async function getScalarValueType(type: string):Promise<ScalarValueType> {
+    let valueType = 0
+    type = type.toLowerCase()    
+    if (scalarValueMap[type]) return scalarValueMap[type]
+
+    // check by name
+    let typeName: string | undefined = type
+    while (typeName) {
+        switch (typeName) {
+            case NS_SYSTEM_BOOL:
+                valueType |= ScalarValueType.Boolean
+                break;
+            case NS_SYSTEM_STRING:
+                valueType |= ScalarValueType.String
+                break;
+            case NS_SYSTEM_DATE:
+                valueType |= ScalarValueType.Date
+                break;
+            case NS_SYSTEM_YEAR:
+                valueType |= ScalarValueType.Date
+                valueType |= ScalarValueType.Year
+                break;
+            case NS_SYSTEM_FULLDATE:
+                valueType |= ScalarValueType.FullDate
+                break;
+            case NS_SYSTEM_YEARMONTH:
+                valueType |= ScalarValueType.YearMonth
+                break;
+            case NS_SYSTEM_NUMBER:
+                valueType |= ScalarValueType.Number
+                break;
+            case NS_SYSTEM_INT:
+                valueType |= ScalarValueType.Integer
+                break;
+        }
+        typeName = (await getSchema(typeName))?.scalar?.base
+    }
+    scalarValueMap[type] = valueType
+    return valueType
+}
+
+//#endregion
+
+//#region  enum access
+
+/**
+ * Gets the enum sublist by given value
+ * @param name The enum schema name
+ * @param value the enum value, if omit means the root enum list
+ * @param deep query deep sub list
+ * @returns the sub list of the given enum value
+ */
+export async function getEnumSubList(name: string, value?: any, deep?: boolean): Promise<IEnumValueInfo[]> {
+    const schema = await getSchema(name)
+    if (!schema?.enum || schema?.type !== SchemaType.Enum) return []
+
+    if (isNull(value))
+    {
+        if (schema.enum.values && schema.enum.values.length) return schema.enum.values
+        if (!schemaProvider) throw new Error("Schema provider not provided")
+        const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        schema.enum.values = einfos
+        return schema.enum!.values
+    }
+    
+    let search = searchEnumValue(schema.enum.values, value)
+    let einfo = search.length ? search[search.length - 1] : undefined
+    if (einfo) {
+        if (!einfo.hasSubList) return []
+        if (einfo.subList && einfo.subList.length) return einfo.subList
+    }
+    if (!schemaProvider) throw new Error("Schema provider not provided")
+    if (einfo)
+    {
+        const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        einfo.subList = einfos
+        return schema.enum!.values 
+    }
+    const access = await schemaProvider.loadEnumAccessList(name, value)
+    if (!access?.length) return []
+    
+    // combine
+    schema.enum.values ||= []
+    let root = schema.enum.values
+    for(let i = 0; i < access.length - 1; i++)
+    {
+        if (!root.length)
+        {
+            root.splice(0, 0, ...access[i].subList)
+            break
+        }
+        const match = root.find(r => r.value == access[i].value)
+        if (!match) {
+            // rebuild all
+            root.splice(0, 0, ...access[i].subList)
+            break
+        }
+        if (match.hasSubList)
+        {
+            match.subList ||= []
+            root = match.subList
+        }
+    }
+    
+    // check
+    einfo = root.find(r => r.value === value)
+    if (!einfo || !einfo.hasSubList) return []
+    if (einfo.subList?.length) return einfo.subList
+
+    // try reload
+    einfo.subList = await schemaProvider.loadEnumSubList(name, value, deep)
+    if (!einfo.subList.length) einfo.hasSubList = false
+    return einfo.subList
+}
+
+/**
+ * Gets the enum access list for given value
+ * @param name The enum schema name
+ * @param value the enum value
+ */
+export async function getEnumAccessList(name: string, value: any): Promise<IEnumValueAccess[]> {
+    const schema = await getSchema(name)
+    if (!schema?.enum || schema.type !== SchemaType.Enum) return []
+    
+    // search
+    const search = searchEnumValue(schema.enum.values, value)
+    if (search.length)
+    {
+        return search.map((s, i) => ({
+            name: schema.enum!.cascade?.length ? schema.enum?.cascade[i]! : "",
+            value: s.value,
+            subList: (i == 0 ? schema.enum?.values : search[i - 1].subList) || []
+        }))
+    }
+
+    // query
+    if (!schemaProvider) throw new Error("Schema provider not provided")
+    const access = await schemaProvider.loadEnumAccessList(name, value)
+
+    // combine
+    if (!access?.length) return []
+    
+    // combine
+    schema.enum.values ||= []
+    let root = schema.enum.values
+    for(let i = 0; i < access.length - 1; i++)
+    {
+        if (!root.length)
+        {
+            root.splice(0, 0, ...access[i].subList)
+            break
+        }
+        const match = root.find(r => r.value == access[i].value)
+        if (!match) {
+            // rebuild all
+            root.splice(0, 0, ...access[i].subList)
+            break
+        }
+        if (match.hasSubList)
+        {
+            match.subList ||= []
+            root = match.subList
+        }
+    }
+
+    return access
 }
 
 //#endregion
@@ -641,9 +902,35 @@ async function callFunc(func: Function, args: any[]): Promise<any> {
         return res
 }
 
+function searchEnumValue(values: IEnumValueInfo[], value: any): IEnumValueInfo[] {
+    for(let i = 0; i < values.length; i++)
+    {
+        if (values[i].value == value) return [ values[i] ]
+        if (values[i].hasSubList && values[i].subList?.length)
+        {
+            const r = searchEnumValue(values[i].subList!, value)
+            if (r.length) return [ values[i], ...r ]
+        }
+    }
+    return []
+}
+
 //#endregion
 
 //#region inner types
+
+// Scalar value type
+export enum ScalarValueType {
+    None = 0,
+    String = 1,
+    Number = 2,
+    Integer = 4,
+    Boolean = 8,
+    Date = 16,
+    Year = 32,
+    FullDate = 64,
+    YearMonth = 128,
+}
 
 interface Expression {
     /**

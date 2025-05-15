@@ -17,11 +17,6 @@ export interface ISchemaNodeConfig
     type: string
 
     /**
-     * The schema info
-     */
-    schemaInfo: ISchemaInfo
-
-    /**
      * The label of the node.
      */
     display?: string | LocaleString

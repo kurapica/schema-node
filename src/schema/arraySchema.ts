@@ -10,6 +10,12 @@ export interface IArraySchema {
   element: string
 
   /**
+   * Whether the array should be treated as a whole value,
+   * no element schema nodes would be created
+   */
+  single?: boolean
+
+  /**
    * The primary fields of the array if the element is a struct.
   */
   primary?: string[]

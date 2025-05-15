@@ -31,4 +31,9 @@ export interface IEnumSchemaNodeConfig extends ISchemaNodeConfig
    * Don't allow flags enum value combination.
    */
   enumSingleFlag?: boolean
+
+  /**
+   * Works as enum array, require multi values
+   */
+  multiple?: boolean
 }

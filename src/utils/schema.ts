@@ -38,7 +38,7 @@ registerSchema([
     {
         name: NS_SYSTEM_ARRAY,
         type: SchemaType.Array,
-        desc: _LS("system.array"),
+        desc: _LS(NS_SYSTEM_ARRAY),
         array: {
             element: ""
         }
@@ -46,7 +46,7 @@ registerSchema([
     {
         name: NS_SYSTEM_STRUCT,
         type: SchemaType.Struct,
-        desc: _LS("system.struct"),
+        desc: _LS(NS_SYSTEM_STRUCT),
         struct: {
             fields: []
         }
@@ -56,7 +56,7 @@ registerSchema([
     {
         name: NS_SYSTEM_BOOL,
         type: SchemaType.Scalar,
-        desc: _LS("system.bool"),
+        desc: _LS(NS_SYSTEM_BOOL),
         scalar: {
             error: _LS("system.bool.error")
         },
@@ -64,7 +64,7 @@ registerSchema([
     {
         name: NS_SYSTEM_DATE,
         type: SchemaType.Scalar,
-        desc: _LS("system.date"),
+        desc: _LS(NS_SYSTEM_DATE),
         scalar: {
             error: _LS("system.date.error")
         },
@@ -72,7 +72,7 @@ registerSchema([
     {
         name: NS_SYSTEM_NUMBER,
         type: SchemaType.Scalar,
-        desc: _LS("system.number"),
+        desc: _LS(NS_SYSTEM_NUMBER),
         scalar: {
             error: _LS("system.number.error"),
             regex: "^(\\-|\\+)?\\d+(\\.\\d+)?(e\\-\\d+)?$",
@@ -81,9 +81,9 @@ registerSchema([
     {
         name: NS_SYSTEM_DOUBLE,
         type: SchemaType.Scalar,
-        desc: _LS("system.double"),
+        desc: _LS(NS_SYSTEM_DOUBLE),
         scalar: {
-            base: "system.number",
+            base: NS_SYSTEM_NUMBER,
             error: _LS("system.double.error"),
             regex: "^-?\\d+\\.?\\d+$",
         },
@@ -91,9 +91,9 @@ registerSchema([
     {
         name: NS_SYSTEM_FLOAT,
         type: SchemaType.Scalar,
-        desc: _LS("system.float"),
+        desc: _LS(NS_SYSTEM_FLOAT),
         scalar: {
-            base: "system.double",
+            base: NS_SYSTEM_DOUBLE,
             error: _LS("system.float.error"),
             regex: "^\\d+(\\.\\d+)?$",
         },
@@ -101,18 +101,18 @@ registerSchema([
     {
         name: NS_SYSTEM_FULLDATE,
         type: SchemaType.Scalar,
-        desc: _LS("system.fulldate"),
+        desc: _LS(NS_SYSTEM_FULLDATE),
         scalar: {
-            base: "system.date",
+            base: NS_SYSTEM_DATE,
             error: _LS("system.fulldate.error"),
         },
     },
     {
         name: NS_SYSTEM_INT,
         type: SchemaType.Scalar,
-        desc: _LS("system.int"),
+        desc: _LS(NS_SYSTEM_INT),
         scalar: {
-            base: "system.number",
+            base: NS_SYSTEM_INT,
             error: _LS("system.int.error"),
             regex: "^(\\-|\\+)?\\d+$",
         },
@@ -120,15 +120,15 @@ registerSchema([
     {
         name: NS_SYSTEM_STRING,
         type: SchemaType.Scalar,
-        desc: _LS("system.string"),
+        desc: _LS(NS_SYSTEM_STRING),
         scalar: {},
     },
     {
         name: NS_SYSTEM_YEAR,
         type: SchemaType.Scalar,
-        desc: _LS("system.year"),
+        desc: _LS(NS_SYSTEM_YEAR),
         scalar: {
-            base: "system.int",
+            base: NS_SYSTEM_INT,
             unit: _LS("system.year.unit"),
             lowLimit: 1900,
             regex: "^\\d{4}$",
@@ -137,9 +137,9 @@ registerSchema([
     {
         name: NS_SYSTEM_YEARMONTH,
         type: SchemaType.Scalar,
-        desc: _LS("system.yearmonth"),
+        desc: _LS(NS_SYSTEM_YEARMONTH),
         scalar: {
-            base: "system.date",
+            base: NS_SYSTEM_DATE,
         },
     },
     //#endregion
@@ -148,19 +148,19 @@ registerSchema([
     {
         name: NS_SYSTEM_RANGEDATE,
         type: SchemaType.Struct,
-        desc: _LS("system.rangedate"),
+        desc: _LS(NS_SYSTEM_RANGEDATE),
         struct: {
             fields: [
                 {
                     name: "start",
                     require: true,
-                    type: "system.date",
+                    type: NS_SYSTEM_DATE,
                     display: _LS("system.rangedate.start"),
                 },
                 {
                     name: "stop",
                     require: true,
-                    type: "system.date",
+                    type: NS_SYSTEM_DATE,
                     display: _LS("system.rangedate.stop"),
                 }
             ],
@@ -169,19 +169,19 @@ registerSchema([
     {
         name: NS_SYSTEM_RANGEFULLDATE,
         type: SchemaType.Struct,
-        desc: _LS("system.rangefulldate"),
+        desc: _LS(NS_SYSTEM_RANGEFULLDATE),
         struct: {
             fields: [
                 {
                     name: "start",
                     require: true,
-                    type: "system.fulldate",
+                    type: NS_SYSTEM_FULLDATE,
                     display: _LS("system.rangedate.start"),
                 },
                 {
                     name: "stop",
                     require: true,
-                    type: "system.fulldate",
+                    type: NS_SYSTEM_FULLDATE,
                     display: _LS("system.rangedate.stop"),
                 }
             ],
@@ -190,20 +190,20 @@ registerSchema([
     {
         name: NS_SYSTEM_RANGEMONTH,
         type: SchemaType.Struct,
-        desc: _LS("system.rangemonth"),
+        desc: _LS(NS_SYSTEM_RANGEMONTH),
         struct: {
             base: "",
             fields: [
                 {
                     name: "start",
                     require: true,
-                    type: "system.yearmonth",
+                    type: NS_SYSTEM_YEARMONTH,
                     display: _LS("system.rangemonth.start"),
                 },
                 {
                     name: "stop",
                     require: true,
-                    type: "system.yearmonth",
+                    type: NS_SYSTEM_YEARMONTH,
                     display: _LS("system.rangemonth.stop"),
                 }
             ],
@@ -212,20 +212,20 @@ registerSchema([
     {
         name: NS_SYSTEM_RANGEYEAR,
         type: SchemaType.Struct,
-        desc: _LS("system.rangeyear"),
+        desc: _LS(NS_SYSTEM_RANGEYEAR),
         struct: {
             base: "",
             fields: [
                 {
                     name: "start",
                     require: true,
-                    type: "system.year",
+                    type: NS_SYSTEM_YEAR,
                     display: _LS("system.rangeyear.start"),
                 },
                 {
                     name: "stop",
                     require: true,
-                    type: "system.year",
+                    type: NS_SYSTEM_YEAR,
                     display: _LS("system.rangeyear.stop"),
                 }
             ],
@@ -237,26 +237,26 @@ registerSchema([
     {
         name: NS_SYSTEM_STRINGS,
         type: SchemaType.Array,
-        desc: _LS("system.strings"),
+        desc: _LS(NS_SYSTEM_STRINGS),
         array: {
-            element: "system.string",
+            element: NS_SYSTEM_STRING,
             primary: [],
         },
     },
     {
         name: NS_SYSTEM_NUMBERS,
         type: SchemaType.Array,
-        desc: _LS("system.numbers"),
+        desc: _LS(NS_SYSTEM_NUMBERS),
         array: {
-            element: "system.number",
+            element: NS_SYSTEM_NUMBER,
         },
     },
     {
         name: NS_SYSTEM_INTS,
         type: SchemaType.Array,
-        desc: _LS("system.ints"),
+        desc: _LS(NS_SYSTEM_INTS),
         array: {
-            element: "system.int",
+            element: NS_SYSTEM_INT
         },
     },
     //#endregion
