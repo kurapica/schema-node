@@ -35,8 +35,11 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     set data(value: any)
     {
         this._data = value
-        this.validate()
-        this.notify()
+        const res = this.validate()
+        if (res instanceof Promise)
+            res.finally(() => this.notify())
+        else
+            this.notify()
     }
 
     /**
@@ -76,7 +79,7 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     /**
      * Re-calc the valid state of the node and children.
      */
-    abstract validate(): void
+    abstract validate(): any
     
     //#endregion
 
@@ -133,8 +136,8 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
     {
         this._parent = parent
         this._config = config as T
-        this._data = isNull(data) ? deepClone(config.default) : data
         this._schemaInfo = getCachedSchema(config.type)!
+        this._data = isNull(data) ? deepClone(config.default) : data
         this._ruleSchema = useRuleSchema(this, parent)
         
         // popup

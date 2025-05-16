@@ -166,6 +166,17 @@ export default class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig
                 }
             }
         }
+
+        // custom validation
+        if (this._valid && this._config.validation)
+        {
+            const error = this._config.validation.call(this)
+            if (!isNull(error))
+            {
+                this._valid = false
+                this._error = error
+            }
+        }
     }
 
     //#endregion

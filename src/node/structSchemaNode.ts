@@ -6,10 +6,10 @@ import { _LS } from '../utils/locale'
 import { isNull } from '../utils/toolset'
 import ArraySchemaNode from './arraySchemaNode'
 import EnumSchemaNode from './enumSchemaNode'
-import ScalarSchemaNode from './ScalarSchemaNode'
+import ScalarSchemaNode from './scalarSchemaNode'
 
 /**
- * The scalar schema data node
+ * The struct schema data node
  */
 export default class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
     //#region Implementation

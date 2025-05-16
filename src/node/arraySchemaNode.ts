@@ -7,7 +7,7 @@ import { getCachedSchema } from '../schema/schemaProvider'
 import { _LS } from '../utils/locale'
 import SchemaNode from '../nodeconfig/schemaNode'
 import EnumSchemaNode from './enumSchemaNode'
-import ScalarSchemaNode from './ScalarSchemaNode'
+import ScalarSchemaNode from './scalarSchemaNode'
 import StructSchemaNode from './structSchemaNode'
 import { isEqual, isNull } from '../utils/toolset'
 
