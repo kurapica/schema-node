@@ -16,17 +16,45 @@ export default class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
     get schemaType(): SchemaType { return SchemaType.Enum }
     
     async validate() {
+        const vtype = this._schemaInfo.enum!.type
         let data = this._data
+        this._valid = true
+        this._error = ""
+
+        // conversion
         if (this.isFlags)
         {
             const sublist = await getEnumSubList(this._schemaInfo.type)
             const maxflag = Math.max(...sublist.map(v => v.value))
-            
+            data = fromFlagsView(data)
+            if (!isNull(data)) {
+                data = data % (maxflag * 2)
+                if (!this.isMultiple && data > 0)
+                {
+                    let match = null
+                    for (let i = 0; i <= Math.log2(data); i++) {
+                        const b = Math.pow(2, i)
+                        if ((data & b) > 0) {
+                            match = b
+                            break
+                        }
+                    }
+                    data = match
+                }
+            }
         }
         else if (this.isMultiple)
         {
-            
+            if (!Array.isArray(data))
+                data = !isNull(data) ? [data] : []
+            data = data.map((d: any) => parseEnumValue(d, vtype)).filter((d: any) => !isNull(d))
         }
+        else 
+        {
+            data = parseEnumValue(data, vtype)
+        }
+        
+        this._data = data
     }
 
     /**
@@ -80,6 +108,21 @@ export default class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
 
 //#region helper
 
+function parseEnumValue(value: any, type: EnumValueType) {
+    switch (type) {
+        case EnumValueType.Int:
+        case EnumValueType.Flags:
+            value = !isNull(value) ? parseInt(value) : null
+            return isFinite(value) ? value : null
+        case EnumValueType.Double:
+        case EnumValueType.Float:
+            value = !isNull(value) ? parseFloat(value) : null
+            return isFinite(value) ? value : null
+        case EnumValueType.String:
+            return !isNull(value) ? `${value}` : null
+    }
+}
+
 /**
  * Convert the flags value to view data
  */
@@ -103,6 +146,7 @@ function toFlagsView(flag: any, single?: boolean) {
  */
 function fromFlagsView(flags: any) {
     if (Array.isArray(flags)) {
+        if (flags.includes(0)) return 0 // 0 means NONE
         const filter = flags.map(parseInt).filter(f => isFinite(f) && f >= 0)
         return filter.length ? filter.reduce((a, b) => a | b) : null
     }
