@@ -1,15 +1,15 @@
 import { SchemaType } from "../enum/schemaType"
 import { ISchemaInfo } from "../schema/schemaInfo"
-import { getCachedSchema } from "../schema/schemaProvider"
+import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce } from "../utils/toolset"
-import { ISchemaNodeConfig } from "./schemaNodeConfig"
-import { activeRuleSchema, ISchemaNodeRule, ISchemaNodeRuleSchema, useRuleSchema } from "./schemaNodeRule"
+import { ISchemaNodeConfig } from "../config/schemaConfig"
+import { activeRuleSchema, ISchemaNodeRule, ISchemaNodeRuleSchema, prepareRuleSchema } from "../rule/ISchemaNodeRule"
 
 /**
  * The abstract schema node.
  */
-export default abstract class SchemaNode<T extends ISchemaNodeConfig> 
+export abstract class SchemaNode<T extends ISchemaNodeConfig> 
 {
     //#region Properties
 
@@ -138,7 +138,7 @@ export default abstract class SchemaNode<T extends ISchemaNodeConfig>
         this._config = config as T
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
-        this._ruleSchema = useRuleSchema(this, parent)
+        this._ruleSchema = prepareRuleSchema(this, parent)
         
         // popup
         if (parent) this.subscribe(() => parent.notify())

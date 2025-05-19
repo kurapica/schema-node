@@ -1,15 +1,15 @@
 import { SchemaType } from '../enum/schemaType'
-import { IScalarSchemaNodeConfig } from '../nodeconfig/scalarSchemaNodeConfig'
-import SchemaNode from '../nodeconfig/schemaNode'
-import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
-import { getScalarValueType, ScalarValueType } from '../schema/schemaProvider'
+import { IScalarSchemaNodeConfig } from '../config/scalarConfig'
+import { SchemaNode } from './schemaNode'
+import { ISchemaNodeConfig } from '../config/schemaConfig'
+import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { isNull, sformat } from '../utils/toolset'
 
 /**
  * The scalar schema data node
  */
-export default class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
+export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Scalar }

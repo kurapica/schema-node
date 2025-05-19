@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema } from "../schema/schemaProvider"
+import { registerSchema } from "./schemaProvider"
 import { _LS } from "./locale"
 import { isNull } from "./toolset"
 import { ExpressionType } from "../enum/expressionType"

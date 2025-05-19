@@ -1,16 +1,16 @@
 import { EnumValueType } from '../enum/enumValueType'
 import { SchemaType } from '../enum/schemaType'
-import { IEnumSchemaNodeConfig } from '../nodeconfig/enumSchemaNodeConfig'
-import SchemaNode from '../nodeconfig/schemaNode'
-import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
-import { getEnumSubList } from '../schema/schemaProvider'
+import { IEnumSchemaNodeConfig } from '../config/enumConfig'
+import { SchemaNode } from './schemaNode'
+import { ISchemaNodeConfig } from '../config/schemaConfig'
+import { getEnumSubList } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { deepClone, isNull } from '../utils/toolset'
 
 /**
  * The enum schema data node
  */
-export default class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
+export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Enum }

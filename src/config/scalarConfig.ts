@@ -1,4 +1,4 @@
-import { ISchemaNodeConfig } from "./schemaNodeConfig"
+import { ISchemaNodeConfig } from "./schemaConfig"
 
 export interface IScalarSchemaNodeConfig extends ISchemaNodeConfig
 {

@@ -1,11 +1,11 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH } from "../utils/schema"
-import { generateGuidPart, isNull, useQueueQuery } from "../utils/toolset"
-import { IEnumValueAccess, IEnumValueInfo } from "./enumSchema"
-import { IFunctionSchema } from "./functionSchema"
-import { ISchemaInfo } from "./schemaInfo"
+import { NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH } from "./schema"
+import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
+import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
+import { IFunctionSchema } from "../schema/functionSchema"
+import { ISchemaInfo } from "../schema/schemaInfo"
 
 /**
  * The schema information provider interface

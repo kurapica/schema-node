@@ -1,5 +1,5 @@
 import { RelationType } from "../enum/relationType"
-import { ISchemaNodeConfig } from "../nodeconfig/schemaNodeConfig"
+import { ISchemaNodeConfig } from "../config/schemaConfig"
 import { IFunctionCallArgument } from "./functionSchema"
 
 /**

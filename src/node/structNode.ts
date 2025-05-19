@@ -1,17 +1,17 @@
 import { SchemaType } from '../enum/schemaType'
-import SchemaNode from '../nodeconfig/schemaNode'
-import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
-import { getCachedSchema } from '../schema/schemaProvider'
+import { SchemaNode } from './schemaNode'
+import { ISchemaNodeConfig } from '../config/schemaConfig'
+import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { isNull } from '../utils/toolset'
-import ArraySchemaNode from './arraySchemaNode'
-import EnumSchemaNode from './enumSchemaNode'
-import ScalarSchemaNode from './scalarSchemaNode'
+import { ArraySchemaNode } from './arrayNode'
+import { EnumSchemaNode } from './enumNode'
+import { ScalarSchemaNode } from './scalarNode'
 
 /**
  * The struct schema data node
  */
-export default class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
+export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Struct }

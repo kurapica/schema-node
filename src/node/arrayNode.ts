@@ -1,20 +1,20 @@
 import { SchemaType } from '../enum/schemaType'
-import { IArraySchemaNodeConfig } from '../nodeconfig/arraySchemaNodeConfig'
-import { IEnumSchemaNodeConfig } from '../nodeconfig/enumSchemaNodeConfig'
-import { ISchemaNodeConfig } from '../nodeconfig/schemaNodeConfig'
+import { IArraySchemaNodeConfig } from '../config/arrayConfig'
+import { IEnumSchemaNodeConfig } from '../config/enumConfig'
+import { ISchemaNodeConfig } from '../config/schemaConfig'
 import { ISchemaInfo } from '../schema/schemaInfo'
-import { getCachedSchema } from '../schema/schemaProvider'
+import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import SchemaNode from '../nodeconfig/schemaNode'
-import EnumSchemaNode from './enumSchemaNode'
-import ScalarSchemaNode from './scalarSchemaNode'
-import StructSchemaNode from './structSchemaNode'
+import { SchemaNode } from './schemaNode'
+import { EnumSchemaNode } from './enumNode'
+import { ScalarSchemaNode } from './scalarNode'
+import { StructSchemaNode } from './structNode'
 import { isEqual, isNull } from '../utils/toolset'
 
 /**
  * The array schema data node
  */
-export default class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
+export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Array }
