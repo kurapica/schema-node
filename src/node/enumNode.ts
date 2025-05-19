@@ -5,12 +5,16 @@ import { SchemaNode } from './schemaNode'
 import { ISchemaNodeConfig } from '../config/schemaConfig'
 import { getEnumSubList } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { deepClone, isNull } from '../utils/toolset'
+import { isNull } from '../utils/toolset'
+import { RuleSchema } from '../ruleSchema/ruleSchema'
+import { Rule } from '../rule/rule'
+import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
+import { EnumRule } from '../rule/enumRule'
 
 /**
  * The enum schema data node
  */
-export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
+export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig, EnumRulechema, EnumRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Enum }
@@ -101,7 +105,7 @@ export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig> {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any) {
         super(parent, config, data)
     }
 }

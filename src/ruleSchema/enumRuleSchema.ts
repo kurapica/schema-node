@@ -1,0 +1,65 @@
+import { IEnumSchemaNodeConfig } from "../config/enumConfig"
+import { ISchemaNodeConfig } from "../config/schemaConfig"
+import { EnumSchemaNode } from "../node/enumNode"
+import { RuleSchema } from "./ruleSchema"
+
+export class EnumRulechema extends RuleSchema
+{
+    /**
+     * The enum root
+     */
+    root?: string | number
+
+    /**
+     * The enum cascade limit
+     */
+    cascade?: number
+
+    /**
+     * The enum black list
+     */
+    blackList?: number[] | string[]
+
+    /**
+     * The enum white list
+     */
+    whiteList?: number[] | string[]
+
+    /**
+     * The enum can choose any cascade level value
+     */
+    anyLevel?: boolean
+
+    /**
+     * No combine value for flag enum
+     */
+    singleFlag?: boolean
+
+    /**
+     * init the node rule
+     */
+    override initNode(node: EnumSchemaNode)
+    {
+        super.initNode(node)
+        const rule = node.rule
+        rule.root = this.root
+        rule.cascade = this.cascade
+        rule.blackList = (this.blackList ? [...this.blackList] : undefined) as any
+        rule.whiteList = (this.whiteList ? [...this.whiteList] : undefined) as any
+        rule.anyLevel = this.anyLevel
+        this.singleFlag = this.singleFlag
+    }
+
+    /**
+     * load the config
+     */
+    override loadConfig(config: IEnumSchemaNodeConfig): void {
+        super.loadConfig(config)
+        this.cascade = config.cascade
+        this.root = config.root
+        this.whiteList = config.whiteList ? [...config.whiteList] : undefined
+        this.blackList = config.blackList ? [...config.blackList] : undefined
+        this.anyLevel = config.anyLevel
+        this.singleFlag = config.singleFlag
+    }
+}

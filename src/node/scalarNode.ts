@@ -5,11 +5,15 @@ import { ISchemaNodeConfig } from '../config/schemaConfig'
 import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { isNull, sformat } from '../utils/toolset'
+import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
+import { ScalarRule } from '../rule/scalarRule'
+import { RuleSchema } from '../ruleSchema/ruleSchema'
+import { Rule } from '../rule/rule'
 
 /**
  * The scalar schema data node
  */
-export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
+export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig, ScalarRuleSchema, ScalarRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Scalar }
@@ -94,7 +98,7 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.enumWhiteList && rule.enumWhiteList.length > 0 && rule.enumWhiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
+            else if (!rule.asSuggest && rule.whiteList && rule.whiteList.length > 0 && rule.whiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -120,7 +124,7 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.enumWhiteList && rule.enumWhiteList.length > 0 && rule.enumWhiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
+            else if (!rule.asSuggest && rule.whiteList && rule.whiteList.length > 0 && rule.whiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -236,7 +240,7 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig> {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any) {
         super(parent, config, data)
         getScalarValueType(config.type).then(v => this._valueType = v)
 

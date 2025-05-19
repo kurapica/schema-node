@@ -32,7 +32,7 @@ export interface IStructFieldRelationInfo
   /**
    * The target field, can use . for deep fields
   */
-  field?: string
+  field: string
 
   /**
    * The relation function

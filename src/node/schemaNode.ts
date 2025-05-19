@@ -4,12 +4,13 @@ import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce } from "../utils/toolset"
 import { ISchemaNodeConfig } from "../config/schemaConfig"
-import { activeRuleSchema, ISchemaNodeRule, ISchemaNodeRuleSchema, prepareRuleSchema } from "../rule/ISchemaNodeRule"
+import { prepareRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
+import { Rule } from "../rule/rule"
 
 /**
  * The abstract schema node.
  */
-export abstract class SchemaNode<T extends ISchemaNodeConfig> 
+export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleSchema, TR extends Rule> 
 {
     //#region Properties
 
@@ -21,7 +22,7 @@ export abstract class SchemaNode<T extends ISchemaNodeConfig>
     /**
      * The config of the node.
      */
-    get config(): T { return this._config }
+    get config(): TC { return this._config }
 
     /**
      * The schema info.
@@ -60,17 +61,17 @@ export abstract class SchemaNode<T extends ISchemaNodeConfig>
     /**
      * The parent node of the node.
      */
-    get parent(): SchemaNode<ISchemaNodeConfig> | undefined { return this._parent }
+    get parent(): SchemaNode<ISchemaNodeConfig, RuleSchema, Rule> | undefined { return this._parent }
 
     /**
      * The schema node rule
      */
-    get rule(): ISchemaNodeRule { return this._rule }
+    get rule(): TR { return this._rule }
 
     /**
      * The schema node rule schema
      */
-    get ruleSchema(): ISchemaNodeRuleSchema { return this._ruleSchema }
+    get ruleSchema(): TRS { return this._ruleSchema }
     
     //#endregion
 
@@ -88,7 +89,7 @@ export abstract class SchemaNode<T extends ISchemaNodeConfig>
     /**
      * active the rule schema for the node
      */
-    activeRule(deep?: boolean, init?: boolean): void { return activeRuleSchema(this, deep, init) }
+    activeRule(init?: boolean): void { return this.ruleSchema.active(this, init) }
 
     /**
      * Reset the change state of the node and children.
@@ -116,10 +117,10 @@ export abstract class SchemaNode<T extends ISchemaNodeConfig>
     
     protected _watchter: DataChangeWatcher = new DataChangeWatcher()
     protected _schemaInfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
-    protected _parent: SchemaNode<ISchemaNodeConfig> | undefined
-    protected _rule: ISchemaNodeRule = {}
-    protected _ruleSchema: ISchemaNodeRuleSchema = { type: '' }
-    protected _config: T
+    protected _parent?: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>
+    protected _rule: TR
+    protected _ruleSchema: TRS
+    protected _config: TC
     protected _error: string | undefined
     protected _valid: boolean = true
     protected _original: any
@@ -132,13 +133,14 @@ export abstract class SchemaNode<T extends ISchemaNodeConfig>
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any)
+    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any)
     {
         this._parent = parent
-        this._config = config as T
+        this._config = config as TC
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
-        this._ruleSchema = prepareRuleSchema(this, parent)
+        this._rule = {} as any as TR
+        this._ruleSchema = prepareRuleSchema(this, parent) as any as TRS
         
         // popup
         if (parent) this.subscribe(() => parent.notify())

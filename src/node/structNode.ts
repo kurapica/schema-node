@@ -7,11 +7,15 @@ import { isNull } from '../utils/toolset'
 import { ArraySchemaNode } from './arrayNode'
 import { EnumSchemaNode } from './enumNode'
 import { ScalarSchemaNode } from './scalarNode'
+import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
+import { StructRule } from '../rule/structRule'
+import { RuleSchema } from '../ruleSchema/ruleSchema'
+import { Rule } from '../rule/rule'
 
 /**
  * The struct schema data node
  */
-export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
+export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig, StructRuleSchema, StructRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Struct }
@@ -50,13 +54,13 @@ export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
     /**
      * Gets the struct fields
      */
-    get fields(): SchemaNode<ISchemaNodeConfig>[] { return this._fields }
+    get fields(): SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>[] { return this._fields }
 
     //#endregion
 
     //#region Fields
 
-    protected _fields: SchemaNode<ISchemaNodeConfig>[] = []
+    protected _fields: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>[] = []
 
     //#endregion
 
@@ -65,7 +69,7 @@ export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any) {
         super(parent, config, null)
         if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
 
@@ -73,7 +77,7 @@ export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig> {
         for(let i = 0; i < this._schemaInfo.struct!.fields.length; i++)
         {
             const fconf = this._schemaInfo.struct!.fields[i]
-            let field: SchemaNode<ISchemaNodeConfig> | null = null
+            let field: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule> | null = null
             const fschema = getCachedSchema(fconf.type)
             switch (fschema?.type)
             {

@@ -10,18 +10,22 @@ import { EnumSchemaNode } from './enumNode'
 import { ScalarSchemaNode } from './scalarNode'
 import { StructSchemaNode } from './structNode'
 import { isEqual, isNull } from '../utils/toolset'
+import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
+import { ArrayRule } from '../rule/arrayRule'
+import { RuleSchema } from '../ruleSchema/ruleSchema'
+import { Rule } from '../rule/rule'
 
 /**
  * The array schema data node
  */
-export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
+export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRuleSchema, ArrayRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Array }
     get valid(): boolean { return this._enumArrayNode ? this._enumArrayNode.valid : this._elements.findIndex(e => !e.valid) < 0 }
     get error(): any { return this._enumArrayNode ? this._enumArrayNode.error : this._elements.find(e => !e.valid)?.error }
     get changed(): boolean { return this._enumArrayNode ? this._enumArrayNode.changed : !this._schemaInfo.array?.single ? this._elements.findIndex(e => e.changed) >= 0 : !isEqual(this._data, this._original) }
-    validate(): void { return this._enumArrayNode ? this._enumArrayNode.validate() : this._elements.forEach(e => e.validate()) }
+    validate(): void { this._enumArrayNode ? this._enumArrayNode.validate() : this._elements.forEach(e => e.validate()) }
 
     get data()
     {
@@ -94,7 +98,7 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
     //#region Methods
 
     private newElement(data?: any) {
-        let eleNode: SchemaNode<ISchemaNodeConfig> | null = null
+        let eleNode: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule> | null = null
         switch (this._eleSchemaInfo.type)
         {
             case SchemaType.Scalar:
@@ -147,20 +151,20 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
     /**
      * Gets the array elements
      */
-    get elements(): SchemaNode<ISchemaNodeConfig>[] { return this._elements }
+    get elements(): SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>[] { return this._elements }
 
     /**
      * Gets the enum node if the element is enum schema node
      */
-    get enumArrayNode(): SchemaNode<IEnumSchemaNodeConfig> | undefined { return this._enumArrayNode }
+    get enumArrayNode(): EnumSchemaNode | undefined { return this._enumArrayNode }
 
     //#endregion
 
     //#region Fields
 
     private _eleSchemaInfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
-    private _elements: SchemaNode<ISchemaNodeConfig>[] = []
-    private _enumArrayNode: SchemaNode<IEnumSchemaNodeConfig> | undefined
+    private _elements: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>[] = []
+    private _enumArrayNode: EnumSchemaNode | undefined
 
     //#endregion
 
@@ -169,7 +173,7 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig> {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig>, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any) {
         super(parent, config, null)
 
         // element check
