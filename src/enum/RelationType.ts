@@ -1,41 +1,6 @@
 export enum RelationType
 {
   /**
-   * As Default
-   */
-  Default = "default",
-
-  /**
-   * As Enum root
-   */
-  EnumRoot = "enumRoot",
-
-  /**
-   * Enum cascade
-   */
-  EnumCascade = "enumCascade",
-
-  /**
-   * Enum blacklist
-   */
-  EnumBlackList = "enumBlackList",
-
-  /**
-   * Enum whitelist
-   */
-  EnumWhiteList = "enumWhiteList",
-
-  /**
-   * low limit
-   */
-  LowLimit = "lowLimit",
-
-  /**
-   * up limit
-   */
-  Uplimit = "upLimit",
-
-  /**
    * Invisible
    */
   Invisible = "invisible",
@@ -46,17 +11,42 @@ export enum RelationType
   Disable = "disable",
 
   /**
+   * As Default
+   */
+  Default = "default",
+
+  /**
    * Assign
    */
   Assign = "assign",
 
   /**
-   * Enum list as suggest
-   */
-  AsSuggest = "asSuggest",
-
-  /**
-   * Init only
+   * Only use for init
    */
   InitOnly = "initOnly",
+
+  /**
+   * low limit
+   */
+  LowLimit = "lowLimit",
+
+  /**
+   * up limit
+   */
+  Uplimit = "upLimit",
+  
+  /**
+   * As Enum root
+   */
+  EnumRoot = "enumRoot",
+
+  /**
+   * Enum blacklist
+   */
+  EnumBlackList = "enumBlackList",
+
+  /**
+   * Enum whitelist
+   */
+  EnumWhiteList = "enumWhiteList",
 }

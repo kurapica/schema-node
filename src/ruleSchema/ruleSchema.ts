@@ -2,13 +2,15 @@ import { ISchemaNodeConfig } from "../config/schemaConfig"
 import { RelationType } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
 import { ArraySchemaNode } from "../node/arrayNode"
-import { SchemaNode } from "../node/schemaNode"
+import { EnumSchemaNode } from "../node/enumNode"
+import { ScalarSchemaNode } from "../node/scalarNode"
+import { AnySchemaNode } from "../node/schemaNode"
 import { StructSchemaNode } from "../node/structNode"
-import { Rule } from "../rule/rule"
 import { ISchemaInfo } from "../schema/schemaInfo"
 import { IStructFieldRelationInfo, IStructSchema } from "../schema/structSchema"
-import { getCachedSchema } from "../utils/schemaProvider"
-import { isNull } from "../utils/toolset"
+import { NS_SYSTEM_BOOL } from "../utils/schema"
+import { callSchemaFunction, getCachedSchema } from "../utils/schemaProvider"
+import { debounce, isEqual, isNull } from "../utils/toolset"
 import { ArrayRuleSchema } from "./arrayRuleSchema"
 import { EnumRulechema } from "./enumRuleSchema"
 import { ScalarRuleSchema } from "./scalarRuleSchema"
@@ -23,7 +25,7 @@ export const ARRAY_ITSELF = "$array"
  * The rule schema for schema node
  */
 export class RuleSchema {
-    
+
     /**
      * The default value
      */
@@ -52,16 +54,31 @@ export class RuleSchema {
     /**
      * Active the rule schema for node
      */
-    active(node: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, init?: boolean)
-    {
+    active(node: AnySchemaNode, init?: boolean) {
+        if (node instanceof ArraySchemaNode) {
+            if (node.enumArrayNode) {
+                node.activeRule(init)
+            }
+            else {
+                node.elements.forEach(e => e.activeRule(init))
+            }
+        }
+        else if (node instanceof StructSchemaNode) {
+            node.fields.forEach(f => f.activeRule(init))
+        }
 
+        // active once
+        if (node.rule._actived) return
+        node.rule._actived = true
+
+        // active push schemas
+        node.ruleSchema.pushSchemas?.forEach(p => activePushSchema(node, p))
     }
 
     /**
      * Init the node rule
      */
-    initNode(node: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>)
-    {
+    initNode(node: AnySchemaNode) {
         const rule = node.rule
         rule.default = this.default
         rule.invisible = this.invisible
@@ -71,8 +88,7 @@ export class RuleSchema {
     /**
      * Load the config
      */
-    loadConfig(config: ISchemaNodeConfig)
-    {
+    loadConfig(config: ISchemaNodeConfig) {
         this.default = config.default
         this.invisible = config.invisible
     }
@@ -81,7 +97,7 @@ export class RuleSchema {
 /**
  * prepare the rule schema for node
  */
-export function prepareRuleSchema(node: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, parent?: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>): RuleSchema {
+export function prepareRuleSchema(node: AnySchemaNode, parent?: AnySchemaNode): RuleSchema {
     parent = parent || node.parent
     const ruleSchema = (parent instanceof ArraySchemaNode
         ? parent.ruleSchema.element
@@ -144,8 +160,7 @@ function buildRuleSchema(schemaInfo: ISchemaInfo): RuleSchema {
         schema.upLimit = schemaInfo.scalar?.upLimit
         return schema
     }
-    else if (schemaInfo.type === SchemaType.Enum)
-    {
+    else if (schemaInfo.type === SchemaType.Enum) {
         return new EnumRulechema()
     }
     return new RuleSchema()
@@ -196,130 +211,230 @@ function registerRelation(rootSchema: StructRuleSchema, relation: IStructFieldRe
 }
 
 /**
- * 构建推送数据
+ * active
  */
-function useTypeDataPush(node: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, pushSchema: ISchemaNodePushSchema, type?: string, dftval?: any): any {
-    // 从父节点拿取依赖节点的数据
-    return useTypeDataPushResult(
-        node,
-        pushSchema.func,
-        pushSchema.args.map(argSchema => {
-            if (argSchema.schema && argSchema.field) {
-                // 查询schema对应的父节点，拿到根数据容器
-                const nodePaths: ISchemaNode[] = []
-                let parent: ISchemaNode | null = node
+function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema) {
+    const args: ISchemaNodePushArg[] = pushSchema.args.map(a => {
+        if (a.schema && a.field) {
+            const nodePaths: AnySchemaNode[] = []
+            let parent: AnySchemaNode | undefined = node
 
-                // 记录所有路过的节点
-                while (parent && parent.ruleSchema !== argSchema.schema) {
-                    nodePaths.unshift(parent)
-                    parent = parent.parent
+            // record the nodes on the path
+            while (parent && parent.ruleSchema !== a.schema) {
+                nodePaths.unshift(parent)
+                parent = parent.parent
+            }
+
+            // locate the data node
+            if (parent?.ruleSchema === a.schema) {
+                nodePaths.unshift(parent)
+
+                if (a.field === ARRAY_ITSELF) {
+                    while (parent && parent.schemaType !== SchemaType.Array) {
+                        parent = parent.parent
+                    }
+                    if (parent) {
+                        return { node: parent, checkArrayNode: true, value: null }
+                    }
+
+                    // no way
+                    console.error(`The node ${node.access} not in an array`)
+                    return { value: a.value }
                 }
 
-                // 定位数据容器
-                if (parent && parent.ruleSchema === argSchema.schema) {
-                    nodePaths.unshift(parent)
+                const paths = a.field!.split(".")
+                let checkArrayNode = false
+                let i = 0
+                let ni = 1
 
-                    if (argSchema.field === ARRAY_ITSELF) {
-                        while (parent && parent.dataNodeType !== SchemaType.Array) {
-                            parent = parent.parent
+                // locate the diff point
+                for (; i < paths.length; i++, ni++) {
+                    if (paths[i].toLowerCase() !== nodePaths[ni].config.name.toLowerCase()) break
+                    if (nodePaths[ni].schemaType === SchemaType.Array) {
+                        // If the last is the array node
+                        if (i === paths.length - 1) {
+                            checkArrayNode = true
                         }
-                        if (parent) {
-                            return { node: parent, checkArrayNode: true, value: null }
-                        }
-                        else {
-                            console.error(`定位${node.name}(${node.type})依赖的数组节点失败`)
-                        }
-                    }
-
-                    const paths = argSchema.field!.split(".")
-                    let checkArrayNode = false
-                    let i = 0
-                    let ni = 1
-
-                    // 定位分歧点
-                    for (; i < paths.length; i++, ni++) {
-                        if (paths[i] !== nodePaths[ni].name) break;
-                        if (nodePaths[ni].dataNodeType === SchemaType.Array) {
-                            // 检查是否定位到整个数组
-                            if (i === paths.length - 1) {
-                                checkArrayNode = true
-                            }
-                            else {
-                                ni++
-                            }
+                        else 
+                        {
+                            ni++
                         }
                     }
+                }
 
-                    // 定位数据节点
-                    let valNode: ISchemaNode = nodePaths[ni - 1]
-                    for (; i < paths.length; i++)
-                        valNode = (valNode as StructDataNode).getField(paths[i])!
+                // locate the rest path
+                let valNode: AnySchemaNode | undefined = nodePaths[ni - 1]
+                for (; i < paths.length; i++)
+                    valNode = valNode instanceof StructSchemaNode
+                        ? valNode.getField(paths[i])
+                        : undefined
 
+                if (valNode)
+                {
                     return { node: valNode, checkArrayNode, value: null }
                 }
-                else {
-                    console.error(`定位${node.name}(${node.type})依赖的父节点失败`)
+            }
+
+            console.error(`The node ${node.access} can't locate the relation node by path "${a.field}"`)
+            return { value: a.value }
+        }
+        else {
+            return { value: a.value }
+        }
+    })
+
+    // define the value handler
+    let handler: Function | undefined = undefined
+    let type: string = ""
+
+    switch (pushSchema.type)
+    {
+        case RelationType.Invisible:
+            type = NS_SYSTEM_BOOL
+            handler = (res: any) => {
+                res = res ? true : false
+                if (res !== node.rule.invisible)
+                {
+                    node.rule.invisible = res
+                    node.notifyState()
                 }
-
-                return { value: argSchema.value }
             }
-            else {
-                return { value: argSchema.value }
+            break
+        
+        case RelationType.Disable:
+            type = NS_SYSTEM_BOOL
+            handler = (res: any) => {
+                res = res ? true : false
+                if (res !== node.rule.disable)
+                {
+                    node.rule.disable = res
+                    node.notifyState()
+                }
             }
-        }),
-        type,
-        pushSchema.target,
-        dftval
-    )
-}
+            break
 
-/**
- * 生成推送用数据
- */
-function useTypeDataPushResult(node: ISchemaNode, func: string, args: ITypeDataPushArg[], type?: string, needtarget?: boolean, dftval?: any) {
-    // 返回对象
-    const result = ref<any>(dftval)
-    let target: string | undefined = undefined
+        case RelationType.Default:
+            if (node instanceof ArraySchemaNode)
+            {
+                handler = (res: any) => {
+                    if (!node.elements.length)
+                        node.data = res
+                }
+            }
+            else 
+            {
+                let dftval: any = node.ruleSchema.default
+                handler = (res: any) => {
+                    if (isNull(res)) res = dftval
+                    const prev = node.rule.default
+                    node.rule.default = res
+                    if (!isNull(res) && (isNull(node.data) || isEqual(node.data, prev)))
+                        node.data = res
+                }
+            }
+            break
 
-    if (needtarget) {
-        let parent: ISchemaNode | null = node
-        while (parent && parent.dataNodeType !== SchemaType.Namspace)
-            parent = parent.parent
-        if (parent)
-            target = (parent as CategoryNode).target
+        case RelationType.Assign, RelationType.InitOnly:
+            handler = (res: any) => {
+                node.rule.default = res
+                node.data = res
+            }
+            break
+        
+        case RelationType.LowLimit:
+            if (node instanceof ScalarSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.lowLimit = res
+                    node.validate()
+                    node.notify()
+                }
+            }
+            break
 
-        if (!target)
-            return result
+        case RelationType.Uplimit:
+            if (node instanceof ScalarSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.upLimit = res
+                    node.validate()
+                    node.notify()
+                }
+            }
+            break
+
+        case RelationType.EnumRoot:
+            if (node instanceof EnumSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.root = res
+                    node.validate().finally(() => {
+                        node.notify()
+                        node.notifyState()
+                    })
+                }
+            }
+            break
+
+        case RelationType.EnumBlackList:
+            if (node instanceof EnumSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.blackList = res
+                    node.validate().finally(() => {
+                        node.notify()
+                        node.notifyState()
+                    })
+                }
+            }
+            break
+
+        case RelationType.EnumWhiteList:
+
+            if (node instanceof ScalarSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.whiteList = res
+                    node.validate()
+                    node.notify()
+                    node.notifyState()
+                }
+            }
+            else if (node instanceof EnumSchemaNode)
+            {
+                handler = (res: any) => {
+                    node.rule.whiteList = res
+                    node.validate().finally(() => {
+                        node.notify()
+                        node.notifyState()
+                    })
+                }
+            }
+            break
     }
 
-    // 获取模型数据和结构
-    const doFetch = debounce(async function () {
-        for (let retry = 0; retry < 5; retry++) {
-            if (node.destroyed) return
+    if (!handler) return
 
+    // build the function
+    const push = debounce(async function() {
+        for (let retry = 0; retry < 5; retry++) {
             try {
-                // 请求
-                const res = await callDataDictFunc(
-                    func,
+                // call data func
+                return handler(await callSchemaFunction(
+                    pushSchema.func,
                     args.map((a, i) => {
                         if (a.node) {
-                            let value = a.node.calcData
-                            if (isRef(value)) value = value.value
+                            let value = a.node.data
                             if (a.checkArrayNode) {
                                 let n = node
                                 while (n.parent && n.parent !== a.node)
                                     n = n.parent
-                                if (n && n.parent) {
-                                    const arrayIndex = (n.parent as ArrayDataNode).elements.findIndex(v => v === n)
-                                    if (Array.isArray(value) && arrayIndex >= 0)
-                                        return value.slice(0, arrayIndex)
-                                    else
-                                        return []
-                                }
-                                else {
-                                    console.warn(`${node.display || node.name}和${a.node.display || a.node.name}的归属关系无法明确`)
+
+                                const arrayIndex = (n.parent as ArraySchemaNode).elements.findIndex(v => v === n)
+                                if (Array.isArray(value) && arrayIndex >= 0)
+                                    return value.slice(0, arrayIndex)
+                                else
                                     return []
-                                }
                             }
                             return value
                         }
@@ -328,16 +443,7 @@ function useTypeDataPushResult(node: ISchemaNode, func: string, args: ITypeDataP
                         }
                     }),
                     type,
-                    false,
-                    target
-                )
-
-                if (dftval)
-                    result.value = isNull(res) ? dftval : res
-                else
-                    result.value = res
-
-                return
+                ))
             }
             catch (ex) {
                 if (retry == 4) throw ex;
@@ -347,32 +453,18 @@ function useTypeDataPushResult(node: ISchemaNode, func: string, args: ITypeDataP
         }
     }, 200)
 
-    // 订阅执行
-    args.forEach(v => {
-        if (v.node) {
-            const argNode = v.node
-            if (!argNode.rule._actived)
-                argNode.activeRule(true)
-            if (argNode.dataNodeType === SchemaType.Scalar || argNode.dataNodeType === SchemaType.Enum) {
-                node.addWatchHandle(watch(argNode.data, doFetch))
-                node.addWatchHandle(watch(() => argNode.data, doFetch))
-            }
-            else if (argNode.dataNodeType === SchemaType.Array && (argNode as ArrayDataNode).isSingleValue) {
-                const tarNode = argNode as ArrayDataNode
-                node.addWatchHandle(watch(tarNode.singleValueChangeTime, doFetch))
-                node.addWatchHandle(watch(() => tarNode.singleValueChangeTime, doFetch))
-            }
-            else {
-                node.addWatchHandle(watch(argNode.data, doFetch))
-            }
-        }
-    })
+    // subscribe
+    if (pushSchema.type !== RelationType.InitOnly)
+    {
+        args.filter(a => a.node).forEach(a => {
+            if (!a.node!.rule._actived)
+                a.node!.activeRule()
+            node.watch(a.node!, push)
+        })
+    }
 
-    // 首次执行
-    doFetch()
-
-    // 返回引用
-    return result
+    // process
+    push()
 }
 
 /**
@@ -515,7 +607,7 @@ interface ISchemaNodePushArg {
     /**
      * The node
      */
-    node?: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>
+    node?: AnySchemaNode
 
     /**
      * Whether check array node change

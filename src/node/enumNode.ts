@@ -1,13 +1,11 @@
 import { EnumValueType } from '../enum/enumValueType'
 import { SchemaType } from '../enum/schemaType'
 import { IEnumSchemaNodeConfig } from '../config/enumConfig'
-import { SchemaNode } from './schemaNode'
+import { AnySchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaNodeConfig } from '../config/schemaConfig'
 import { getEnumSubList } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { isNull } from '../utils/toolset'
-import { RuleSchema } from '../ruleSchema/ruleSchema'
-import { Rule } from '../rule/rule'
 import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
 import { EnumRule } from '../rule/enumRule'
 
@@ -79,18 +77,12 @@ export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig, EnumRulech
     /**
      * Whether the node require multiple values
      */
-    get isMultiple(): boolean { return this.isFlags ? !this._config.enumSingleFlag : (this._config.multiple || false)  }
+    get isMultiple(): boolean { return this.isFlags ? !this._config.singleFlag : (this._config.multiple || false)  }
 
     /**
      * Gets the cascader options
      */
     get cascaderOptions(): ICascaderOptionInfo[] { return this._options }
-
-    //#endregion
-
-    //#region helper
-
-    
 
     //#endregion
 
@@ -105,7 +97,7 @@ export class EnumSchemaNode extends SchemaNode<IEnumSchemaNodeConfig, EnumRulech
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: AnySchemaNode, config: ISchemaNodeConfig, data: any) {
         super(parent, config, data)
     }
 }
