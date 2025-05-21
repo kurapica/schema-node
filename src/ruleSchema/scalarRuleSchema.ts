@@ -1,6 +1,6 @@
-import { IScalarSchemaNodeConfig } from "../config/scalarConfig"
-import { ISchemaNodeConfig } from "../config/schemaConfig"
-import { ScalarSchemaNode } from "../node/scalarNode"
+import { IScalarConfig } from "../config/scalarConfig"
+import { ISchemaConfig } from "../config/schemaConfig"
+import { ScalarNode } from "../node/scalarNode"
 import { RuleSchema } from "./ruleSchema"
 
 export class ScalarRuleSchema extends RuleSchema
@@ -33,7 +33,7 @@ export class ScalarRuleSchema extends RuleSchema
     /**
      * init the node rule
      */
-    override initNode(node: ScalarSchemaNode)
+    override initNode(node: ScalarNode)
     {
         super.initNode(node)
         const rule = node.rule
@@ -47,7 +47,7 @@ export class ScalarRuleSchema extends RuleSchema
     /**
      * load the config
      */
-    override loadConfig(config: IScalarSchemaNodeConfig): void {
+    override loadConfig(config: IScalarConfig): void {
         super.loadConfig(config)
         this.whiteList = config.whiteList ? [...config.whiteList] : undefined
         this.lowLimit = config.lowLimit

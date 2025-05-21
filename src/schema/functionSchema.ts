@@ -24,17 +24,17 @@ export interface IFunctionSchema
    * The basic type of generic types, provided to T(single generic type), 
    * T1, T2(for multi generic type)
    */
-  generic?: string | string[],
+  generic?: string | string[]
 
   /**
    * Call server if server provided
    */
-  server?: boolean,
+  server?: boolean
 
   /**
    * The client should not cache the result
    */
-  nocache?: boolean,
+  nocache?: boolean
 
   /**
    * The function registered by the frontend

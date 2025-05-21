@@ -1,6 +1,6 @@
-import { ISchemaNodeConfig } from "./schemaConfig"
+import { ISchemaConfig } from "./schemaConfig"
 
-export interface IEnumSchemaNodeConfig extends ISchemaNodeConfig
+export interface IEnumConfig extends ISchemaConfig
 {
   /**
    * The enum cascade limit.

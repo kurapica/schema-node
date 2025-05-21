@@ -1,5 +1,5 @@
 import { RelationType } from "../enum/relationType"
-import { ISchemaNodeConfig } from "../config/schemaConfig"
+import { ISchemaConfig } from "../config/schemaConfig"
 import { IFunctionCallArgument } from "./functionSchema"
 
 /**
@@ -15,19 +15,19 @@ export interface IStructSchema
   /**
    * The struct fields.
   */
-  fields: ISchemaNodeConfig[]
+  fields: ISchemaConfig[]
 
   /**
    * The realtions between the fields
    */
-  relations?: IStructFieldRelationInfo[]
+  relations?: IStructFieldRelation[]
 }
 
 
 /**
  * The realtion between fields
 */
-export interface IStructFieldRelationInfo
+export interface IStructFieldRelation
 {
   /**
    * The target field, can use . for deep fields

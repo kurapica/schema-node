@@ -1,4 +1,4 @@
-import { StructSchemaNode } from "../node/structNode"
+import { StructNode } from "../node/structNode"
 import { RuleSchema } from "./ruleSchema"
 
 export class StructRuleSchema extends RuleSchema

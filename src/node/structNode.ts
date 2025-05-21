@@ -1,19 +1,19 @@
 import { SchemaType } from '../enum/schemaType'
 import { AnySchemaNode, SchemaNode } from './schemaNode'
-import { ISchemaNodeConfig } from '../config/schemaConfig'
+import { ISchemaConfig } from '../config/schemaConfig'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { isNull } from '../utils/toolset'
-import { ArraySchemaNode } from './arrayNode'
-import { EnumSchemaNode } from './enumNode'
-import { ScalarSchemaNode } from './scalarNode'
+import { ArrayNode } from './arrayNode'
+import { EnumNode } from './enumNode'
+import { ScalarNode } from './scalarNode'
 import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
 
 /**
  * The struct schema data node
  */
-export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig, StructRuleSchema, StructRule> {
+export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Struct }
@@ -72,7 +72,7 @@ export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig, StructRuleSc
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
         super(parent, config, null)
         if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
 
@@ -85,16 +85,16 @@ export class StructSchemaNode extends SchemaNode<ISchemaNodeConfig, StructRuleSc
             switch (fschema?.type)
             {
                 case SchemaType.Scalar:
-                    field = new ScalarSchemaNode(this, fconf, data[fconf.name])
+                    field = new ScalarNode(this, fconf, data[fconf.name])
                     break
                 case SchemaType.Enum:
-                    field = new EnumSchemaNode(this, fconf, data[fconf.name])
+                    field = new EnumNode(this, fconf, data[fconf.name])
                     break
                 case SchemaType.Struct:
-                    field = new StructSchemaNode(this, fconf, data[fconf.name])
+                    field = new StructNode(this, fconf, data[fconf.name])
                     break
                 case SchemaType.Array:
-                    field = new ArraySchemaNode(this, fconf, data[fconf.name])
+                    field = new ArrayNode(this, fconf, data[fconf.name])
                     break
             }
             if (field)

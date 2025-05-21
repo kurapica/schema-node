@@ -7,9 +7,10 @@ import { IScalarSchema } from "./scalarSchema"
 import { IStructSchema } from "./structSchema"
 
 /**
- * The schema information
+ * The data node schema
+ * The schema is used to describe the data node
  */
-export interface ISchemaInfo
+export interface INodeSchema
 {
     /**
      * The schema name

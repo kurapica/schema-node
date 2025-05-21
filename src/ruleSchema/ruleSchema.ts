@@ -1,13 +1,13 @@
-import { ISchemaNodeConfig } from "../config/schemaConfig"
+import { ISchemaConfig } from "../config/schemaConfig"
 import { RelationType } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
-import { ArraySchemaNode } from "../node/arrayNode"
-import { EnumSchemaNode } from "../node/enumNode"
-import { ScalarSchemaNode } from "../node/scalarNode"
+import { ArrayNode } from "../node/arrayNode"
+import { EnumNode } from "../node/enumNode"
+import { ScalarNode } from "../node/scalarNode"
 import { AnySchemaNode } from "../node/schemaNode"
-import { StructSchemaNode } from "../node/structNode"
-import { ISchemaInfo } from "../schema/schemaInfo"
-import { IStructFieldRelationInfo, IStructSchema } from "../schema/structSchema"
+import { StructNode } from "../node/structNode"
+import { INodeSchema } from "../schema/nodeSchema"
+import { IStructFieldRelation, IStructSchema } from "../schema/structSchema"
 import { NS_SYSTEM_BOOL } from "../utils/schema"
 import { callSchemaFunction, getCachedSchema } from "../utils/schemaProvider"
 import { debounce, isEqual, isNull } from "../utils/toolset"
@@ -55,7 +55,7 @@ export class RuleSchema {
      * Active the rule schema for node
      */
     active(node: AnySchemaNode, init?: boolean) {
-        if (node instanceof ArraySchemaNode) {
+        if (node instanceof ArrayNode) {
             if (node.enumArrayNode) {
                 node.activeRule(init)
             }
@@ -63,7 +63,7 @@ export class RuleSchema {
                 node.elements.forEach(e => e.activeRule(init))
             }
         }
-        else if (node instanceof StructSchemaNode) {
+        else if (node instanceof StructNode) {
             node.fields.forEach(f => f.activeRule(init))
         }
 
@@ -88,7 +88,7 @@ export class RuleSchema {
     /**
      * Load the config
      */
-    loadConfig(config: ISchemaNodeConfig) {
+    loadConfig(config: ISchemaConfig) {
         this.default = config.default
         this.invisible = config.invisible
     }
@@ -99,9 +99,9 @@ export class RuleSchema {
  */
 export function prepareRuleSchema(node: AnySchemaNode, parent?: AnySchemaNode): RuleSchema {
     parent = parent || node.parent
-    const ruleSchema = (parent instanceof ArraySchemaNode
+    const ruleSchema = (parent instanceof ArrayNode
         ? parent.ruleSchema.element
-        : parent instanceof StructSchemaNode
+        : parent instanceof StructNode
             ? parent.ruleSchema.schemas[node.config.name]
             : null)
         || buildRuleSchema(node.schemaInfo)
@@ -116,7 +116,7 @@ export function prepareRuleSchema(node: AnySchemaNode, parent?: AnySchemaNode): 
 /**
  * Build the rule schema
  */
-function buildRuleSchema(schemaInfo: ISchemaInfo): RuleSchema {
+function buildRuleSchema(schemaInfo: INodeSchema): RuleSchema {
     if (schemaInfo.type == SchemaType.Array) {
         // The array and element share the rule schema
         const elementInfo = getCachedSchema(schemaInfo.array!.element)!
@@ -169,7 +169,7 @@ function buildRuleSchema(schemaInfo: ISchemaInfo): RuleSchema {
 /**
  * Register Relation between fields
  */
-function registerRelation(rootSchema: StructRuleSchema, relation: IStructFieldRelationInfo, info: ISchemaInfo) {
+function registerRelation(rootSchema: StructRuleSchema, relation: IStructFieldRelation, info: INodeSchema) {
     const rootTypeInfo = info.struct!
 
     // locate the target
@@ -265,7 +265,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 // locate the rest path
                 let valNode: AnySchemaNode | undefined = nodePaths[ni - 1]
                 for (; i < paths.length; i++)
-                    valNode = valNode instanceof StructSchemaNode
+                    valNode = valNode instanceof StructNode
                         ? valNode.getField(paths[i])
                         : undefined
 
@@ -314,7 +314,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.Default:
-            if (node instanceof ArraySchemaNode)
+            if (node instanceof ArrayNode)
             {
                 handler = (res: any) => {
                     if (!node.elements.length)
@@ -342,7 +342,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
         
         case RelationType.LowLimit:
-            if (node instanceof ScalarSchemaNode)
+            if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
                     node.rule.lowLimit = res
@@ -353,7 +353,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.Uplimit:
-            if (node instanceof ScalarSchemaNode)
+            if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
                     node.rule.upLimit = res
@@ -364,7 +364,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.EnumRoot:
-            if (node instanceof EnumSchemaNode)
+            if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
                     node.rule.root = res
@@ -377,7 +377,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.EnumBlackList:
-            if (node instanceof EnumSchemaNode)
+            if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
                     node.rule.blackList = res
@@ -391,7 +391,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
         case RelationType.EnumWhiteList:
 
-            if (node instanceof ScalarSchemaNode)
+            if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
@@ -400,7 +400,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.notifyState()
                 }
             }
-            else if (node instanceof EnumSchemaNode)
+            else if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
@@ -430,7 +430,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                                 while (n.parent && n.parent !== a.node)
                                     n = n.parent
 
-                                const arrayIndex = (n.parent as ArraySchemaNode).elements.findIndex(v => v === n)
+                                const arrayIndex = (n.parent as ArrayNode).elements.findIndex(v => v === n)
                                 if (Array.isArray(value) && arrayIndex >= 0)
                                     return value.slice(0, arrayIndex)
                                 else

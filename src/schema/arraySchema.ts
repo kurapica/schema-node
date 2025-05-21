@@ -1,4 +1,4 @@
-import { IStructFieldRelationInfo } from "./structSchema"
+import { IStructFieldRelation } from "./structSchema"
 
 /**
  * The array schema.
@@ -23,5 +23,5 @@ export interface IArraySchema {
   /**
    * The realtions between the fields
    */
-  relations?: IStructFieldRelationInfo[]
+  relations?: IStructFieldRelation[]
 }

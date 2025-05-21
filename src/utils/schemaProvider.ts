@@ -5,7 +5,7 @@ import { NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
-import { ISchemaInfo } from "../schema/schemaInfo"
+import { INodeSchema } from "../schema/nodeSchema"
 
 /**
  * The schema information provider interface
@@ -37,7 +37,7 @@ export interface ISchemaProvider {
      * @param schemaName The name of the schema
      * @returns The schema information
      */
-    loadSchema(schemaName: string): Promise<ISchemaInfo>
+    loadSchema(schemaName: string): Promise<INodeSchema>
 
     /**
      * Load the enum value sub list from the server
@@ -59,8 +59,8 @@ export interface ISchemaProvider {
 //#region Methods
 
 let schemaProvider: ISchemaProvider | null = null
-const schemaCache: { [key: string]: ISchemaInfo } = {}
-const arraySchemaMap: { [key: string]: ISchemaInfo } = {}
+const schemaCache: { [key: string]: INodeSchema } = {}
+const arraySchemaMap: { [key: string]: INodeSchema } = {}
 const serverCallOnly: Set<string> = new Set()
 
 /**
@@ -83,7 +83,7 @@ export function getSchemaProvider(): ISchemaProvider | null {
  * Register the frontend schemas
  * @param schemas The schemas to be registered
  */
-export function registerSchema(schemas: ISchemaInfo[]): void {
+export function registerSchema(schemas: INodeSchema[]): void {
     for (const schema of schemas) {
         schemaCache[schema.name.toLowerCase()] = schema
         if (schema.type === SchemaType.Array)
@@ -97,7 +97,7 @@ export function registerSchema(schemas: ISchemaInfo[]): void {
  * @param generic the generic types
  * @returns The schema information
  */
-export async function getSchema(name: string, generic?: string | string[]): Promise<ISchemaInfo | undefined> {
+export async function getSchema(name: string, generic?: string | string[]): Promise<INodeSchema | undefined> {
     // all schema names should be case insensitive
     name = name.toLowerCase()
 
@@ -122,14 +122,14 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
  * @param name The schema name
  * @returns The schema info
  */
-export function getCachedSchema(name: string): ISchemaInfo | undefined {
+export function getCachedSchema(name: string): INodeSchema | undefined {
     return schemaCache[name.toLowerCase()]
 }
 
 /**
  * Gets an array schema that use the target as element
  */
-export async function getArraySchema(name: string | ISchemaInfo): Promise<ISchemaInfo | undefined> {
+export async function getArraySchema(name: string | INodeSchema): Promise<INodeSchema | undefined> {
     const schema = typeof name === "string" ? await getSchema(name) : name
     if (!schema) return undefined
     name = schema.name.toLowerCase()
@@ -636,7 +636,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     if (!funcInfo.exps.length || (funcInfo.server && schemaProvider)) return false
 
     // arg or exp type map
-    const exptypes: { [key: string]: ISchemaInfo } = {}
+    const exptypes: { [key: string]: INodeSchema } = {}
     for (let i = 0; i < funcInfo.args.length; i++) {
         const expSchema = await getSchema(funcInfo.args[i].type, funcInfo.generic)
         if (expSchema) exptypes[funcInfo.args[i].name] = expSchema
@@ -956,7 +956,7 @@ interface Expression {
     /**
      * The return type
      */
-    retType: ISchemaInfo
+    retType: INodeSchema
 
     /**
      * The array index

@@ -1,10 +1,9 @@
-import { ISchemaInfo } from "../schema/schemaInfo"
 import { LocaleString } from "../utils/locale"
 
 /**
  * The config of the schema node.
  */
-export interface ISchemaNodeConfig
+export interface ISchemaConfig
 {
     /**
      * The name of the node.

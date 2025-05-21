@@ -1,6 +1,6 @@
-import { ISchemaNodeConfig } from "./schemaConfig"
+import { ISchemaConfig } from "./schemaConfig"
 
-export interface IArraySchemaNodeConfig extends ISchemaNodeConfig
+export interface IArrayConfig extends ISchemaConfig
 {
     /**
      * The array data is increase update

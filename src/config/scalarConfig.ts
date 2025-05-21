@@ -1,6 +1,6 @@
-import { ISchemaNodeConfig } from "./schemaConfig"
+import { ISchemaConfig } from "./schemaConfig"
 
-export interface IScalarSchemaNodeConfig extends ISchemaNodeConfig
+export interface IScalarConfig extends ISchemaConfig
 {
     /**
      * The white list

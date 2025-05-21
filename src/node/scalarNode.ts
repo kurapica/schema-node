@@ -1,7 +1,7 @@
 import { SchemaType } from '../enum/schemaType'
-import { IScalarSchemaNodeConfig } from '../config/scalarConfig'
+import { IScalarConfig } from '../config/scalarConfig'
 import { AnySchemaNode, SchemaNode } from './schemaNode'
-import { ISchemaNodeConfig } from '../config/schemaConfig'
+import { ISchemaConfig } from '../config/schemaConfig'
 import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { isNull, sformat } from '../utils/toolset'
@@ -13,7 +13,7 @@ import { Rule } from '../rule/rule'
 /**
  * The scalar schema data node
  */
-export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig, ScalarRuleSchema, ScalarRule> {
+export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, ScalarRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Scalar }
@@ -240,7 +240,7 @@ export class ScalarSchemaNode extends SchemaNode<IScalarSchemaNodeConfig, Scalar
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
         super(parent, config, data)
         getScalarValueType(config.type).then(v => this._valueType = v)
 

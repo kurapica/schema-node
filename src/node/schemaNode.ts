@@ -1,18 +1,18 @@
 import { SchemaType } from "../enum/schemaType"
-import { ISchemaInfo } from "../schema/schemaInfo"
+import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce, generateGuidPart } from "../utils/toolset"
-import { ISchemaNodeConfig } from "../config/schemaConfig"
+import { ISchemaConfig } from "../config/schemaConfig"
 import { prepareRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
 import { Rule } from "../rule/rule"
-import { ArraySchemaNode } from "./arrayNode"
-import { StructSchemaNode } from "./structNode"
+import { ArrayNode } from "./arrayNode"
+import { StructNode } from "./structNode"
 
 /**
  * The abstract schema node.
  */
-export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleSchema, TR extends Rule> 
+export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchema, TR extends Rule> 
 {
     //#region Properties
 
@@ -30,7 +30,7 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
      * Gets the full access path
      */
     get access(): string {
-        if (this._parent instanceof ArraySchemaNode)
+        if (this._parent instanceof ArrayNode)
         {
             if (this._parent.enumArrayNode)
             {
@@ -43,7 +43,7 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
                     return `${this._parent.access}[${index}].${this._config.name}`
             }
         }
-        else if (this._parent instanceof StructSchemaNode)
+        else if (this._parent instanceof StructNode)
         {
             return `${this._parent.access}.${this._config.name}`
         }
@@ -58,7 +58,7 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
     /**
      * The schema info.
      */
-    get schemaInfo(): ISchemaInfo { return this._schemaInfo }
+    get schemaInfo(): INodeSchema { return this._schemaInfo }
 
     /**
      * The data of the node.
@@ -205,7 +205,7 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
     
     protected _stateWatcher: DataChangeWatcher = new DataChangeWatcher()
     protected _watchter: DataChangeWatcher = new DataChangeWatcher()
-    protected _schemaInfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
+    protected _schemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
     protected _parent?: AnySchemaNode
     protected _rule: TR
     protected _ruleSchema: TRS
@@ -223,7 +223,7 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaNodeConfig, data: any)
+    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any)
     {
         this._parent = parent
         this._config = config as TC
@@ -240,4 +240,4 @@ export abstract class SchemaNode<TC extends ISchemaNodeConfig, TRS extends RuleS
 /**
  * Any schema node
  */
-export type AnySchemaNode = SchemaNode<ISchemaNodeConfig, RuleSchema, Rule>
+export type AnySchemaNode = SchemaNode<ISchemaConfig, RuleSchema, Rule>

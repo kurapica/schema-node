@@ -1,6 +1,5 @@
-import { IEnumSchemaNodeConfig } from "../config/enumConfig"
-import { ISchemaNodeConfig } from "../config/schemaConfig"
-import { EnumSchemaNode } from "../node/enumNode"
+import { IEnumConfig } from "../config/enumConfig"
+import { EnumNode } from "../node/enumNode"
 import { RuleSchema } from "./ruleSchema"
 
 export class EnumRulechema extends RuleSchema
@@ -38,7 +37,7 @@ export class EnumRulechema extends RuleSchema
     /**
      * init the node rule
      */
-    override initNode(node: EnumSchemaNode)
+    override initNode(node: EnumNode)
     {
         super.initNode(node)
         const rule = node.rule
@@ -53,7 +52,7 @@ export class EnumRulechema extends RuleSchema
     /**
      * load the config
      */
-    override loadConfig(config: IEnumSchemaNodeConfig): void {
+    override loadConfig(config: IEnumConfig): void {
         super.loadConfig(config)
         this.cascade = config.cascade
         this.root = config.root

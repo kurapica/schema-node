@@ -1,14 +1,14 @@
 import { SchemaType } from '../enum/schemaType'
-import { IArraySchemaNodeConfig } from '../config/arrayConfig'
-import { IEnumSchemaNodeConfig } from '../config/enumConfig'
-import { ISchemaNodeConfig } from '../config/schemaConfig'
-import { ISchemaInfo } from '../schema/schemaInfo'
+import { IArrayConfig } from '../config/arrayConfig'
+import { IEnumConfig } from '../config/enumConfig'
+import { ISchemaConfig } from '../config/schemaConfig'
+import { INodeSchema } from '../schema/nodeSchema'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { AnySchemaNode, SchemaNode } from './schemaNode'
-import { EnumSchemaNode } from './enumNode'
-import { ScalarSchemaNode } from './scalarNode'
-import { StructSchemaNode } from './structNode'
+import { EnumNode } from './enumNode'
+import { ScalarNode } from './scalarNode'
+import { StructNode } from './structNode'
 import { isEqual, isNull } from '../utils/toolset'
 import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
@@ -16,7 +16,7 @@ import { ArrayRule } from '../rule/arrayRule'
 /**
  * The array schema data node
  */
-export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRuleSchema, ArrayRule> {
+export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRule> {
     //#region Implementation
 
     get schemaType(): SchemaType { return SchemaType.Array }
@@ -100,13 +100,13 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRul
         switch (this._eleSchemaInfo.type)
         {
             case SchemaType.Scalar:
-                eleNode = new ScalarSchemaNode(this, {...this._config, require: false }, data)
+                eleNode = new ScalarNode(this, {...this._config, require: false }, data)
                 break
             case SchemaType.Enum:
-                eleNode = new EnumSchemaNode(this, { ...this._config, require: false }, data)
+                eleNode = new EnumNode(this, { ...this._config, require: false }, data)
                 break
             case SchemaType.Struct:
-                eleNode = new StructSchemaNode(this, { ...this._config, require: false }, data)
+                eleNode = new StructNode(this, { ...this._config, require: false }, data)
                 break
         }
         return eleNode
@@ -144,7 +144,7 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRul
     /**
      * Gets the schema info of the array element
      */
-    get elementSchemaInfo(): ISchemaInfo { return this._eleSchemaInfo }
+    get elementSchemaInfo(): INodeSchema { return this._eleSchemaInfo }
 
     /**
      * Gets the array elements
@@ -154,15 +154,15 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRul
     /**
      * Gets the enum node if the element is enum schema node
      */
-    get enumArrayNode(): EnumSchemaNode | undefined { return this._enumArrayNode }
+    get enumArrayNode(): EnumNode | undefined { return this._enumArrayNode }
 
     //#endregion
 
     //#region Fields
 
-    private _eleSchemaInfo: ISchemaInfo = { name: '', type: SchemaType.Namespace }
+    private _eleSchemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
     private _elements: AnySchemaNode[] = []
-    private _enumArrayNode: EnumSchemaNode | undefined
+    private _enumArrayNode: EnumNode | undefined
 
     //#endregion
 
@@ -171,17 +171,17 @@ export class ArraySchemaNode extends SchemaNode<IArraySchemaNodeConfig, ArrayRul
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaNodeConfig, data: any) {
+    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
         super(parent, config, null)
 
         // element check
         this._eleSchemaInfo = getCachedSchema(this._schemaInfo.array!.element)!
         if (this._eleSchemaInfo.type === SchemaType.Enum)
         {
-            this._enumArrayNode = new EnumSchemaNode(this, {
+            this._enumArrayNode = new EnumNode(this, {
                 ...config,
                 multiple: true,
-            } as IEnumSchemaNodeConfig, data)
+            } as IEnumConfig, data)
         }
         else if (this.schemaInfo.array?.single)
         {
