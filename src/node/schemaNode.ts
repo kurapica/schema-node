@@ -2,7 +2,7 @@ import { SchemaType } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
-import { deepClone, isEqual, isNull, debounce, generateGuidPart } from "../utils/toolset"
+import { deepClone, isEqual, isNull, debounce, generateGuid } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { prepareRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
 import { Rule } from "../rule/rule"
@@ -24,7 +24,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The guid of the node.
      */
-    readonly guid: string = generateGuidPart()
+    readonly guid: string = generateGuid()
 
     /**
      * Gets the full access path
