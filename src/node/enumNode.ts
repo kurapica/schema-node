@@ -15,8 +15,10 @@ import { EnumRule } from '../rule/enumRule'
 export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     //#region Implementation
 
+    // override properties
     get schemaType(): SchemaType { return SchemaType.Enum }
     
+    // override methods
     async validate() {
         const vtype = this._schemaInfo.enum!.type
         let data = this._data

@@ -19,11 +19,15 @@ import { ArrayRule } from '../rule/arrayRule'
 export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRule> {
     //#region Implementation
 
+    // override properties
     get schemaType(): SchemaType { return SchemaType.Array }
     get valid(): boolean { return this._enumArrayNode ? this._enumArrayNode.valid : this._elements.findIndex(e => !e.valid) < 0 }
     get error(): any { return this._enumArrayNode ? this._enumArrayNode.error : this._elements.find(e => !e.valid)?.error }
     get changed(): boolean { return this._enumArrayNode ? this._enumArrayNode.changed : !this._schemaInfo.array?.single ? this._elements.findIndex(e => e.changed) >= 0 : !isEqual(this._data, this._original) }
+    
+    // override methods
     validate(): void { this._enumArrayNode ? this._enumArrayNode.validate() : this._elements.forEach(e => e.validate()) }
+    resetChanges(): void { this._enumArrayNode ? this._enumArrayNode.resetChanges() : this._elements.forEach(e => e.resetChanges()) }
 
     get data()
     {

@@ -16,11 +16,15 @@ import { StructRule } from '../rule/structRule'
 export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructRule> {
     //#region Implementation
 
+    // override properties
     get schemaType(): SchemaType { return SchemaType.Struct }
     get valid(): boolean { return this._fields.findIndex(f => !f.valid) < 0 }
     get error(): any { return this._fields.find(f => !f.valid)?.error }
     get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
+
+    // override methods
     validate(): void { return this._fields.forEach(f => f.validate() )}
+    resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
 
     get data()
     {

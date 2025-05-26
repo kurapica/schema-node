@@ -12,7 +12,7 @@ import { StructNode } from "./structNode"
 /**
  * The abstract schema node.
  */
-export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchema, TR extends Rule> 
+export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchema, TR extends Rule>
 {
     //#region Properties
 
@@ -33,15 +33,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         if (this._parent instanceof ArrayNode)
         {
             if (this._parent.enumArrayNode)
-            {
                 return this._parent.access
-            }
-            else
-            {
-                const index = this._parent.elements.findIndex(e => e === this)
-                if (index >= 0)
-                    return `${this._parent.access}[${index}].${this._config.name}`
-            }
+
+            const index = this._parent.elements.findIndex(e => e === this)
+            if (index >= 0)
+                return `${this._parent.access}[${index}].${this._config.name}`
         }
         else if (this._parent instanceof StructNode)
         {
@@ -51,7 +47,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      }
 
     /**
-     * The config of the node.
+     * The config of the node.m
      */
     get config(): TC { return this._config }
 
@@ -108,7 +104,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Gets the name of the node
      */
     get name(): string { return this._config.name }
-    
+
     /**
      * Gets the display of the node
      */
@@ -151,8 +147,8 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Re-calc the valid state of the node and children.
      */
-    abstract validate(): any
-    
+    abstract validate(): void | Promise<void>
+
     //#endregion
 
     //#region Methods
@@ -169,7 +165,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
 
     /**
      * Subscribe a data change handler
-     * 
+     *
      * @param func the change handler
      * @param state true means watch the state like invisible, otherwise the data change
      */
@@ -196,13 +192,13 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     dispose(): void {
         this._watches.forEach(w => w())
         this._stateWatcher.dispose()
-        this._watchter.dispose() 
+        this._watchter.dispose()
     }
 
     //#endregion
 
     //#region Field
-    
+
     protected _stateWatcher: DataChangeWatcher = new DataChangeWatcher()
     protected _watchter: DataChangeWatcher = new DataChangeWatcher()
     protected _schemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
@@ -231,7 +227,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._data = isNull(data) ? deepClone(config.default) : data
         this._rule = {} as any as TR
         this._ruleSchema = prepareRuleSchema(this, parent) as any as TRS
-        
+
         // popup
         if (parent) this.subscribe(() => parent.notify())
     }

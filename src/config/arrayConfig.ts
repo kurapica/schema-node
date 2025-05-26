@@ -6,7 +6,7 @@ export interface IArrayConfig extends ISchemaConfig
      * The array data is increase update
      */
     isIncrUpdate?: boolean
-    
+
     /**
      * The page count
      */
@@ -20,5 +20,5 @@ export interface IArrayConfig extends ISchemaConfig
     /**
      * Use descend order
      */
-    descend?: boolean    
+    descend?: boolean
 }

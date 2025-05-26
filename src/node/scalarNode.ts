@@ -7,8 +7,6 @@ import { _L, _LS } from '../utils/locale'
 import { isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
 import { ScalarRule } from '../rule/scalarRule'
-import { RuleSchema } from '../ruleSchema/ruleSchema'
-import { Rule } from '../rule/rule'
 
 /**
  * The scalar schema data node
@@ -16,6 +14,7 @@ import { Rule } from '../rule/rule'
 export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, ScalarRule> {
     //#region Implementation
 
+    // override properties
     get schemaType(): SchemaType { return SchemaType.Scalar }
 
     // Gets the data by type
@@ -50,9 +49,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         return value
     }
 
-    /**
-     * Validate the value
-     */
+    // override methods
     validate(): void {
         const value = this.data
         const config = this._config

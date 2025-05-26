@@ -31,7 +31,7 @@ export interface ISchemaConfig
     readonly?: boolean
 
     /**
-     * The node data is immutable.
+     * The node data is immutable, unchangable if inited.
      */
     immutable?: boolean
 
