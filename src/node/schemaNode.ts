@@ -59,15 +59,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The data of the node.
      */
-    get data(): any { return this._data }
+    get rawData(): any { return this._data }
+    get data(): any { return deepClone(this._data) }
     set data(value: any)
     {
-        this._data = value
-        const res = this.validate()
-        if (res instanceof Promise)
-            res.finally(() => this.notify())
-        else
-            this.notify()
+        this._data = deepClone(value)
+        this.validation().then(this.notify)
     }
 
     /**
@@ -149,6 +146,19 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      */
     abstract validate(): void | Promise<void>
 
+    /**
+     * Common data validation and notify
+     */
+    async validation()
+    {
+        // validation
+        const valid = this._valid
+        const res = this.validate()
+        if (res instanceof Promise) await res
+        if (valid !== this._valid)
+            this.notifyState()
+    }
+
     //#endregion
 
     //#region Methods
@@ -177,14 +187,26 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     watch(node: AnySchemaNode, func: Function) { return this._watches.push(node.subscribe(func)) }
 
     /**
-     * Notify the data, error, valid may changes
+     * Notify the data changes
      */
     notify = debounce(() => this._watchter.notify(this), 50)
 
     /**
-     * Notify the state changes
+     * Notify the state changes like valid, error, invisible and etc
      */
     notifyState = debounce(() => this._stateWatcher.notify(this), 50)
+
+    /**
+     * Set the error by parent
+     */
+    setError (err: string) {
+        if (this._valid)
+        {
+            this._valid = false
+            this._error = err
+            this.notifyState()
+        }
+    }
 
     /**
      * Dispose the node and children.
@@ -227,9 +249,6 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._data = isNull(data) ? deepClone(config.default) : data
         this._rule = {} as any as TR
         this._ruleSchema = prepareRuleSchema(this, parent) as any as TRS
-
-        // popup
-        if (parent) this.subscribe(() => parent.notify())
     }
 }
 

@@ -140,9 +140,7 @@ export async function getArraySchema(name: string | INodeSchema): Promise<INodeS
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
         desc: `Anonmous array for ${name}`,
-        array: {
-            element: schema.name
-        }
+        array: { element: schema.name }
     }
 
     return arraySchemaMap[name]

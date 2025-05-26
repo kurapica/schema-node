@@ -3,7 +3,7 @@ import { AnySchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { isNull } from '../utils/toolset'
+import { debounce, isNull } from '../utils/toolset'
 import { ArrayNode } from './arrayNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
@@ -23,16 +23,21 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
 
     // override methods
-    validate(): void { return this._fields.forEach(f => f.validate() )}
+    async validate(): Promise<void> {
+        for(let i = 0; i < this._fields.length; i++)
+        {
+            await this._fields[i].validation()
+        }
+    }
     resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
 
     get data()
     {
         const result: { [key:string]: any } = {}
         this._fields.forEach(f => {
-            if (f.config.displayOnly) return // no display only
-            if (f.rule.invisible && !f.valid) return // no invisiable and not valid
-            result[f.config.name] = f.data
+            if (f.displayOnly) return // no display only
+            if (f.invisible && !f.valid) return // no invisiable and not valid
+            result[f.name] = f.data
         })
         return result
     }
@@ -40,14 +45,23 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     set data(data: any)
     {
         if (!data || Array.isArray(data) || typeof data !== "object") data = {}
-        this._fields.forEach(f => f.data = data[f.config.name])
+        this._fields.forEach(f => f.data = data[f.name])
     }
 
     override dispose(): void {
-        this._watchter.dispose()
         this._fields.forEach(f => f.dispose() )
         this._fields = []
+        super.dispose()
     }
+
+    //#endregion
+
+    //#region Methods
+
+    private refreshRawData = debounce(() => {
+        this._fields.forEach(f => this._data[f.name] = f.rawData)
+        this.notify()
+    }, 20)
 
     //#endregion
 
@@ -77,7 +91,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * @param config the config of the node.
      */
     constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, null)
+        super(parent, config, {})
         if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
 
         // init fields
@@ -104,6 +118,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
             if (field)
             {
                 this._fields.push(field)
+                field.subscribe(this.refreshRawData)
             }
         }
     }

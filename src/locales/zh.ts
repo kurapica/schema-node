@@ -140,6 +140,8 @@ export default {
     "ERR_CANT_BE_GREATTHAN": "{0}不能大于{1}",
     "ERR_CANT_BE_LESSTHAN": "{0}不能小于{1}",
     "ERR_NOT_DATE": "{0}不是有效的日期",
+    "ERR_ARRAY_DATA_NOT_VALID": "{0}数据无效",
+    "ERR_ARRAY_PRIMARY_DUPLICATE": "{0}不能重复",
 
     //#endregion
 }

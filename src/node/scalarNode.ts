@@ -70,16 +70,8 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
 
         // limit
-        let uplimit = !isNull(rule.upLimit)
-            ? rule.upLimit
-            : !isNull(config.upLimit)
-                ? config.upLimit
-                : scalarInfo?.upLimit
-        let lowlimit = !isNull(rule.lowLimit)
-            ? rule.lowLimit
-            : !isNull(config.lowLimit)
-                ? config.lowLimit
-                : scalarInfo?.lowLimit
+        let uplimit  = !isNull(rule.upLimit)  ? rule.upLimit  : !isNull(config.upLimit)  ? config.upLimit  : scalarInfo?.upLimit 
+        let lowlimit = !isNull(rule.lowLimit) ? rule.lowLimit : !isNull(config.lowLimit) ? config.lowLimit : scalarInfo?.lowLimit
 
         // string
         if (this.isString) {
@@ -240,7 +232,5 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
         super(parent, config, data)
         getScalarValueType(config.type).then(v => this._valueType = v)
-
-        // @TODO: add primary check
     }
 }

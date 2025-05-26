@@ -3,13 +3,13 @@ import { IArrayConfig } from '../config/arrayConfig'
 import { IEnumConfig } from '../config/enumConfig'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { INodeSchema } from '../schema/nodeSchema'
-import { getCachedSchema } from '../utils/schemaProvider'
+import { getCachedSchema, validateSchemaValue } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { AnySchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
-import { isEqual, isNull } from '../utils/toolset'
+import { debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
 import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 
@@ -21,18 +21,16 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
     // override properties
     get schemaType(): SchemaType { return SchemaType.Array }
-    get valid(): boolean { return this._enumArrayNode ? this._enumArrayNode.valid : this._elements.findIndex(e => !e.valid) < 0 }
-    get error(): any { return this._enumArrayNode ? this._enumArrayNode.error : this._elements.find(e => !e.valid)?.error }
-    get changed(): boolean { return this._enumArrayNode ? this._enumArrayNode.changed : !this._schemaInfo.array?.single ? this._elements.findIndex(e => e.changed) >= 0 : !isEqual(this._data, this._original) }
+    get valid(): boolean { return this._enumArrayNode ? this._enumArrayNode.valid : this.asSingleValue ? this._valid : this._elements.findIndex(e => !e.valid) < 0 }
+    get error(): any { return this._enumArrayNode ? this._enumArrayNode.error : this.asSingleValue ? this._error : this._elements.find(e => !e.valid)?.error }
+    get changed(): boolean { return this._enumArrayNode ? this._enumArrayNode.changed : this.asSingleValue ? !isEqual(this._data, this._original) : this._elements.findIndex(e => e.changed) >= 0 }
     
-    // override methods
-    validate(): void { this._enumArrayNode ? this._enumArrayNode.validate() : this._elements.forEach(e => e.validate()) }
-    resetChanges(): void { this._enumArrayNode ? this._enumArrayNode.resetChanges() : this._elements.forEach(e => e.resetChanges()) }
-
+    get rawData() { return this._enumArrayNode ? this._enumArrayNode.rawData : this._data }
+    
     get data()
     {
         if (this._enumArrayNode) return this._enumArrayNode.data
-        if (this._schemaInfo.array?.single) return this._data
+        if (this.asSingleValue) return Array.isArray(this._data) ? deepClone(this._data) : []
 
         // filter
         if (this._eleSchemaInfo.type === SchemaType.Struct)
@@ -55,25 +53,23 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (this._enumArrayNode) {
             this._enumArrayNode.data = data
         }
-        else if (this._schemaInfo.array?.single)
+        else if (this.asSingleValue)
         {
-            this.data = data
-            this.validate()
-            this.notify()
+            if (Array.isArray(this._data))
+                this._data.splice(0, this._data.length, ...data.map(deepClone))
+            else
+                this._data = deepClone(data)
+            this.validation().then(this.notify)
         }
-        else 
+        else
         {
             // assign
             for(let i = 0; i < Math.min(this._elements.length, data.length); i++)
-            {
                 this._elements[i].data = data[i]
-            }
 
             // destory
             for (let i = this._elements.length - 1; i > data.length; i--)
-            {
                 this._elements.pop()?.dispose()
-            }
 
             // new
             for (let i = this._elements.length; i < data.length; i++)
@@ -88,16 +84,100 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    // override methods
+    async validate(): Promise<void> {
+        if (this._enumArrayNode)
+        {
+            return await this._enumArrayNode.validation()
+        }
+        else if (this.asSingleValue)
+        {
+            this._valid = true
+            this._error = ""
+            const elename = this._schemaInfo.array?.element
+            if (!elename || !Array.isArray(this._data)) return
+            for(let i = 0; i < this._data.length; i++)
+            {
+                if (!await validateSchemaValue(elename, this._data[i]))
+                {
+                    this._valid = false
+                    this._error = sformat(_LS("ERR_ARRAY_DATA_NOT_VALID"), this.display)
+                    break
+                }
+            }
+        }
+        else
+        {
+            for(let i = 0; i < this._elements.length; i++)
+            {
+                await this._elements[i].validation()
+            }
+        }
+    }
+
+    resetChanges(): void {
+        if (this._enumArrayNode)
+        {
+            this._enumArrayNode.resetChanges()
+        }
+        else if(this.asSingleValue)
+        {
+            this._original = Array.isArray(this._data) ? deepClone(this._data) : []
+        }
+        else
+        {
+            this._elements.forEach(e => e.resetChanges()) 
+        }
+    }
+
     override dispose(): void {
-        this._watchter.dispose()
         this._enumArrayNode?.dispose()
         this._elements.forEach(e => e.dispose())
         this._elements = []
+        super.dispose()
     }
 
     //#endregion
 
     //#region Methods
+
+    // validate the primary fields
+    private primaryCheck(): void {
+        if (!this._schemaInfo.array?.primary?.length) return
+        const primarys = this._eleSchemaInfo.struct?.fields.map(f => f.name).filter(n => this._schemaInfo.array?.primary?.includes(n))
+        if (!primarys?.length) return
+        for(let i = 1; i < this._elements.length; i++)
+        {
+            const ele = this._elements[i] as StructNode
+            for(let j = 0; j < i; j++)
+            {
+                const cele = this._elements[j] as StructNode
+                let k = 0;
+                for(; k < primarys.length; k++)
+                {
+                    if (!isEqual(ele.getField(primarys[k])?.rawData, cele.getField(primarys[k])?.rawData))
+                        break
+                }
+                if (k >= primarys.length)
+                {
+                    const errfld = ele.getField(primarys[primarys.length - 1])
+                    errfld?.setError(sformat(_LS("ERR_ARRAY_PRIMARY_DUPLICATE"), errfld.display))
+                    return
+                }
+            }
+        }
+    }
+
+    private refreshRawData = debounce(() => {
+        if (Array.isArray(this._data))
+            this._data.splice(0, this._data.length, ...this._elements.map(e => e.rawData))
+        else
+            this._data = this._elements.map(e => e.rawData)
+
+        // primary check
+        this.primaryCheck()
+        this.notify()
+    }, 20)
 
     private newElement(data?: any) {
         let eleNode: AnySchemaNode | null = null
@@ -113,6 +193,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 eleNode = new StructNode(this, { ...this._config, require: false }, data)
                 break
         }
+        eleNode?.subscribe(this.refreshRawData)
         return eleNode
     }
 
@@ -120,7 +201,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * Add a new row
      */
     addRow(index?: number, data?: any) {
-        if (this._eleSchemaInfo.type === SchemaType.Enum || this._schemaInfo.array?.single) return
+        if (this._enumArrayNode || this.asSingleValue) return
         if (isNull(index)) index = this._elements.length
         const newEle = this.newElement(data)
         if (newEle)
@@ -136,7 +217,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * @param count the delete row count, default 1
      */
     delRows(start: number, count = 1) {
-        if (this._eleSchemaInfo.type === SchemaType.Enum || this._schemaInfo.array?.single || start < 0 || start >= this._elements.length) return
+        if (this._enumArrayNode || this.asSingleValue || start < 0 || start >= this._elements.length) return
         const remove = this._elements.splice(start, count)
         remove.forEach(r => r.dispose())
     }
@@ -144,6 +225,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     //#endregion
 
     //#region Properties
+
+    /**
+     * Whether the array data be treated as single value, like Coordinates
+     */
+    get asSingleValue(): boolean { return this._schemaInfo.array?.single || false }
 
     /**
      * Gets the schema info of the array element
@@ -176,7 +262,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * @param config the config of the node.
      */
     constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, null)
+        super(parent, config, [])
 
         // element check
         this._eleSchemaInfo = getCachedSchema(this._schemaInfo.array!.element)!
@@ -186,6 +272,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 ...config,
                 multiple: true,
             } as IEnumConfig, data)
+            this._enumArrayNode.subscribe(this.notify)
+            this._enumArrayNode.subscribe(this.notifyState, true)
         }
         else if (this.schemaInfo.array?.single)
         {
