@@ -6,9 +6,8 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "lint": "eslint . --ext .ts"
+    "build": "vite build",
+    "dev": "vite"
   },
   "keywords": [
     "typescript",
@@ -24,6 +23,7 @@
   "author": "kurapica125@outlook.com",
   "license": "Apache-2.0",
   "dependencies": {
-    "bignumber.js": "^9.3.0"
+    "bignumber.js": "^9.3.0",
+    "vite": "^6.3.5"
   }
 }
