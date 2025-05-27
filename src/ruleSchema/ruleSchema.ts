@@ -346,8 +346,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.lowLimit = res
-                    node.validate()
-                    node.notify()
+                    node.validation()
                 }
             }
             break
@@ -357,8 +356,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.upLimit = res
-                    node.validate()
-                    node.notify()
+                    node.validation()
                 }
             }
             break
@@ -368,10 +366,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.root = res
-                    node.validate().finally(() => {
-                        node.notify()
-                        node.notifyState()
-                    })
+                    node.validation()
                 }
             }
             break
@@ -381,10 +376,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.blackList = res
-                    node.validate().finally(() => {
-                        node.notify()
-                        node.notifyState()
-                    })
+                    node.validation()
                 }
             }
             break
@@ -395,19 +387,14 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
-                    node.validate()
-                    node.notify()
-                    node.notifyState()
+                    node.validation()
                 }
             }
             else if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
-                    node.validate().finally(() => {
-                        node.notify()
-                        node.notifyState()
-                    })
+                    node.validation()
                 }
             }
             break

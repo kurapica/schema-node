@@ -47,7 +47,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      }
 
     /**
-     * The config of the node.m
+     * The config of the node.
      */
     get config(): TC { return this._config }
 
@@ -55,6 +55,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * The schema info.
      */
     get schemaInfo(): INodeSchema { return this._schemaInfo }
+
+    /**
+     * The schema type name.
+     */
+    get schemaName(): string { return this._schemaInfo.name }
 
     /**
      * The data of the node.

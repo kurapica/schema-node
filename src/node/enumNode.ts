@@ -3,9 +3,9 @@ import { SchemaType } from '../enum/schemaType'
 import { IEnumConfig } from '../config/enumConfig'
 import { AnySchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
-import { getEnumSubList } from '../utils/schemaProvider'
+import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { isNull } from '../utils/toolset'
+import { deepClone, isNull, sformat } from '../utils/toolset'
 import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
 import { EnumRule } from '../rule/enumRule'
 
@@ -20,8 +20,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     
     // override methods
     async validate() {
-        const vtype = this._schemaInfo.enum!.type
-        let data = this._data
+        let data = deepClone(this._data)
         this._valid = true
         this._error = ""
 
@@ -32,6 +31,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             const maxflag = Math.max(...sublist.map(v => v.value))
             data = fromFlagsView(data)
             if (!isNull(data)) {
+                // auto fix
                 data = data % (maxflag * 2)
                 if (!this.isMultiple && data > 0)
                 {
@@ -49,16 +49,54 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         }
         else if (this.isMultiple)
         {
-            if (!Array.isArray(data))
-                data = !isNull(data) ? [data] : []
-            data = data.map((d: any) => parseEnumValue(d, vtype)).filter((d: any) => !isNull(d))
+            if (!Array.isArray(data)) data = !isNull(data) ? [data] : []
+            data = data.map((d: any) => this.parseEnumValue(d)).filter((d: any) => !isNull(d))
         }
-        else 
+        else
         {
-            data = parseEnumValue(data, vtype)
+            data = this.parseEnumValue(data)
+        }
+
+        // validation
+        if (isNull(data) || Array.isArray(data) && !data.length)
+        {
+            if (this.require)
+            {
+                this._valid = false
+                this._error = sformat(_LS("ERR_CANT_BE_NULL"), this.display)
+            }
+        }
+        else if(!this.isFlags)
+        {
+            if (Array.isArray(data))
+            {
+                for(let i = 0; i < data.length; i++)
+                {
+                    if (!await this.isValidEnumValue(data[i])){
+                        this._valid = false
+                        this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                        break
+                    }
+                }
+            }
+            else
+            {
+                if (!await this.isValidEnumValue(data)){
+                    this._valid = false
+                    this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                }
+            }
         }
         
-        this._data = data
+        // write back
+        if (!this.isFlags && this.isMultiple && Array.isArray(this._data))
+        {
+            this._data.splice(0, this._data.length, ...data)
+        }
+        else
+        {
+            this._data = data
+        }
     }
 
     /**
@@ -82,15 +120,94 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     get isMultiple(): boolean { return this.isFlags ? !this._config.singleFlag : (this._config.multiple || false)  }
 
     /**
-     * Gets the cascader options
+     * Gets the enum cascade
      */
-    get cascaderOptions(): ICascaderOptionInfo[] { return this._options }
+    get cascade() { return this.rule.cascade || this._config.cascade }
+
+    /**
+     * Gets the enum root
+     */
+    get root() { return this.rule.root || this._config.root }
+
+    /**
+     * Gets the enum white list
+     */
+    get whiteList() { return this.rule.whiteList || this._config.whiteList }
+
+    /**
+     * Gets the black list
+     */
+    get blackList() { return this.rule.blackList || this._config.blackList }
+
+    /**
+     * Allow use enum value in any level
+     */
+    get anyLevel() { return this.rule.anyLevel || this._config.anyLevel }
+
+    /**
+     * The max cascade level
+     */
+    get cascadeLevel() { return this._schemaInfo.enum?.cascade?.length || 1 }
 
     //#endregion
 
-    //#region Fields
+    //#region Methods
 
-    private _options: ICascaderOptionInfo[] = []
+    /**
+     * Validate the single enum value
+     */
+    async isValidEnumValue(value: any): Promise<boolean> {
+        value = this.parseEnumValue(value)
+        if (isNull(value)) return true
+        
+        // gets the access list
+        const access = await getEnumAccessList(this.schemaName, value)
+        if (!access.length) return false
+
+        // check the enum root
+        if (this.root && access.findIndex(a => `${a.value}` === `${this.root}`) < 0) return false
+
+        // check the cascade
+        if (this.cascade && access.length > this.cascade) return false
+
+        // check any level
+        if (!this.anyLevel && access.length < this.cascadeLevel) return false
+
+        // check the black list
+        if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex(b => `${a.value}` === `${b}`) >= 0) >= 0) return false
+
+        // check the white list - the sub enum value of the allowed enum value also allowed, also their parent if any level
+        if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex(b => `${a.value}` === `${b}`) < 0) < 0)
+        {
+            if (!this.anyLevel || this.cascadeLevel === 1) return false
+            for(let i = 0; i < this.whiteList.length; i++)
+            {
+                // check if parent
+                const w = await getEnumAccessList(this.schemaName, this.parseEnumValue(this.whiteList[i]))
+                if (w?.length && w.length > access.length && w[access.length - 1].value == value) return true
+            }
+            return false
+        }
+
+        return true
+    }
+
+    // parse enum value    
+    private parseEnumValue(value: any) {
+        switch (this._schemaInfo.enum!.type) {
+            case EnumValueType.Int:
+            case EnumValueType.Flags:
+                value = !isNull(value) ? parseInt(value) : null
+                return isFinite(value) ? value : null
+            case EnumValueType.Double:
+            case EnumValueType.Float:
+                value = !isNull(value) ? parseFloat(value) : null
+                return isFinite(value) ? value : null
+            case EnumValueType.String:
+                return !isNull(value) ? `${value}` : null
+        }
+    }
+
 
     //#endregion
 
@@ -105,21 +222,6 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
 }
 
 //#region helper
-
-function parseEnumValue(value: any, type: EnumValueType) {
-    switch (type) {
-        case EnumValueType.Int:
-        case EnumValueType.Flags:
-            value = !isNull(value) ? parseInt(value) : null
-            return isFinite(value) ? value : null
-        case EnumValueType.Double:
-        case EnumValueType.Float:
-            value = !isNull(value) ? parseFloat(value) : null
-            return isFinite(value) ? value : null
-        case EnumValueType.String:
-            return !isNull(value) ? `${value}` : null
-    }
-}
 
 /**
  * Convert the flags value to view data
