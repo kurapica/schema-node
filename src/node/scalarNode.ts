@@ -4,7 +4,7 @@ import { AnySchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
-import { isNull, sformat } from '../utils/toolset'
+import { deepClone, isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
 import { ScalarRule } from '../rule/scalarRule'
 
@@ -48,6 +48,11 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
         return value
     }
+    set data(value: any)
+    {
+        this._data = deepClone(value)
+        this.validation().then(this.notify)
+    }
 
     // override methods
     validate(): void {
@@ -87,7 +92,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList && rule.whiteList.length > 0 && rule.whiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
+            else if (!rule.asSuggest && rule.whiteList && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -113,7 +118,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList && rule.whiteList.length > 0 && rule.whiteList.findIndex(v => typeof (v) === "object" ? v.value === value : v == value) < 0) {
+            else if (!rule.asSuggest && rule.whiteList && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -229,8 +234,8 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, data)
+    constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
+        super(config, data, parent)
         getScalarValueType(config.type).then(v => this._valueType = v)
     }
 }

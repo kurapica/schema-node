@@ -85,6 +85,24 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     }
 
     // override methods
+    
+    /**
+     * indexof the sub node
+     */
+    indexof(node: AnySchemaNode): number | string | undefined | null {
+        if (this._enumArrayNode)
+        {
+            return node === this._enumArrayNode ? "" : undefined
+        }
+        else
+        {
+            return this._elements.findIndex(e => e === node)
+        }
+    }
+
+    /**
+     * validate the value
+     */
     async validate(): Promise<void> {
         if (this._enumArrayNode)
         {
@@ -184,13 +202,13 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         switch (this._eleSchemaInfo.type)
         {
             case SchemaType.Scalar:
-                eleNode = new ScalarNode(this, {...this._config, require: false }, data)
+                eleNode = new ScalarNode({...this._config, require: false }, data, this)
                 break
             case SchemaType.Enum:
-                eleNode = new EnumNode(this, { ...this._config, require: false }, data)
+                eleNode = new EnumNode({ ...this._config, require: false }, data, this)
                 break
             case SchemaType.Struct:
-                eleNode = new StructNode(this, { ...this._config, require: false }, data)
+                eleNode = new StructNode({ ...this._config, require: false }, data, this)
                 break
         }
         eleNode?.subscribe(this.refreshRawData)
@@ -261,19 +279,19 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, [])
+    constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
+        super(config, [], parent)
 
         // element check
         this._eleSchemaInfo = getCachedSchema(this._schemaInfo.array!.element)!
         if (this._eleSchemaInfo.type === SchemaType.Enum)
         {
-            this._enumArrayNode = new EnumNode(this, {
+            this._enumArrayNode = new EnumNode({
                 ...config,
                 multiple: true,
-            } as IEnumConfig, data)
+            } as IEnumConfig, data, this)
             this._enumArrayNode.subscribe(this.notify)
-            this._enumArrayNode.subscribe(this.notifyState, true)
+            this._enumArrayNode.subscribeState(this.notifyState)
         }
         else if (this.schemaInfo.array?.single)
         {

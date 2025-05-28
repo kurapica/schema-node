@@ -11,6 +11,11 @@ export class ScalarRuleSchema extends RuleSchema
     whiteList?: number[] | string[] | { value: any, label: string }[]
 
     /**
+     * The black list
+     */
+    blackList?: string[] | number[]
+    
+    /**
      * The low limit
      */
     lowLimit?: any
@@ -37,7 +42,8 @@ export class ScalarRuleSchema extends RuleSchema
     {
         super.initNode(node)
         const rule = node.rule
-        rule.whiteList = (this.whiteList ? [...this.whiteList] : undefined) as any
+        rule.whiteList = this.whiteList ? [...this.whiteList] as any : undefined
+        rule.blackList = this.blackList ? [...this.blackList] as any : undefined
         rule.lowLimit = this.lowLimit
         rule.upLimit = this.upLimit
         rule.asSuggest = this.asSuggest
@@ -49,7 +55,8 @@ export class ScalarRuleSchema extends RuleSchema
      */
     override loadConfig(config: IScalarConfig): void {
         super.loadConfig(config)
-        this.whiteList = config.whiteList ? [...config.whiteList] : undefined
+        this.whiteList = config.whiteList ? [...config.whiteList] as any : undefined
+        this.blackList = config.blackList ? [...config.blackList] as any : undefined
         this.lowLimit = config.lowLimit
         this.upLimit = config.upLimit
         this.asSuggest = config.asSuggest

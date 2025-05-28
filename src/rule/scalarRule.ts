@@ -8,6 +8,11 @@ export class ScalarRule extends Rule
     whiteList?: number[] | string[] | { value: any, label: string }[]
 
     /**
+     * The black list
+     */
+    blackList?: string[] | number[]
+    
+    /**
      * The low limit
      */
     lowLimit?: any

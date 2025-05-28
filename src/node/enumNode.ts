@@ -216,8 +216,8 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, data)
+    constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
+        super(config, data, parent)
     }
 }
 

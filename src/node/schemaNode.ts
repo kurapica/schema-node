@@ -30,20 +30,22 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Gets the full access path
      */
     get access(): string {
-        if (this._parent instanceof ArrayNode)
+        if (this._parent)
         {
-            if (this._parent.enumArrayNode)
-                return this._parent.access
-
-            const index = this._parent.elements.findIndex(e => e === this)
-            if (index >= 0)
-                return `${this._parent.access}[${index}].${this._config.name}`
+            const parent = this._parent.access
+            const index = this._parent.indexof(this)
+            if (typeof(index) === "number")
+            {
+                return index >= 0 ? `${parent}[${index}]` : ""
+            }
+            else if (typeof(index) === "string")
+            {
+                return !isNull(parent) 
+                    ? (isNull(index) ? parent : `${parent}.${index}`)
+                    : index
+            }
         }
-        else if (this._parent instanceof StructNode)
-        {
-            return `${this._parent.access}.${this._config.name}`
-        }
-        return this._config.name
+        return ""
      }
 
     /**
@@ -103,11 +105,6 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     get ruleSchema(): TRS { return this._ruleSchema }
 
     /**
-     * Gets the name of the node
-     */
-    get name(): string { return this._config.name }
-
-    /**
      * Gets the display of the node
      */
     get display(): string { return `${this._config.display}` }
@@ -152,6 +149,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     abstract validate(): void | Promise<void>
 
     /**
+     * indexof the sub node
+     */
+    indexof(node: AnySchemaNode): number | string | undefined | null { return null }
+
+    /**
      * Common data validation and notify
      */
     async validation()
@@ -184,7 +186,20 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * @param func the change handler
      * @param state true means watch the state like invisible, otherwise the data change
      */
-    subscribe(func: Function, state?: boolean): Function { return state ? this._stateWatcher.addWatcher(func) : this._watchter.addWatcher(func) }
+    subscribe(func: Function, immediate?: boolean): Function {
+        const result = this._watchter.addWatcher(func) 
+        if (immediate) func()
+        return result
+    }
+
+    /**
+     * Subscribe a state change handler
+     */
+    subscribeState(func: Function, immediate?: boolean) : Function {
+        const result = this._stateWatcher.addWatcher(func) 
+        if (immediate) func()
+        return result
+    }
 
     /**
      * Watch other node data
@@ -246,7 +261,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any)
+    constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined)
     {
         this._parent = parent
         this._config = config as TC

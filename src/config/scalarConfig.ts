@@ -5,7 +5,12 @@ export interface IScalarConfig extends ISchemaConfig
     /**
      * The white list
     */
-    whiteList?: string[]
+    whiteList?: number[] | string[] | { value: any, label: string }[]
+
+    /**
+     * The black list
+     */
+    blackList?: string[] | number[]
 
     /**
      * The low limit of the scalar value.
@@ -26,5 +31,4 @@ export interface IScalarConfig extends ISchemaConfig
      * When calculating the up limit, use the original value.
      */
     useOriginForUplimit?: boolean
-
 }

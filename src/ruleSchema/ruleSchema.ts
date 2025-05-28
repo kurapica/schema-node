@@ -7,7 +7,7 @@ import { ScalarNode } from "../node/scalarNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
-import { IStructFieldRelation, IStructSchema } from "../schema/structSchema"
+import { IStructFieldConfig, IStructFieldRelation, IStructSchema } from "../schema/structSchema"
 import { NS_SYSTEM_BOOL } from "../utils/schema"
 import { callSchemaFunction, getCachedSchema } from "../utils/schemaProvider"
 import { debounce, isEqual, isNull } from "../utils/toolset"
@@ -102,7 +102,7 @@ export function prepareRuleSchema(node: AnySchemaNode, parent?: AnySchemaNode): 
     const ruleSchema = (parent instanceof ArrayNode
         ? parent.ruleSchema.element
         : parent instanceof StructNode
-            ? parent.ruleSchema.schemas[node.config.name]
+            ? parent.ruleSchema.schemas[(node.config as IStructFieldConfig).name]
             : null)
         || buildRuleSchema(node.schemaInfo)
 
@@ -249,7 +249,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
                 // locate the diff point
                 for (; i < paths.length; i++, ni++) {
-                    if (paths[i].toLowerCase() !== nodePaths[ni].config.name.toLowerCase()) break
+                    if (paths[i].toLowerCase() !== (nodePaths[ni].config as IStructFieldConfig).name.toLowerCase()) break
                     if (nodePaths[ni].schemaType === SchemaType.Array) {
                         // If the last is the array node
                         if (i === paths.length - 1) {

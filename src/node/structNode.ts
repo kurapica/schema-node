@@ -9,6 +9,7 @@ import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
+import { IStructFieldConfig } from '../schema/structSchema'
 
 /**
  * The struct schema data node
@@ -22,22 +23,13 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get error(): any { return this._fields.find(f => !f.valid)?.error }
     get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
 
-    // override methods
-    async validate(): Promise<void> {
-        for(let i = 0; i < this._fields.length; i++)
-        {
-            await this._fields[i].validation()
-        }
-    }
-    resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
-
     get data()
     {
         const result: { [key:string]: any } = {}
         this._fields.forEach(f => {
             if (f.displayOnly) return // no display only
             if (f.invisible && !f.valid) return // no invisiable and not valid
-            result[f.name] = f.data
+            result[(f.config as IStructFieldConfig).name] = f.data
         })
         return result
     }
@@ -45,8 +37,32 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     set data(data: any)
     {
         if (!data || Array.isArray(data) || typeof data !== "object") data = {}
-        this._fields.forEach(f => f.data = data[f.name])
+        this._fields.forEach(f => f.data = data[(f.config as IStructFieldConfig).name])
     }
+
+    // override methods
+
+    /**
+     * indexof the sub node
+     */
+    indexof(node: AnySchemaNode): number | string | undefined | null {
+        return (this._fields.find(f => f === node)?.config as IStructFieldConfig)?.name || undefined
+    }
+
+    /**
+     * valiate the value
+     */
+    async validate(): Promise<void> {
+        for(let i = 0; i < this._fields.length; i++)
+        {
+            await this._fields[i].validation()
+        }
+    }
+
+    /**
+     * reset changes
+     */
+    resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
 
     override dispose(): void {
         this._fields.forEach(f => f.dispose() )
@@ -59,7 +75,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     //#region Methods
 
     private refreshRawData = debounce(() => {
-        this._fields.forEach(f => this._data[f.name] = f.rawData)
+        this._fields.forEach(f => this._data[(f.config as IStructFieldConfig).name] = f.rawData)
         this.notify()
     }, 20)
 
@@ -75,7 +91,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     /**
      * Gets the struct field by name
      */
-    getField(name: string) { return this._fields.find(f => f.config.name.toLowerCase() === name.toLowerCase() ) }
+    getField(name: string) { return this._fields.find(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase() ) }
 
     //#endregion
 
@@ -90,8 +106,8 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * @param parent the parent node of the node.
      * @param config the config of the node.
      */
-    constructor(parent: AnySchemaNode, config: ISchemaConfig, data: any) {
-        super(parent, config, {})
+    constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
+        super(config, {}, parent)
         if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
 
         // init fields
@@ -99,20 +115,20 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         {
             const fconf = this._schemaInfo.struct!.fields[i]
             let field: AnySchemaNode | null = null
-            const fschema = getCachedSchema(fconf.type)
+            const fschema = getCachedSchema(fconf.type!)
             switch (fschema?.type)
             {
                 case SchemaType.Scalar:
-                    field = new ScalarNode(this, fconf, data[fconf.name])
+                    field = new ScalarNode(fconf, data[fconf.name], this)
                     break
                 case SchemaType.Enum:
-                    field = new EnumNode(this, fconf, data[fconf.name])
+                    field = new EnumNode(fconf, data[fconf.name], this)
                     break
                 case SchemaType.Struct:
-                    field = new StructNode(this, fconf, data[fconf.name])
+                    field = new StructNode(fconf, data[fconf.name], this)
                     break
                 case SchemaType.Array:
-                    field = new ArrayNode(this, fconf, data[fconf.name])
+                    field = new ArrayNode(fconf, data[fconf.name], this)
                     break
             }
             if (field)

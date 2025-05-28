@@ -6,11 +6,6 @@ import { LocaleString } from "../utils/locale"
 export interface ISchemaConfig
 {
     /**
-     * The name of the node.
-     */
-    name: string
-
-    /**
      * The type name of the node.
      */
     type: string
