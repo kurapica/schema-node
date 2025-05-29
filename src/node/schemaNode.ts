@@ -2,12 +2,13 @@ import { SchemaType } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
-import { deepClone, isEqual, isNull, debounce, generateGuid } from "../utils/toolset"
+import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { prepareRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
 import { Rule } from "../rule/rule"
 import { ArrayNode } from "./arrayNode"
 import { StructNode } from "./structNode"
+import { _LS } from "../utils/locale"
 
 /**
  * The abstract schema node.
@@ -108,6 +109,16 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Gets the display of the node
      */
     get display(): string { return `${this._config.display}` }
+
+    /**
+     * The placeholder for input
+     */
+    get inputPlaceHolder(): string { return sformat(_LS("INPUT_MESSAGE"), this.display) }
+
+    /**
+     * The placeholder for select
+     */
+    get selectPlaceHolder(): string { return sformat(_LS("SELECT_MESSAGE"), this.display) }
 
     /**
      * Gets the description of the node

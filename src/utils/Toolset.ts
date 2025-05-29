@@ -62,7 +62,7 @@ export function debounceby(fn: Function, wait: Function)
  * Check is equal
  */
 export function isEqual(a: any, b: any, t: string | null = null): boolean {
-  if (a === b) return true
+  if (a === b || isNull(a) && isNull(b)) return true
 
   // Array check
   if (Array.isArray(a) || Array.isArray(b))

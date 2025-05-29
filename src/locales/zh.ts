@@ -143,5 +143,11 @@ export default {
     "ERR_ARRAY_DATA_NOT_VALID": "{0}数据无效",
     "ERR_ARRAY_PRIMARY_DUPLICATE": "{0}不能重复",
 
+    "INPUT_MESSAGE": "请输入{0}",
+    "SELECT_MESSAGE": "请选择{0}",
+
+    "YES": "是",
+    "NO": "否"
+
     //#endregion
 }
