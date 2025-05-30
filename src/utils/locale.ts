@@ -1,3 +1,5 @@
+import { DataChangeWatcher } from './dataChangeWatcher'
+
 const locales: any = {
     'en': import('../locales/en'),
     'zh': import('../locales/zh'),
@@ -5,6 +7,7 @@ const locales: any = {
 
 let currentLanguage = navigator.languages.find(l => locales[l]) || 'en'
 let currentLocale = locales[currentLanguage] || locales['en']
+const langWatches = new DataChangeWatcher()
 const missingLocales = new Set()
 const shareLocaleStrings: { [key:string]: LocaleString } = {}
 
@@ -35,9 +38,30 @@ export class LocaleString {
  */
 export function setLanguage(...languages: string[]) 
 {
-    currentLanguage = languages.find(l => locales[l]) || 'en'
+    const newLan = languages.find(l => locales[l]) || 'en'
+    if (currentLanguage === newLan) return
+    currentLanguage = newLan
     currentLocale = locales[currentLanguage]
     missingLocales.clear()
+    langWatches.notify(currentLanguage)
+}
+
+/**
+ * Gets current language
+ */
+export function getLanguage()
+{
+    return currentLanguage
+}
+
+/**
+ * Add language change watcher
+ */
+export function subscribeLanguage(func: Function, immediate?: boolean) : Function
+{
+    const handler = langWatches.addWatcher(func)
+    if (func) func(currentLanguage)
+    return handler
 }
 
 /**

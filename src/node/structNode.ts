@@ -119,16 +119,16 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
             switch (fschema?.type)
             {
                 case SchemaType.Scalar:
-                    field = new ScalarNode(fconf, data[fconf.name], this)
+                    field = new ScalarNode({...fconf, readonly: config.readonly || fconf.readonly}, data[fconf.name], this)
                     break
                 case SchemaType.Enum:
-                    field = new EnumNode(fconf, data[fconf.name], this)
+                    field = new EnumNode({...fconf, readonly: config.readonly || fconf.readonly}, data[fconf.name], this)
                     break
                 case SchemaType.Struct:
-                    field = new StructNode(fconf, data[fconf.name], this)
+                    field = new StructNode({...fconf, readonly: config.readonly || fconf.readonly}, data[fconf.name], this)
                     break
                 case SchemaType.Array:
-                    field = new ArrayNode(fconf, data[fconf.name], this)
+                    field = new ArrayNode({...fconf, readonly: config.readonly || fconf.readonly}, data[fconf.name], this)
                     break
             }
             if (field)

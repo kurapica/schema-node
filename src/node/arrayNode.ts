@@ -264,6 +264,32 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      */
     get enumArrayNode(): EnumNode | undefined { return this._enumArrayNode }
 
+    /**
+     * Gets whether the array node is used as an incr update application field
+     */
+    get isIncrUpdate(): boolean { return this._config.isIncrUpdate || false }
+
+    /**
+     * Gets the total count
+     */
+    get total() { return this.isIncrUpdate ? this._total! : this._elements.length }
+
+    /**
+     * Gets the page count
+     */
+    get pageCount() { return this.isIncrUpdate ? this._pageCount! : this._elements.length }
+
+    /**
+     * Gets the current page
+     */
+    get page() { return this._page || 0 }
+
+    /**
+     * Set the current page
+     * @TODO
+     */
+    set page(page: number) { this._page = page }
+
     //#endregion
 
     //#region Fields
@@ -271,6 +297,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _eleSchemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
     private _elements: AnySchemaNode[] = []
     private _enumArrayNode: EnumNode | undefined
+    private _total: number | undefined
+    private _pageCount: number | undefined
+    private _page: number | undefined
 
     //#endregion
 
@@ -281,6 +310,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
         super(config, [], parent)
+
+        this._total = this._config.total
+        this._pageCount = this._config.pageCount
+        this._page = 0
 
         // element check
         this._eleSchemaInfo = getCachedSchema(this._schemaInfo.array!.element)!

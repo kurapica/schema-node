@@ -75,8 +75,8 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
 
         // limit
-        let uplimit  = !isNull(rule.upLimit)  ? rule.upLimit  : !isNull(config.upLimit)  ? config.upLimit  : scalarInfo?.upLimit 
-        let lowlimit = !isNull(rule.lowLimit) ? rule.lowLimit : !isNull(config.lowLimit) ? config.lowLimit : scalarInfo?.lowLimit
+        const uplimit  = this.upLimit
+        const lowlimit = this.lowLimit
 
         // string
         if (this.isString) {
@@ -132,35 +132,16 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             }
             else 
             {
-                if (!isNull(uplimit))
+                if (!isNull(uplimit)  && uplimit < value)
                 {
-                    if (typeof uplimit === "string")
-                    {
-                        uplimit = new Date(uplimit)
-                        if (isNaN(uplimit.getFullYear()))
-                            uplimit = null
-                    }
-                    if (uplimit instanceof Date && uplimit < value)
-                    {
-                        this._valid = false
-                        this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
-                    }
+                    this._valid = false
+                    this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
                 }
 
-                if (!isNull(lowlimit) && this._valid)
+                if (!isNull(lowlimit) && this._valid && lowlimit > value)
                 {
-
-                    if (typeof lowlimit === "string")
-                    {
-                        lowlimit = new Date(lowlimit)
-                        if (isNaN(lowlimit.getFullYear()))
-                            lowlimit = null
-                    }
-                    if (lowlimit instanceof Date && lowlimit > value)
-                    {
-                        this._valid = false
-                        this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
-                    }
+                    this._valid = false
+                    this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
                 }
             }
         }
@@ -220,6 +201,68 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      * Is year month value
      */
     get isYearMonth(): boolean { return (this._valueType & ScalarValueType.YearMonth) > 0 }
+
+    /**
+     * Gets the uplimit
+     */
+    get upLimit(): any {
+        // limit
+        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schemaInfo.scalar?.upLimit 
+        if (isNull(uplimit)) return null
+
+        // string
+        if (this.isString || this.isYear) {
+            uplimit = parseInt(uplimit)
+            return !isNaN(uplimit) ? uplimit : null
+        }
+        // number
+        else if (this.isNumber) {
+            uplimit = parseFloat(uplimit)
+            return !isNaN(uplimit) ? uplimit : null
+        }
+        // date
+        else if (this.isDate) {
+            if (typeof uplimit === "string")
+            {
+                uplimit = new Date(uplimit)
+                if (isNaN(uplimit.getFullYear()))
+                    uplimit = null
+            }
+
+            return uplimit instanceof Date ? uplimit : null
+        }
+    }
+
+    /**
+     * Gets the lowlimit
+     */
+    get lowLimit(): any {
+        // limit
+        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schemaInfo.scalar?.lowLimit 
+        if (isNull(lowLimit)) return null
+
+        // string
+        if (this.isString || this.isYear) {
+            lowLimit = parseInt(lowLimit)
+            return !isNaN(lowLimit) ? lowLimit : null
+        }
+        // number
+        else if (this.isNumber) {
+            lowLimit = parseFloat(lowLimit)
+            return !isNaN(lowLimit) ? lowLimit : null
+        }
+        // date
+        else if (this.isDate) {
+            if (typeof lowLimit === "string")
+            {
+                lowLimit = new Date(lowLimit)
+                if (isNaN(lowLimit.getFullYear()))
+                    lowLimit = null
+            }
+
+            return lowLimit instanceof Date ? lowLimit : null
+        }
+    }
 
     //#endregion
 

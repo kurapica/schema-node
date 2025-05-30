@@ -1,11 +1,30 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH } from "./schema"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema } from "../schema/nodeSchema"
+
+export const NS_SYSTEM_ARRAY = "system.array"
+export const NS_SYSTEM_STRUCT = "system.struct"
+export const NS_SYSTEM_BOOL = "system.bool"
+export const NS_SYSTEM_DATE = "system.date"
+export const NS_SYSTEM_NUMBER = "system.number"
+export const NS_SYSTEM_DOUBLE = "system.double"
+export const NS_SYSTEM_FLOAT = "system.float"
+export const NS_SYSTEM_FULLDATE = "system.fulldate"
+export const NS_SYSTEM_INT = "system.int"
+export const NS_SYSTEM_STRING = "system.string"
+export const NS_SYSTEM_YEAR = "system.year"
+export const NS_SYSTEM_YEARMONTH = "system.yearmonth"
+export const NS_SYSTEM_RANGEDATE = "system.rangedate"
+export const NS_SYSTEM_RANGEFULLDATE = "system.rangefulldate"
+export const NS_SYSTEM_RANGEMONTH = "system.rangemonth"
+export const NS_SYSTEM_RANGEYEAR = "system.rangeyear"
+export const NS_SYSTEM_STRINGS = "system.strings"
+export const NS_SYSTEM_NUMBERS = "system.numbers"
+export const NS_SYSTEM_INTS = "system.ints"
 
 /**
  * The schema information provider interface
@@ -86,7 +105,7 @@ export function getSchemaProvider(): ISchemaProvider | null {
 export function registerSchema(schemas: INodeSchema[]): void {
     for (const schema of schemas) {
         schemaCache[schema.name.toLowerCase()] = schema
-        if (schema.type === SchemaType.Array)
+        if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
     }
 }

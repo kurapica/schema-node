@@ -27,11 +27,7 @@ export * from './rule/enumRule'
 export * from './rule/structRule'
 export * from './rule/arrayRule'
 
-export * from './ruleSchema/ruleSchema'
-export * from './ruleSchema/scalarRuleSchema'
-export * from './ruleSchema/enumRuleSchema'
-export * from './ruleSchema/structRuleSchema'
-export * from './ruleSchema/arrayRuleSchema'
+export * from './ruleSchema'
 
 export * from './node/schemaNode'
 export * from './node/scalarNode'

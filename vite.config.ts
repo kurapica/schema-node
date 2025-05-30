@@ -6,7 +6,8 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       name: 'SchemaNode',
-      fileName: () => `index.js`,
+      formats: ['es', 'cjs'],
+      fileName: (format) => format === 'cjs' ? `index.js` : `index.${format}.js`,
     },
     rollupOptions: {
       output: {
@@ -17,7 +18,7 @@ export default defineConfig({
     }
   },
   plugins: [dts({
-    outDir: 'dist',         // emit index.d.ts to dist/
-    insertTypesEntry: true     // adds `export * from './index'` to index.d.ts
+    outDir: 'dist',           // emit index.d.ts to dist/
+    insertTypesEntry: true    // adds `export * from './index'` to index.d.ts
   })]
 })

@@ -146,8 +146,16 @@ export default {
     "INPUT_MESSAGE": "请输入{0}",
     "SELECT_MESSAGE": "请选择{0}",
 
+    //#endregion
+
+    //#region Common 
+
     "YES": "是",
-    "NO": "否"
+    "NO": "否",
+
+    "OPER": "操作",
+    "ADD": "添加",
+    "DEL": "删除",
 
     //#endregion
 }

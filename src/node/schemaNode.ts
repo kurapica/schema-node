@@ -4,10 +4,8 @@ import { getCachedSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
-import { prepareRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
+import { prepareRuleSchema, RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
-import { ArrayNode } from "./arrayNode"
-import { StructNode } from "./structNode"
 import { _LS } from "../utils/locale"
 
 /**
