@@ -50,5 +50,40 @@ export interface INodeSchema
     /**
      * The function schema if type is function
      */
-    function?: IFunctionSchema
+    func?: IFunctionSchema
+
+    /**
+     * The sub schemas of of the namespace
+     */
+    schemas?: INodeSchema[]
+
+    /**
+     * The schema info is loaded from server
+     */
+    loadState?: SchemaLoadState
+}
+
+/**
+ * The schema load state
+ */
+export enum SchemaLoadState {
+    /**
+     * system defined
+     */
+    System = 8,
+
+    /**
+     * Register by frontend
+     */
+    Frontend = 4,
+
+    /**
+     * Custom defined
+     */
+    Custom = 2,
+
+    /**
+     * Loaded from server
+     */
+    Server = 1,
 }

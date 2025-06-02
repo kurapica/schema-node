@@ -1,7 +1,7 @@
 import { EnumValueType } from '../enum/enumValueType'
 import { SchemaType } from '../enum/schemaType'
 import { IEnumConfig } from '../config/enumConfig'
-import { AnySchemaNode, SchemaNode } from './schemaNode'
+import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
@@ -12,6 +12,7 @@ import { EnumRule } from '../rule/enumRule'
 /**
  * The enum schema data node
  */
+@regSchemaNode(SchemaType.Enum)
 export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     //#region Implementation
 
@@ -177,7 +178,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex(b => `${a.value}` === `${b}`) >= 0) >= 0) return false
 
         // check the white list - the sub enum value of the allowed enum value also allowed, also their parent if any level
-        if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex(b => `${a.value}` === `${b}`) < 0) < 0)
+        if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex(b => `${a.value}` === `${b}`) >= 0) < 0)
         {
             if (!this.anyLevel || this.cascadeLevel === 1) return false
             for(let i = 0; i < this.whiteList.length; i++)

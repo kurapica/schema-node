@@ -1,12 +1,13 @@
 import { SchemaType } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
-import { getCachedSchema } from "../utils/schemaProvider"
+import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
-import { prepareRuleSchema, RuleSchema } from "../ruleSchema"
+import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { _LS } from "../utils/locale"
+import { getRuleSchemaType } from "../ruleSchema/ruleSchema"
 
 /**
  * The abstract schema node.
@@ -111,12 +112,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The placeholder for input
      */
-    get inputPlaceHolder(): string { return sformat(_LS("INPUT_MESSAGE"), this.display) }
+    get inputPlaceHolder(): string { return sformat(_LS("PLACEHOLDER_INPUT"), this.display) }
 
     /**
      * The placeholder for select
      */
-    get selectPlaceHolder(): string { return sformat(_LS("SELECT_MESSAGE"), this.display) }
+    get selectPlaceHolder(): string { return sformat(_LS("PLACEHOLDER_SELECT"), this.display) }
 
     /**
      * Gets the description of the node
@@ -277,7 +278,8 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
         this._rule = {} as any as TR
-        this._ruleSchema = prepareRuleSchema(this, parent) as any as TRS
+        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? new (getRuleSchemaType(this.schemaInfo.type))!(this.schemaInfo)) as any as TRS
+        this._ruleSchema.initNode(this)
     }
 }
 
@@ -285,3 +287,39 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
  * Any schema node
  */
 export type AnySchemaNode = SchemaNode<ISchemaConfig, RuleSchema, Rule>
+
+
+//#region decorator
+
+const schemaNodeMap: Record<string, new (config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined) => AnySchemaNode> = {}
+
+/**
+ * Register a document element
+ */
+export function regSchemaNode(type: SchemaType) {
+    return function <T extends new (config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined) => AnySchemaNode>(constructor: T) {
+      schemaNodeMap[type] = constructor
+    }
+}
+
+/**
+ * Gets a ruleschema type by schema type
+ */
+export function getSchemaNodeType(type: SchemaType)
+{
+    return schemaNodeMap[type]
+}
+
+/**
+ * Gets the schema node with config
+ */
+export async function getSchemaNode(config: ISchemaConfig, data: any) {
+    const schemaInfo = await getSchema(config.type)
+    if (!schemaInfo) return undefined
+
+    let schemaType = getSchemaNodeType(schemaInfo.type)
+    if (!schemaType) return undefined
+    return new schemaType(config, data, undefined)
+}
+
+//#endregion

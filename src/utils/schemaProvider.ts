@@ -4,7 +4,7 @@ import { SchemaType } from "../enum/schemaType"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
-import { INodeSchema } from "../schema/nodeSchema"
+import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 
 export const NS_SYSTEM_ARRAY = "system.array"
 export const NS_SYSTEM_STRUCT = "system.struct"
@@ -13,6 +13,7 @@ export const NS_SYSTEM_DATE = "system.date"
 export const NS_SYSTEM_NUMBER = "system.number"
 export const NS_SYSTEM_DOUBLE = "system.double"
 export const NS_SYSTEM_FLOAT = "system.float"
+export const NS_SYSTEM_PERCENT = "system.percent"
 export const NS_SYSTEM_FULLDATE = "system.fulldate"
 export const NS_SYSTEM_INT = "system.int"
 export const NS_SYSTEM_STRING = "system.string"
@@ -43,6 +44,13 @@ export const NS_SYSTEM_INTS = "system.ints"
  */
 export interface ISchemaProvider {
     /**
+     * Load the schema information
+     * @param schemaName The name of the schema
+     * @returns The schema information
+     */
+    loadSchema(schemaName: string): Promise<INodeSchema>
+
+    /**
      * Call the function schema from the server with the arguments and type, gets the result
      * @param schemaName The name of the function schema
      * @param args The arguments of the function
@@ -50,13 +58,6 @@ export interface ISchemaProvider {
      * @returns The schema information
      */
     callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
-
-    /**
-     * Load the schema information
-     * @param schemaName The name of the schema
-     * @returns The schema information
-     */
-    loadSchema(schemaName: string): Promise<INodeSchema>
 
     /**
      * Load the enum value sub list from the server
@@ -102,9 +103,21 @@ export function getSchemaProvider(): ISchemaProvider | null {
  * Register the frontend schemas
  * @param schemas The schemas to be registered
  */
-export function registerSchema(schemas: INodeSchema[]): void {
+export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Server): void {
     for (const schema of schemas) {
-        schemaCache[schema.name.toLowerCase()] = schema
+        const name = schema.name.toLowerCase()
+        const exist = schemaCache[name]
+        if (exist)
+        {
+            if ((exist.loadState || 0) <= loadState)
+            {
+                
+            }
+        }
+        if ((schemaCache[name]?.loadState || 0) > loadState) continue
+
+        schemaCache[name] = schema
+        schema.loadState = loadState
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
     }
@@ -127,11 +140,13 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         name = Array.isArray(generic) ? generic[index] : generic
     }
 
+    let schema = schemaCache[name]
+
     if (schemaCache[name]) return schemaCache[name]
-    if (!schemaProvider) throw new Error("Schema provider not provided")
+    if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
-    const schema = await schemaProvider.loadSchema(name)
+    schema = await schemaProvider.loadSchema(name)
     registerSchema([schema])
     return schema
 }
@@ -396,7 +411,7 @@ export async function getScalarValueType(type: string):Promise<ScalarValueType> 
 
 //#endregion
 
-//#region  enum access
+//#region enum access
 
 /**
  * Gets the enum sublist by given value
@@ -546,7 +561,7 @@ const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], 
 export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any> {
     const schema = await getSchema(schemaName)
     if (!schema || schema.type !== SchemaType.Function) throw Error(`${schemaName} is not a function schema`)
-    const funcInfo = schema.function!
+    const funcInfo = schema.func!
 
     // Pre-check the function arguments
     for (let i = 0; i < funcInfo.args.length; i++) {
@@ -663,15 +678,15 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     const exps: Expression[] = []
     for (let i = 0; i < funcInfo.exps.length; i++) {
         const fexp = funcInfo.exps[i]
-        const retSchema = await getSchema(fexp.type) // every expression must have a result type
+        const retSchema = await getSchema(fexp.return) // every expression must have a result type
         exptypes[fexp.name] = retSchema!
 
         // get the call func
-        const cfinfo = await getSchema(fexp.callFunc)
-        if (!cfinfo || !cfinfo.function || serverCallOnly.has(cfinfo.name) || (cfinfo.function.server && schemaProvider)) return false
+        const cfinfo = await getSchema(fexp.func)
+        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && schemaProvider)) return false
 
         // try buil the call func
-        const cfuncInfo = cfinfo.function
+        const cfuncInfo = cfinfo.func
         if (!cfuncInfo.func && !await buildFunction(cfuncInfo)) {
             serverCallOnly.add(cfinfo.name)
             return false
@@ -679,13 +694,13 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
 
         // array index
         let arrayIndex: number = -1
-        if (fexp.callType !== ExpressionType.Call) {
+        if (fexp.type !== ExpressionType.Call) {
             // generic type check
             const generic = cfuncInfo.generic ? Array.isArray(cfuncInfo.generic) ? [...cfuncInfo.generic] : [cfuncInfo.generic] : []
 
             // use exp type if the ret type is generic
-            if (/^[tT]\d*$/.test(cfuncInfo.retType)) {
-                const gidx = cfuncInfo.retType.length > 1 ? parseInt(cfuncInfo.retType.substring(1)) - 1 : 0
+            if (/^[tT]\d*$/.test(cfuncInfo.return)) {
+                const gidx = cfuncInfo.return.length > 1 ? parseInt(cfuncInfo.return.substring(1)) - 1 : 0
                 if (retSchema) generic[gidx] = retSchema.name
             }
 
@@ -712,19 +727,19 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         // prepare
         exps.push({
             name: fexp.name,
-            type: fexp.callType,
+            type: fexp.type,
             func: cfuncInfo.func!,
             args: fexp.args?.map((f, i) => ({ ...f, require: !(cfuncInfo.args.length > i && cfuncInfo.args[i]?.nullable) })),
-            retType: retSchema!,
+            return: retSchema!,
             arrIndex: arrayIndex
         })
     }
 
     // check the return type if the func works as struct constructor
     let objFields: string[] = []
-    if (funcInfo.retType) {
-        const retSchema = await getSchema(funcInfo.retType, funcInfo.generic)
-        if (retSchema?.type === SchemaType.Struct && !isSchemaCanBeUseAs(exps[exps.length - 1].retType.name, retSchema.name)) {
+    if (funcInfo.return) {
+        const retSchema = await getSchema(funcInfo.return, funcInfo.generic)
+        if (retSchema?.type === SchemaType.Struct && !isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name)) {
             objFields = retSchema.struct!.fields.map(f => f.name)
         }
     }
@@ -973,7 +988,7 @@ interface Expression {
     /**
      * The return type
      */
-    retType: INodeSchema
+    return: INodeSchema
 
     /**
      * The array index

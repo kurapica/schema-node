@@ -260,6 +260,7 @@ export function deepClone(value: any): any
   }
   else if (typeof (value) === "object")
   {
+    if (value instanceof Date) return value
     const ret:any = {}
     for (var k in value)
     {

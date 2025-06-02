@@ -8,7 +8,7 @@ export interface IFunctionSchema
   /**
    * The return type of the function, T T1 T2 means the generic type
    */
-  retType: string
+  return: string
 
   /**
    * The function arguments
@@ -75,17 +75,17 @@ export interface IFunctionExpression {
   /**
    * The call function
   */
-  callFunc: string
+  func: string
 
   /**
    * The calling type
    */
-  callType: ExpressionType
+  type: ExpressionType
 
   /**
    * The expression type
   */
-  type: string
+  return: string
 
   /**
    * The argument list, should be exp name or argument name.

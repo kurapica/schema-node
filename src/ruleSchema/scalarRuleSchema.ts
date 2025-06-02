@@ -1,8 +1,12 @@
+import { splitVendorChunkPlugin } from "vite"
 import { IScalarConfig } from "../config/scalarConfig"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { ScalarNode } from "../node/scalarNode"
-import { RuleSchema } from "./ruleSchema"
+import { regRuleSchema, RuleSchema } from "./ruleSchema"
+import { INodeSchema } from "../schema/nodeSchema"
+import { SchemaType } from "../enum/schemaType"
 
+@regRuleSchema(SchemaType.Scalar)
 export class ScalarRuleSchema extends RuleSchema
 {
     /**
@@ -61,5 +65,12 @@ export class ScalarRuleSchema extends RuleSchema
         this.upLimit = config.upLimit
         this.asSuggest = config.asSuggest
         this.useOriginForUplimit = config.useOriginForUplimit
+    }
+
+    constructor(schema: INodeSchema)
+    {
+        super(schema)
+        this.lowLimit = schema.scalar?.lowLimit
+        this.upLimit = schema.scalar?.upLimit
     }
 }

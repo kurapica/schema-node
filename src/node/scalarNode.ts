@@ -1,6 +1,6 @@
 import { SchemaType } from '../enum/schemaType'
 import { IScalarConfig } from '../config/scalarConfig'
-import { AnySchemaNode, SchemaNode } from './schemaNode'
+import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
@@ -11,6 +11,7 @@ import { ScalarRule } from '../rule/scalarRule'
 /**
  * The scalar schema data node
  */
+@regSchemaNode(SchemaType.Scalar)
 export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, ScalarRule> {
     //#region Implementation
 

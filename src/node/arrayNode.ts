@@ -5,7 +5,7 @@ import { ISchemaConfig } from '../config/schemaConfig'
 import { INodeSchema } from '../schema/nodeSchema'
 import { getCachedSchema, validateSchemaValue } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { AnySchemaNode, SchemaNode } from './schemaNode'
+import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
@@ -16,6 +16,7 @@ import { ArrayRule } from '../rule/arrayRule'
 /**
  * The array schema data node
  */
+@regSchemaNode(SchemaType.Array)
 export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRule> {
     //#region Implementation
 
@@ -65,7 +66,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         {
             // assign
             for(let i = 0; i < Math.min(this._elements.length, data.length); i++)
+            {
                 this._elements[i].data = data[i]
+                this._data[i] = this.elements[i].rawData
+            }
 
             // destory
             for (let i = this._elements.length - 1; i > data.length; i--)
@@ -75,11 +79,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             for (let i = this._elements.length; i < data.length; i++)
             {
                 const eleNode = this.newElement(data[i])
-                if (eleNode)
-                {
-                    this._elements.push(eleNode)
-                    if (this._rule._actived) eleNode.activeRule()
-                }
+                this._elements.push(eleNode)
+                this._data[i] = eleNode.rawData
+                if (this._rule._actived) eleNode.activeRule()
             }
         }
     }
@@ -202,13 +204,13 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         switch (this._eleSchemaInfo.type)
         {
             case SchemaType.Scalar:
-                eleNode = new ScalarNode({...this._config, require: false }, data, this)
+                eleNode = new ScalarNode({...this._config, type: this._eleSchemaInfo.name, require: false }, data, this)
                 break
             case SchemaType.Enum:
-                eleNode = new EnumNode({ ...this._config, require: false }, data, this)
+                eleNode = new EnumNode({ ...this._config, type: this._eleSchemaInfo.name, require: false }, data, this)
                 break
             case SchemaType.Struct:
-                eleNode = new StructNode({ ...this._config, require: false }, data, this)
+                eleNode = new StructNode({ ...this._config, type: this._eleSchemaInfo.name, require: false }, data, this)
                 break
         }
         eleNode?.subscribe(this.refreshRawData)
@@ -226,6 +228,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         {
             this._elements.splice(index!, 0, newEle)
             newEle.activeRule(true)
+            this.notify(this.elements.length)
         }
     }
 
@@ -238,6 +241,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (this._enumArrayNode || this.asSingleValue || start < 0 || start >= this._elements.length) return
         const remove = this._elements.splice(start, count)
         remove.forEach(r => r.dispose())
+        this.notify(this.elements.length)
     }
 
     //#endregion
@@ -309,7 +313,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * @param config the config of the node.
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
-        super(config, [], parent)
+        super(config, null, parent)
+        if (isNull(data) || !Array.isArray(data)) data = []
+
+        // init the raw data
+        this._data = data
 
         this._total = this._config.total
         this._pageCount = this._config.pageCount
@@ -321,16 +329,13 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         {
             this._enumArrayNode = new EnumNode({
                 ...config,
+                type: this._eleSchemaInfo.name,
                 multiple: true,
             } as IEnumConfig, data, this)
             this._enumArrayNode.subscribe(this.notify)
             this._enumArrayNode.subscribeState(this.notifyState)
         }
-        else if (this.schemaInfo.array?.single)
-        {
-            this._data = data
-        }
-        else
+        else if (!this.schemaInfo.array?.single)
         {
             // assign data and init elements
             this.data = data

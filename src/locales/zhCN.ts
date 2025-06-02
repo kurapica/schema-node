@@ -1,5 +1,7 @@
 export default {
 
+    "language": "中",
+
     //#region Namespace
 
     // system
@@ -17,6 +19,7 @@ export default {
     "system.double.error": "必须是双精度浮点数。",
     "system.float": "浮点数",
     "system.float.error": "请输入正确内容，仅限数字",
+    "system.percent": "百分比",
     "system.fulldate": "年月日时分秒",
     "system.fulldate.error": "请输入正确的时间",
     "system.int": "整数",
@@ -38,8 +41,11 @@ export default {
     "system.strings": "字符串列表类型",
     "system.numbers": "数值用数组",
     "system.ints": "整型数组",
-    "system.default": "缺省",
-    "system.null": "空值",
+
+    // system.conv
+    "system.conv": "数值转换",    
+    "system.conv.default": "缺省",
+    "system.conv.null": "空值",
 
     // system.str
     "system.str": "字符串运算",
@@ -105,12 +111,21 @@ export default {
     "system.datetime.addhours": "增加指定小时返回新日期",
     "system.datetime.addminutes": "增加指定分钟返回新日期",
     "system.datetime.addseconds": "增加指定秒返回新日期",
+    "system.datetime.getyears": "获取间隔年份",
+    "system.datetime.getmonths": "获取间隔月份",
+    "system.datetime.getdays": "获取间隔天数",
     
     // system.collection
+    "system.collection.arrlen": "获取数组长度",
     "system.collection.newstruct": "新建结构体",
     "system.collection.getfield": "获取字段",
     "system.collection.setfield": "写入字段返回新结构体",
     "system.collection.delfield": "删除字段返回新结构体",
+    "system.collection.getfields": "从数组各个元素获取字段构成新数组",
+    "system.collection.sum": "对数组进行合计",
+    "system.collection.sumfields": "对数组各个元素的指定字段进行合计",
+    "system.collection.average": "对数组求平均值",
+    "system.collection.averagefields": "对数组的各个元素的指定字段求平均值",
 
     // system.logic
     "system.logic": "逻辑操作",
@@ -143,8 +158,8 @@ export default {
     "ERR_ARRAY_DATA_NOT_VALID": "{0}数据无效",
     "ERR_ARRAY_PRIMARY_DUPLICATE": "{0}不能重复",
 
-    "INPUT_MESSAGE": "请输入{0}",
-    "SELECT_MESSAGE": "请选择{0}",
+    "PLACEHOLDER_INPUT": "请输入{0}",
+    "PLACEHOLDER_SELECT": "请选择{0}",
 
     //#endregion
 

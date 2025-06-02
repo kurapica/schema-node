@@ -1,5 +1,12 @@
-import { RuleSchema } from "./ruleSchema"
+import { SchemaType } from "../enum/schemaType"
+import { ArrayNode } from "../node/arrayNode"
+import { AnySchemaNode } from "../node/schemaNode"
+import { INodeSchema } from "../schema/nodeSchema"
+import { getCachedSchema } from "../utils/schemaProvider"
+import { getRuleSchemaType, regRuleSchema, RuleSchema } from "./ruleSchema"
+import { StructRuleSchema } from "./structRuleSchema"
 
+@regRuleSchema(SchemaType.Array)
 export class ArrayRuleSchema extends RuleSchema
 {
     /**
@@ -8,10 +15,44 @@ export class ArrayRuleSchema extends RuleSchema
     element: RuleSchema
 
     /**
+     * Active the rule schema for node
+     */
+    override active(node: ArrayNode, init?: boolean) {
+        if (node.enumArrayNode) {
+            node.enumArrayNode.activeRule(init)
+        }
+        else {
+            node.elements.forEach(e => e.activeRule(init))
+        }
+
+        return super.active(node, init)
+    }
+
+    /**
+     * Gets the child rule schema
+     */
+    override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
+    {
+        return this.element
+    }
+    
+    /**
      * The constructor
      */
-    constructor(ele: RuleSchema){
-        super()
-        this.element = ele
+    constructor(schema: INodeSchema){
+        super(schema)
+        
+        // The array and element share the rule schema
+        const elementInfo = getCachedSchema(schema.array!.element)!
+        const eleRuleSchema = new (getRuleSchemaType(elementInfo.type)!)(elementInfo)
+        eleRuleSchema.isArrayElement = true
+        this.element = eleRuleSchema
+
+        // Register relations of the array
+        if (eleRuleSchema instanceof StructRuleSchema && schema.array?.relations?.length) {
+            for (let i = 0; i < schema.array.relations.length; i++) {
+                eleRuleSchema.regRelation(schema.array.relations[i])
+            }
+        }
     }
 }

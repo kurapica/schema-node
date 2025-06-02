@@ -1,7 +1,9 @@
 import { IEnumConfig } from "../config/enumConfig"
+import { SchemaType } from "../enum/schemaType"
 import { EnumNode } from "../node/enumNode"
-import { RuleSchema } from "./ruleSchema"
+import { regRuleSchema, RuleSchema } from "./ruleSchema"
 
+@regRuleSchema(SchemaType.Enum)
 export class EnumRulechema extends RuleSchema
 {
     /**

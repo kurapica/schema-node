@@ -59,10 +59,10 @@ export interface IStructFieldRelation
   /**
    * The func arguments
   */
-  funcArgs: IFunctionCallArgument[]
+  args: IFunctionCallArgument[]
 
   /**
    * The realtion type
   */
-  relationType: RelationType
+  type: RelationType
 }

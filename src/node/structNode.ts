@@ -1,5 +1,5 @@
 import { SchemaType } from '../enum/schemaType'
-import { AnySchemaNode, SchemaNode } from './schemaNode'
+import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
@@ -14,6 +14,7 @@ import { IStructFieldConfig } from '../schema/structSchema'
 /**
  * The struct schema data node
  */
+@regSchemaNode(SchemaType.Struct)
 export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructRule> {
     //#region Implementation
 
@@ -107,8 +108,9 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * @param config the config of the node.
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
-        super(config, {}, parent)
-        if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
+        if (isNull(data) || Array.isArray(data) || typeof data !== "object") 
+            data = {}
+        super(config, data, parent)
 
         // init fields
         for(let i = 0; i < this._schemaInfo.struct!.fields.length; i++)
@@ -137,5 +139,6 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
                 field.subscribe(this.refreshRawData)
             }
         }
+        this.refreshRawData()
     }
 }

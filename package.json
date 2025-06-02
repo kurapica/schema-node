@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite build --watch"
   },
   "keywords": [
     "typescript",

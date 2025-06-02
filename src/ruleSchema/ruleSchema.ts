@@ -6,6 +6,7 @@ import { EnumNode } from "../node/enumNode"
 import { ScalarNode } from "../node/scalarNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
+import { INodeSchema } from "../schema/nodeSchema"
 import { IStructFieldConfig } from "../schema/structSchema"
 import { NS_SYSTEM_BOOL } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
@@ -50,18 +51,6 @@ export class RuleSchema {
      * Active the rule schema for node
      */
     active(node: AnySchemaNode, init?: boolean) {
-        if (node instanceof ArrayNode) {
-            if (node.enumArrayNode) {
-                node.activeRule(init)
-            }
-            else {
-                node.elements.forEach(e => e.activeRule(init))
-            }
-        }
-        else if (node instanceof StructNode) {
-            node.fields.forEach(f => f.activeRule(init))
-        }
-
         // active once
         if (node.rule._actived) return
         node.rule._actived = true
@@ -87,8 +76,46 @@ export class RuleSchema {
         this.default = config.default
         this.invisible = config.invisible
     }
+
+    /**
+     * Gets the child rule schema
+     */
+    getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
+    {
+        return null
+    }
+
+    /**
+     * construct from schema
+     */
+    constructor(schema: INodeSchema) {
+    }
 }
 
+//#region decorator
+
+const ruleSchemaMap: Record<string, new (schema: INodeSchema) => RuleSchema> = {}
+
+/**
+ * Register a document element
+ */
+export function regRuleSchema(type: SchemaType) {
+    return function <T extends new (schema: INodeSchema) => RuleSchema>(constructor: T) {
+      ruleSchemaMap[type] = constructor
+    }
+}
+
+/**
+ * Gets a ruleschema type by schema type
+ */
+export function getRuleSchemaType(type: SchemaType)
+{
+    return ruleSchemaMap[type]
+}
+
+//#endregion
+
+//#region helper
 
 /**
  * active
@@ -210,6 +237,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.rule.default = res
                     if (!isNull(res) && (isNull(node.data) || isEqual(node.data, prev)))
                         node.data = res
+                    node.notifyState()
                 }
             }
             break
@@ -226,7 +254,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.lowLimit = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             break
@@ -236,7 +264,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.upLimit = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             break
@@ -246,7 +274,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.root = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             break
@@ -256,7 +284,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.blackList = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             break
@@ -267,14 +295,14 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             else if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
                     node.rule.whiteList = res
-                    node.validation()
+                    node.validation().finally(() => node.notifyState())
                 }
             }
             break
@@ -333,6 +361,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
     // process
     push()
 }
+
+//#endregion
+
+//#region type
 
 /**
  * The push schema
@@ -393,3 +425,5 @@ export interface ISchemaNodePushArg {
      */
     value?: any
 }
+
+//#endregion
