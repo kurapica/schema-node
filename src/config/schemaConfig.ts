@@ -21,9 +21,9 @@ export interface ISchemaConfig
     desc?: string | LocaleString
 
     /**
-     * The node data is readonly.
+     * The node data is required.
      */
-    readonly?: boolean
+    require?: boolean
 
     /**
      * The node data is immutable, unchangable if inited.
@@ -31,9 +31,9 @@ export interface ISchemaConfig
     immutable?: boolean
 
     /**
-     * The node data is required.
+     * The node data is readonly.
      */
-    require?: boolean
+    readonly?: boolean
 
     /**
      * The node should be invisible.

@@ -194,7 +194,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Subscribe a data change handler
      *
      * @param func the change handler
-     * @param state true means watch the state like invisible, otherwise the data change
+     * @param immediate whether to call the handler immediately
      */
     subscribe(func: Function, immediate?: boolean): Function {
         const result = this._watchter.addWatcher(func) 

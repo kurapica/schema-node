@@ -116,6 +116,7 @@ export default {
     "system.datetime.getdays": "获取间隔天数",
     
     // system.collection
+    "system.collection": "集合操作",
     "system.collection.arrlen": "获取数组长度",
     "system.collection.newstruct": "新建结构体",
     "system.collection.getfield": "获取字段",

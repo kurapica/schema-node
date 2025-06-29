@@ -219,6 +219,16 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
         super(config, data, parent)
+
+        // fix data
+        if (Array.isArray(this._data)) {
+            for(let i = 0; i < this._data.length; i++) {
+                this._data[i] = this.parseEnumValue(this._data[i])
+            }
+        }
+        else if (!isNull(this._data)) {
+            this._data = this.parseEnumValue(this._data)
+        }
     }
 }
 

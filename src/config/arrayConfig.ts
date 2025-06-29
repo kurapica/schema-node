@@ -4,6 +4,7 @@ export interface IArrayConfig extends ISchemaConfig
 {
     /**
      * The array data is increase update
+     * only usable in application
      */
     isIncrUpdate?: boolean
 

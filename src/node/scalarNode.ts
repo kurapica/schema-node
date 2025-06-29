@@ -265,6 +265,16 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
     }
 
+    /**
+     * Gets the enum white list
+     */
+    get whiteList() { return this.rule.whiteList || this._config.whiteList }
+
+    /**
+     * Gets the black list
+     */
+    get blackList() { return this.rule.blackList || this._config.blackList }
+    
     //#endregion
 
     //#region Fields

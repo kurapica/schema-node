@@ -5,6 +5,9 @@ import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
+import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
+
+export const NS_SYSTEM = "system"
 
 export const NS_SYSTEM_ARRAY = "system.array"
 export const NS_SYSTEM_STRUCT = "system.struct"
@@ -80,8 +83,26 @@ export interface ISchemaProvider {
 
 let schemaProvider: ISchemaProvider | null = null
 const schemaCache: { [key: string]: INodeSchema } = {}
+const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
 const arraySchemaMap: { [key: string]: INodeSchema } = {}
 const serverCallOnly: Set<string> = new Set()
+
+// Add sub schema
+function addSchema(root: INodeSchema, schema: INodeSchema)
+{
+    root.schemas = root.schemas || []
+    root.schemas.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)
+    
+    const name = schema.name.toLowerCase()
+    for (let j = 0; j < root.schemas.length; j++)
+    {
+        if (name < root.schemas[j].name.toLowerCase())
+        {
+            root.schemas.splice(j, 0, schema)
+            return
+        }
+    }
+}
 
 /**
  * Sets the schema provider
@@ -103,23 +124,91 @@ export function getSchemaProvider(): ISchemaProvider | null {
  * Register the frontend schemas
  * @param schemas The schemas to be registered
  */
-export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Server): void {
+export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
         const exist = schemaCache[name]
+
+        // combine
         if (exist)
         {
-            if ((exist.loadState || 0) <= loadState)
-            {
-                
-            }
-        }
-        if ((schemaCache[name]?.loadState || 0) > loadState) continue
+            if (exist.type !== schema.type) continue
 
+            exist.desc = schema.desc || exist.desc
+            if (schema.type === SchemaType.Namespace)
+            {
+                exist.loadState = (exist.loadState || 0) | loadState
+            }
+            else
+            {
+                if ((exist.loadState || 0) >= loadState) continue
+                exist.loadState = loadState
+            }
+
+            
+            switch(exist.type)
+            {
+                case SchemaType.Namespace:
+                    if (schema.schemas)
+                        registerSchema(schema.schemas, loadState)
+                    break
+                
+                case SchemaType.Enum:
+                    exist.enum = schema.enum
+                    break
+
+                case SchemaType.Scalar:
+                    exist.scalar = schema.scalar
+                    break
+
+                case SchemaType.Struct:
+                    exist.struct = schema.struct
+                    break
+
+                case SchemaType.Array:
+                    exist.array = schema.array
+                    break
+
+                case SchemaType.Function:
+                    exist.func = schema.func
+                    break
+            }
+
+            continue
+        }
+
+        // root namespace
+        const paths = name.split(".").filter(n => !isNull(n))
+        let root: INodeSchema = rootSchema
+        for (let i = 0; i < paths.length - 1; i++)
+        {
+            const p = paths.splice(0, i + 1).join(".")
+            let ns = schemaCache[p]
+            if (!ns)
+            {
+                ns = {
+                    name: p,
+                    type: SchemaType.Namespace,
+                    schemas: [],
+                    loadState: loadState
+                }
+                schemaCache[p] = ns
+                if(root) addSchema(root, ns)
+            }
+            root = ns
+            if (root.type !== SchemaType.Namespace) continue
+        }
+        
         schemaCache[name] = schema
+
+        // append to the namespace
+        addSchema(root, schema)
         schema.loadState = loadState
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
+
+        if (schema.type === SchemaType.Namespace && schema.schemas)
+            registerSchema(schema.schemas, loadState)
     }
 }
 
@@ -140,14 +229,21 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         name = Array.isArray(generic) ? generic[index] : generic
     }
 
-    let schema = schemaCache[name]
-
-    if (schemaCache[name]) return schemaCache[name]
+    let schema = !name ? rootSchema : schemaCache[name]
+    if (schema?.type === SchemaType.Namespace)
+    {
+        if (((schema.loadState || 0) & SchemaLoadState.Server) === SchemaLoadState.Server || !schemaProvider)
+            return schema
+    }
+    else if(schema)
+    {
+        return schema
+    }
     if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
     schema = await schemaProvider.loadSchema(name)
-    registerSchema([schema])
+    registerSchema([schema], SchemaLoadState.Server)
     return schema
 }
 
@@ -157,7 +253,8 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
  * @returns The schema info
  */
 export function getCachedSchema(name: string): INodeSchema | undefined {
-    return schemaCache[name.toLowerCase()]
+    name = name.toLowerCase()
+    return !name ? rootSchema : schemaCache[name]
 }
 
 /**
@@ -357,6 +454,42 @@ export async function validateSchemaValue(name: string, value: any): Promise<boo
     return true
 }
 
+/**
+ * Whether the struct field can be used as index
+ * @param config The struct field config
+ */
+export async function isStructFieldIndexable(config: IStructFieldConfig)
+{
+    let schema = await getSchema(config.type)
+    if (!schema) return false
+    switch (schema.type) {
+        case SchemaType.Scalar:
+            const valueType = await getScalarValueType(schema.name)
+            if (!valueType) return false
+            if (valueType & ScalarValueType.String) 
+            {
+                let uplimit = (config as IStructScalarFieldConfig).upLimit
+                if (!isNull(uplimit) && uplimit <= 128) return true
+
+                while (schema && schema.name !== NS_SYSTEM_STRING)
+                {
+                    uplimit = schema.scalar?.upLimit
+                    if (!isNull(uplimit) && uplimit <= 128) return true
+                    schema = schema.scalar?.base
+                        ? await getSchema(schema.scalar.base)
+                        : null
+                }
+
+                return false
+            }
+            return (valueType & INDEX_VALUE_TYPE) !== 0
+        case SchemaType.Enum:
+            return true
+        default:
+            return false
+    }
+}
+
 //#endregion
 
 //#region scalar
@@ -427,6 +560,10 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     if (isNull(value))
     {
         if (schema.enum.values && schema.enum.values.length) return schema.enum.values
+        
+        // check load state
+        if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
+
         if (!schemaProvider) throw new Error("Schema provider not provided")
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
         schema.enum.values = einfos
@@ -439,6 +576,10 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
         if (!einfo.hasSubList) return []
         if (einfo.subList && einfo.subList.length) return einfo.subList
     }
+    
+    // check load state
+    if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
+
     if (!schemaProvider) throw new Error("Schema provider not provided")
     if (einfo)
     {
@@ -502,6 +643,9 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
             subList: (i == 0 ? schema.enum?.values : search[i - 1].subList) || []
         }))
     }
+
+    // check load state
+    if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
     // query
     if (!schemaProvider) throw new Error("Schema provider not provided")
@@ -963,6 +1107,13 @@ export enum ScalarValueType {
     FullDate = 64,
     YearMonth = 128,
 }
+
+const INDEX_VALUE_TYPE = ScalarValueType.Integer | 
+    ScalarValueType.Boolean | 
+    ScalarValueType.Date |
+    ScalarValueType.Year |
+    ScalarValueType.FullDate |
+    ScalarValueType.YearMonth
 
 interface Expression {
     /**

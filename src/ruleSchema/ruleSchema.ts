@@ -8,7 +8,7 @@ import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { IStructFieldConfig } from "../schema/structSchema"
-import { NS_SYSTEM_BOOL } from "../utils/schemaProvider"
+import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { debounce, isEqual, isNull } from "../utils/toolset"
 
@@ -21,7 +21,6 @@ export const ARRAY_ITSELF = "$array"
  * The rule schema for schema node
  */
 export class RuleSchema {
-
     /**
      * The default value
      */
@@ -64,6 +63,7 @@ export class RuleSchema {
      */
     initNode(node: AnySchemaNode) {
         const rule = node.rule
+        rule.type = node.schemaName
         rule.default = this.default
         rule.invisible = this.invisible
         rule.disable = this.disable
@@ -196,6 +196,22 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
     switch (pushSchema.type)
     {
+        case RelationType.Type:
+            type = NS_SYSTEM_STRING
+            if (node.parent instanceof StructNode)
+            {
+                handler = (res: any) => {
+                    if (!isNull(res) && res.toLowerCase() !== node.rule.type.toLowerCase())
+                    {
+                        getSchema(res).then(schema => {
+                            // replace the node
+                            (node.parent as StructNode).rebuildField((node.config as IStructFieldConfig).name, schema.name)
+                        })
+                    }
+                }
+            }
+            break
+
         case RelationType.Invisible:
             type = NS_SYSTEM_BOOL
             handler = (res: any) => {
@@ -279,7 +295,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.EnumBlackList:
+        case RelationType.BlackList:
             if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -289,7 +305,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.EnumWhiteList:
+        case RelationType.WhiteList:
 
             if (node instanceof ScalarNode)
             {

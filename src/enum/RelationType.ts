@@ -1,6 +1,11 @@
 export enum RelationType
 {
   /**
+   * The node type, only works for struct field
+   */
+  Type = "type",
+
+  /**
    * Invisible
    */
   Invisible = "invisible",
@@ -43,10 +48,10 @@ export enum RelationType
   /**
    * Enum blacklist
    */
-  EnumBlackList = "enumBlackList",
+  BlackList = "blackList",
 
   /**
    * Enum whitelist
    */
-  EnumWhiteList = "enumWhiteList",
+  WhiteList = "whiteList",
 }

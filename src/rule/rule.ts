@@ -1,5 +1,10 @@
 export abstract class Rule {
- /**
+    /**
+     * The node type
+     */
+    type: string
+    
+    /**
      * The default value
      */
     default?: any

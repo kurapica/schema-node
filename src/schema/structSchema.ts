@@ -3,8 +3,6 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { IFunctionCallArgument } from "./functionSchema"
 import { IScalarConfig } from "../config/scalarConfig"
 import { IEnumConfig } from "../config/enumConfig"
-import { IArrayConfig } from "../config/arrayConfig"
-
 /**
  * The struct schema.
 */
@@ -39,7 +37,7 @@ export interface IStructFieldConfig extends ISchemaConfig
 
 export interface IStructScalarFieldConfig extends IStructFieldConfig, IScalarConfig {}
 export interface IStructEnumFieldConfig extends IStructFieldConfig, IEnumConfig {}
-export interface IStructArrayFieldConfig extends IStructFieldConfig, IArrayConfig {}
+//export interface IStructArrayFieldConfig extends IStructFieldConfig, IArrayConfig {}
 
 /**
  * The realtion between fields

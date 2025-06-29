@@ -10,6 +10,8 @@ import { ScalarNode } from './scalarNode'
 import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
 import { IStructFieldConfig } from '../schema/structSchema'
+import { DataChangeWatcher } from '../utils/dataChangeWatcher'
+import { RelationType } from '../enum/relationType'
 
 /**
  * The struct schema data node
@@ -94,11 +96,79 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      */
     getField(name: string) { return this._fields.find(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase() ) }
 
+    /**
+     * Gets whether the field is changable
+     * @param name the field name
+     * @returns whether the field is changable
+     */
+    isFieldChangable(name: string): boolean {
+        const field = this.getField(name)
+        return field && field.ruleSchema.pushSchemas?.find(s => s.type === RelationType.Type) ? true : false
+    }
+
+    /**
+     * rebuild the field with the given type
+     */
+    rebuildField(name: string, type: string) {
+        const fconf = this._schemaInfo.struct!.fields.find(f => f.name === name)
+        if (!fconf) return
+
+        const existed = this._fields.findIndex(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase())
+        if (existed >= 0) this._fields[existed].dispose()
+        
+        fconf.type = type
+        let field: AnySchemaNode | null = null
+        const fschema = getCachedSchema(fconf.type)
+        switch (fschema?.type)
+        {
+            case SchemaType.Scalar:
+                field = new ScalarNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
+                break
+            case SchemaType.Enum:
+                field = new EnumNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
+                break
+            case SchemaType.Struct:
+                field = new StructNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
+                break
+            case SchemaType.Array:
+                field = new ArrayNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
+                break
+        }
+        if (field)
+        {
+            if (existed >= 0)
+            {
+                this._fields[existed] = field
+                this.notify()
+            }
+            else
+            {
+                this._fields.push(field)
+            }
+            field.subscribe(this.refreshRawData)
+            this._memberChangeWatcher.notify(name)
+            field.validation()
+        }
+    }
+
+    /**
+     * Subscribe a member change handler
+     *
+     * @param func the change handler
+     * @param immediate whether to call the handler immediately
+     */
+    subscribeMemberChange(func: Function, immediate?: boolean): Function {
+        const result = this._memberChangeWatcher.addWatcher(func) 
+        if (immediate) func()
+        return result
+    }
+
     //#endregion
 
     //#region Fields
 
     protected _fields: AnySchemaNode[] = []
+    protected _memberChangeWatcher: DataChangeWatcher = new DataChangeWatcher()
 
     //#endregion
 
@@ -108,8 +178,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * @param config the config of the node.
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
-        if (isNull(data) || Array.isArray(data) || typeof data !== "object") 
-            data = {}
+        if (isNull(data) || Array.isArray(data) || typeof data !== "object") data = {}
         super(config, data, parent)
 
         // init fields
