@@ -11,6 +11,11 @@ export class ScalarRule extends Rule
      * The black list
      */
     blackList?: string[] | number[]
+
+    /**
+     * The root
+     */
+    root?: any
     
     /**
      * The low limit

@@ -285,8 +285,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.EnumRoot:
-            if (node instanceof EnumNode)
+        case RelationType.Root:
+            if (node instanceof EnumNode || node instanceof ScalarNode)
             {
                 handler = (res: any) => {
                     node.rule.root = res

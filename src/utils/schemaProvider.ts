@@ -260,11 +260,11 @@ export function getCachedSchema(name: string): INodeSchema | undefined {
 /**
  * Gets an array schema that use the target as element
  */
-export async function getArraySchema(name: string | INodeSchema): Promise<INodeSchema | undefined> {
+export async function getArraySchema(name: string | INodeSchema, noautocreate: boolean = false): Promise<INodeSchema | undefined> {
     const schema = typeof name === "string" ? await getSchema(name) : name
     if (!schema) return undefined
     name = schema.name.toLowerCase()
-    if (arraySchemaMap[name]) return arraySchemaMap[name]
+    if (noautocreate || arraySchemaMap[name]) return arraySchemaMap[name]
 
     // provide a default one
     arraySchemaMap[name] = {

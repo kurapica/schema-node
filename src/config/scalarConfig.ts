@@ -8,6 +8,11 @@ export interface IScalarConfig extends ISchemaConfig
     whiteList?: number[] | string[] | { value: any, label: string }[]
 
     /**
+     * The root value.
+     */
+    root?: string
+    
+    /**
      * The black list
      */
     blackList?: string[] | number[]
