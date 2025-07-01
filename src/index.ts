@@ -2,6 +2,7 @@ export * from './enum/enumValueType'
 export * from './enum/expressionType'
 export * from './enum/relationType'
 export * from './enum/schemaType'
+export * from './enum/dataCombineType'
 
 export * from './schema/nodeSchema'
 export * from './schema/scalarSchema'
