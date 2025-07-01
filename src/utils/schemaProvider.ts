@@ -102,6 +102,7 @@ function addSchema(root: INodeSchema, schema: INodeSchema)
             return
         }
     }
+    root.schemas.push(schema)
 }
 
 /**
