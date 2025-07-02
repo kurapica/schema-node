@@ -96,7 +96,9 @@ function addSchema(root: INodeSchema, schema: INodeSchema)
     const name = schema.name.toLowerCase()
     for (let j = 0; j < root.schemas.length; j++)
     {
-        if (name < root.schemas[j].name.toLowerCase())
+        const n = root.schemas[j].name.toLowerCase()
+        if (name === n) return
+        if (name < n)
         {
             root.schemas.splice(j, 0, schema)
             return

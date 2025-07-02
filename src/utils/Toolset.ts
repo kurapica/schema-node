@@ -258,7 +258,7 @@ export function deepClone(value: any): any
   {
     return value.map(deepClone)
   }
-  else if (typeof (value) === "object")
+  else if (value && typeof (value) === "object")
   {
     if (value instanceof Date) return value
     const ret:any = {}
