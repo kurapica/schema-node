@@ -31,5 +31,5 @@ export enum SchemaType
     /**
      * The function node
      */
-    Function = "function",
+    Function = "func",
 }

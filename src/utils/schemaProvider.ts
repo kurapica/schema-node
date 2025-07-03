@@ -86,6 +86,7 @@ const schemaCache: { [key: string]: INodeSchema } = {}
 const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
 const arraySchemaMap: { [key: string]: INodeSchema } = {}
 const serverCallOnly: Set<string> = new Set()
+const schemaRefs: { [key:string]: number } = {}
 
 // Add sub schema
 function addSchema(root: INodeSchema, schema: INodeSchema)
@@ -148,6 +149,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                 exist.loadState = loadState
             }
 
+            // remove refs
+            updateSchemaRefs(exist, false)
             
             switch(exist.type)
             {
@@ -177,6 +180,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
             }
 
+            // add refs
+            updateSchemaRefs(exist, true)
             continue
         }
 
@@ -185,7 +190,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         let root: INodeSchema = rootSchema
         for (let i = 0; i < paths.length - 1; i++)
         {
-            const p = paths.splice(0, i + 1).join(".")
+            const p = paths.slice(0, i + 1).join(".")
             let ns = schemaCache[p]
             if (!ns)
             {
@@ -210,6 +215,9 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
 
+        // add refs
+        updateSchemaRefs(schema, true)
+        
         if (schema.type === SchemaType.Namespace && schema.schemas)
             registerSchema(schema.schemas, loadState)
     }
@@ -805,6 +813,19 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     }
 }
 
+/**
+ * Whether the schema is deletable
+ * @param schemaName the schema name
+ * @returns deletable
+ */
+export function isSchemaDeletable(schemaName: string)
+{
+    const schema = getCachedSchema(schemaName)
+    if (!schema) return false
+    if (schema.loadState & SchemaLoadState.System) return false
+    return schemaRefs[schema.name.toLowerCase()] ? false : true
+}
+
 //#endregion
 
 //#region helper
@@ -1092,6 +1113,50 @@ function searchEnumValue(values: IEnumValueInfo[], value: any): IEnumValueInfo[]
         }
     }
     return []
+}
+
+function updateRef(name: string, add: boolean)
+{
+    if (!name) return
+    name = name.toLowerCase()
+    if (add)
+    {
+        schemaRefs[name] = (schemaRefs[name] || 0) + 1
+    }
+    else if (schemaRefs[name])
+    {
+        schemaRefs[name]--
+    }
+}
+
+function updateSchemaRefs(schema: INodeSchema, add: boolean)
+{
+    switch (schema.type)
+    {
+        case SchemaType.Scalar:
+            updateRef(schema.scalar.base, add)
+            break
+
+        case SchemaType.Struct:
+            schema.struct.fields.forEach(f => updateRef(f.type, add))
+            schema.struct.relations?.forEach(r => updateRef(r.func, add))
+            break
+
+        case SchemaType.Array:
+            updateRef(schema.array.element, add)
+            schema.array.relations?.forEach(r => updateRef(r.func, add))
+            break
+
+        case SchemaType.Function:
+            updateRef(schema.func.return, add)
+            schema.func.args.forEach(a => updateRef(a.type, add))
+            schema.func.exps.forEach(e => {
+                updateRef(e.return, add)
+                updateRef(e.type, add)
+                updateRef(e.func, add)
+            })
+            break
+    }
 }
 
 //#endregion
