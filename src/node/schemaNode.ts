@@ -313,12 +313,23 @@ export function getSchemaNodeType(type: SchemaType)
 /**
  * Gets the schema node with config
  */
-export async function getSchemaNode(config: ISchemaConfig, data: any) {
+export async function getSchemaNode(config: ISchemaConfig, data: any = null) {
     const schemaInfo = await getSchema(config.type)
     if (!schemaInfo) return undefined
 
     let schemaType = getSchemaNodeType(schemaInfo.type)
     if (!schemaType) return undefined
+
+    // validate data
+    if (schemaInfo.type === SchemaType.Array)
+    {
+        if (isNull(data) || !Array.isArray(data)) data = []
+    }
+    else if (schemaInfo.type === SchemaType.Struct)
+    {
+        if (isNull(data) || typeof(data) !== "object") data = {}
+    }
+
     return new schemaType(config, data, undefined)
 }
 

@@ -54,7 +54,7 @@ export class StructRuleSchema extends RuleSchema
                 // access path
                 const accessPaths = getAccessPath(this, a.name, rootTypeInfo)
                 if (accessPaths == null || accessPaths.length == 0 || !isPathAccessable(targetAccessPaths, accessPaths)) {
-                    console.error(`The ${relation.field} can access path "${a.name}", check the realtions in ${this._schema.name} type`)
+                    console.error(`The "${relation.field}" can't access path "${a.name}", check the realtions in ${this._schema.name} type`)
                     return
                 }
 

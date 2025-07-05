@@ -815,15 +815,44 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
 
 /**
  * Whether the schema is deletable
- * @param schemaName the schema name
+ * @param name the schema name
  * @returns deletable
  */
-export function isSchemaDeletable(schemaName: string)
+export function isSchemaDeletable(name: string)
 {
-    const schema = getCachedSchema(schemaName)
+    const schema = getCachedSchema(name)
     if (!schema) return false
     if (schema.loadState & SchemaLoadState.System) return false
     return schemaRefs[schema.name.toLowerCase()] ? false : true
+}
+
+/**
+ * Remove a schema
+ * @param name the schema name
+ * @return whether the schema is removed
+ */
+export function removeSchema(name: string): boolean
+{
+    name = name.toLowerCase()
+    const schema = getCachedSchema(name)
+    if (!schema) return true
+    if (schema.loadState & SchemaLoadState.System) return false
+    if (schema === rootSchema || schemaRefs[name]) return false
+    updateSchemaRefs(schema, false)
+    
+    const paths = name.split(".")
+    const pname = paths.slice(0, paths.length - 1).join(".")
+    const parent = getCachedSchema(pname)
+    if (pname)
+    {
+        const index = parent.schemas?.findIndex(s => s === schema) || -1
+        if (index >= 0)
+        {
+            parent.schemas.splice(index, 1)
+        }
+    }
+    delete schemaCache[name]
+    return true
 }
 
 //#endregion
