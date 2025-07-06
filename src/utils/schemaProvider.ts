@@ -219,7 +219,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         updateSchemaRefs(schema, true)
         
         if (schema.type === SchemaType.Namespace && schema.schemas)
-            registerSchema(schema.schemas, loadState)
+            registerSchema([...schema.schemas], loadState)
     }
 }
 
@@ -823,7 +823,9 @@ export function isSchemaDeletable(name: string)
     const schema = getCachedSchema(name)
     if (!schema) return false
     if (schema.loadState & SchemaLoadState.System) return false
-    return schemaRefs[schema.name.toLowerCase()] ? false : true
+    if (schemaRefs[schema.name.toLowerCase()]) return false
+    if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
+    return true
 }
 
 /**
@@ -843,10 +845,10 @@ export function removeSchema(name: string): boolean
     const paths = name.split(".")
     const pname = paths.slice(0, paths.length - 1).join(".")
     const parent = getCachedSchema(pname)
-    if (pname)
+    if (parent)
     {
-        const index = parent.schemas?.findIndex(s => s === schema) || -1
-        if (index >= 0)
+        const index = parent.schemas?.findIndex(s => s.name === schema.name)
+        if (!isNull(index) && index >= 0)
         {
             parent.schemas.splice(index, 1)
         }
