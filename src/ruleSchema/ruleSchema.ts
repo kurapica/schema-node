@@ -362,7 +362,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 await new Promise(r => setTimeout(r, 200))
             }
         }
-    }, 200)
+    }, 20)
 
     // subscribe
     if (pushSchema.type !== RelationType.InitOnly)
