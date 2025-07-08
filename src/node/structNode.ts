@@ -46,6 +46,20 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     // override methods
 
     /**
+     * swap data watcher
+     */
+    override swapWatcher(node: AnySchemaNode): void {
+        super.swapWatcher(node)
+        if (node instanceof StructNode)
+        {
+            this._fields.forEach(f => {
+                const m = node.getField((f.config as IStructFieldConfig).name)
+                if (m) node.swapWatcher(m)
+            })
+        }
+    }
+
+    /**
      * indexof the sub node
      */
     indexof(node: AnySchemaNode): number | string | undefined | null {

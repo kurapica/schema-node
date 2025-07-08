@@ -21,6 +21,7 @@ export const ARRAY_ITSELF = "$array"
  * The rule schema for schema node
  */
 export class RuleSchema {
+
     /**
      * The schema type
      */
@@ -348,15 +349,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 // call data func
                 return handler(await callSchemaFunction(
                     pushSchema.func,
-                    args.map((a, i) => {
+                    args.map(a => {
                         if (a.node) {
-                            let value = a.node.data
+                            let value = a.node.rawData
                             if (a.checkArrayNode) {
                                 let n = node
                                 while (n.parent && n.parent !== a.node)
                                     n = n.parent
 
-                                const arrayIndex = (n.parent as ArrayNode).elements.findIndex(v => v === n)
+                                const arrayIndex = (n.parent as ArrayNode).indexof(n) as number
                                 if (Array.isArray(value) && arrayIndex >= 0)
                                     return value.slice(0, arrayIndex)
                                 else

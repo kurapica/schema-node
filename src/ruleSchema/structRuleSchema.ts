@@ -32,7 +32,7 @@ export class StructRuleSchema extends RuleSchema
      */
     override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
     {
-        const name = (node.config as IStructFieldConfig).name
+        let name = (node.config as IStructFieldConfig).name
         let ruleSchema = this.schemas[name]
         if (ruleSchema?.type !== node.config.type)
         {
@@ -43,24 +43,42 @@ export class StructRuleSchema extends RuleSchema
             // build rule schema for field
             const schema = getCachedSchema(node.config.type)
             const ruleSchemaType = getRuleSchemaType(schema.type)
-            const nruleSchema = new ruleSchemaType(schema)
-            this.schemas[name] = nruleSchema
-            nruleSchema.loadConfig(f)
+            ruleSchema = new ruleSchemaType(schema)
+            this.schemas[name] = ruleSchema
+            ruleSchema.loadConfig(f)
 
-            // copy push schemas
-            if (ruleSchema.pushSchemas?.length)
-            {
-                for(let i = 0; i < ruleSchema.pushSchemas.length; i++)
+            // Register the realtions
+            let curr = node
+            let parent = curr.parent
+            while(parent) {
+                const pschema = getCachedSchema(parent.config.type)
+                if (parent.ruleSchema instanceof ArrayRuleSchema)
                 {
-                    const push = ruleSchema.pushSchemas[i]
-                    if (!nruleSchema.pushSchemas?.find(p => p.type !== push.type))
+                    const tempRuleSchema = curr === node ? ruleSchema : curr.ruleSchema
+                    if (pschema.array?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
                     {
-                        nruleSchema.pushSchemas ||= []
-                        nruleSchema.pushSchemas.push(push)
+                        pschema.array.relations
+                            .filter(f => f.field === name || f.field.startsWith(`${name}.`))
+                            .forEach(r => tempRuleSchema.regRelation(r))
                     }
                 }
+                else if (parent.ruleSchema instanceof StructRuleSchema)
+                {
+                    const fldname = (curr.config as IStructFieldConfig).name
+                    const fld = pschema.struct?.fields?.find(f => f.name === fldname)
+                    if (!fld) break
+                    name = curr === node ? name : `${fld.name}.${name}`
+                    const tempRuleSchema = parent.ruleSchema
+                    if (pschema.struct?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
+                    {
+                        pschema.struct.relations
+                            .filter(f => f.field === name || f.field.startsWith(`${name}.`))
+                            .forEach(r => tempRuleSchema.regRelation(r))
+                    }
+                }
+                curr = parent
+                parent = curr.parent
             }
-            ruleSchema = nruleSchema
         }
 
         return ruleSchema
