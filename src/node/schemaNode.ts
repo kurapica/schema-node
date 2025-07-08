@@ -70,6 +70,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     get data(): any { return deepClone(this._data) }
     set data(value: any)
     {
+        if (this._data === value) return
         this._data = deepClone(value)
         this.validation().then(this.notify)
     }
@@ -181,9 +182,14 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     //#region Methods
 
     /**
-     * active the rule schema for the node
+     * Active the rule schema for the node
      */
     activeRule(init?: boolean): void { return this.ruleSchema.active(this, init) }
+
+    /**
+     * Deactive the rule schema
+     */
+    deactiveRule(): void { return this.ruleSchema.deactive(this) }
 
     /**
      * Reset the change state of the node and children.
@@ -197,7 +203,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * @param immediate whether to call the handler immediately
      */
     subscribe(func: Function, immediate?: boolean): Function {
-        const result = this._watchter.addWatcher(func) 
+        const result = this._watcher.addWatcher(func) 
         if (immediate) func()
         return result
     }
@@ -217,14 +223,31 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     watch(node: AnySchemaNode, func: Function) { return this._watches.push(node.subscribe(func)) }
 
     /**
+     * Clear data watches
+     */
+    clearWatch(): void {
+        this._watches.forEach(w => w())
+        this._watches.length = 0
+    }
+
+    /**
      * Notify the data changes
      */
-    notify = debounce(() => this._watchter.notify(this), 50)
+    notify = debounce(() => this._watcher.notify(this), 50)
 
     /**
      * Notify the state changes like valid, error, invisible and etc
      */
     notifyState = debounce(() => this._stateWatcher.notify(this), 50)
+
+    /**
+     * Swap the watcher, useful when field type changes
+     */
+    swapWatcher(node: AnySchemaNode) {
+        const temp = this._watcher
+        this._watcher = node._watcher
+        node._watcher = temp
+    }
 
     /**
      * Set the error by parent
@@ -244,7 +267,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     dispose(): void {
         this._watches.forEach(w => w())
         this._stateWatcher.dispose()
-        this._watchter.dispose()
+        this._watcher.dispose()
     }
 
     //#endregion
@@ -252,7 +275,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     //#region Field
 
     protected _stateWatcher: DataChangeWatcher = new DataChangeWatcher()
-    protected _watchter: DataChangeWatcher = new DataChangeWatcher()
+    protected _watcher: DataChangeWatcher = new DataChangeWatcher()
     protected _schemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
     protected _parent?: AnySchemaNode
     protected _rule: TR

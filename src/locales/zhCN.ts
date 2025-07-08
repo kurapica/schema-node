@@ -5,7 +5,7 @@ export default {
     //#region Namespace
 
     // system
-    "system": "系统类型",
+    "system": "系统命名空间",
     "system.array": "基础数组",
     "system.struct": "基础结构体",
     

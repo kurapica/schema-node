@@ -88,26 +88,6 @@ const arraySchemaMap: { [key: string]: INodeSchema } = {}
 const serverCallOnly: Set<string> = new Set()
 const schemaRefs: { [key:string]: number } = {}
 
-// Add sub schema
-function addSchema(root: INodeSchema, schema: INodeSchema)
-{
-    root.schemas = root.schemas || []
-    root.schemas.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)
-    
-    const name = schema.name.toLowerCase()
-    for (let j = 0; j < root.schemas.length; j++)
-    {
-        const n = root.schemas[j].name.toLowerCase()
-        if (name === n) return
-        if (name < n)
-        {
-            root.schemas.splice(j, 0, schema)
-            return
-        }
-    }
-    root.schemas.push(schema)
-}
-
 /**
  * Sets the schema provider
  * @param provider The schema provider
@@ -860,6 +840,26 @@ export function removeSchema(name: string): boolean
 //#endregion
 
 //#region helper
+
+// Add sub schema
+function addSchema(root: INodeSchema, schema: INodeSchema)
+{
+    root.schemas = root.schemas || []
+    root.schemas.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)
+    
+    const name = schema.name.toLowerCase()
+    for (let j = 0; j < root.schemas.length; j++)
+    {
+        const n = root.schemas[j].name.toLowerCase()
+        if (name === n) return
+        if (name < n)
+        {
+            root.schemas.splice(j, 0, schema)
+            return
+        }
+    }
+    root.schemas.push(schema)
+}
 
 // build the function schema to function
 async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {

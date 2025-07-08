@@ -51,6 +51,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     }
     set data(value: any)
     {
+        if (value === this._data) return
         this._data = deepClone(value)
         this.validation().then(this.notify)
     }

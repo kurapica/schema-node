@@ -18,14 +18,27 @@ export class ArrayRuleSchema extends RuleSchema
      * Active the rule schema for node
      */
     override active(node: ArrayNode, init?: boolean) {
+        super.active(node, init)
         if (node.enumArrayNode) {
             node.enumArrayNode.activeRule(init)
         }
         else {
             node.elements.forEach(e => e.activeRule(init))
         }
+    }
 
-        return super.active(node, init)
+    /**
+     * Deactive the rule schema
+     */
+    override deactive(node: ArrayNode): void {
+        if (node.enumArrayNode) {
+            node.enumArrayNode.deactiveRule()
+        }
+        else {
+            node.elements.forEach(e => e.deactiveRule())
+        }
+
+        return super.deactive(node)
     }
 
     /**

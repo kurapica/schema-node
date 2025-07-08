@@ -136,8 +136,11 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         }
         if (field)
         {
+            // replace
             if (existed >= 0)
             {
+                // other node may watch the existed node
+                field.swapWatcher(this._fields[existed])
                 this._fields[existed] = field
                 this.notify()
             }
@@ -148,6 +151,10 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
             field.subscribe(this.refreshRawData)
             this._memberChangeWatcher.notify(name)
             field.validation()
+
+            // re-active
+            if (this.rule._actived) field.activeRule()
+                
         }
     }
 

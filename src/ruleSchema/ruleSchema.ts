@@ -22,6 +22,11 @@ export const ARRAY_ITSELF = "$array"
  */
 export class RuleSchema {
     /**
+     * The schema type
+     */
+    type: string
+
+    /**
      * The default value
      */
     default?: any
@@ -59,6 +64,14 @@ export class RuleSchema {
     }
 
     /**
+     * Deactive the rule schema for node
+     */
+    deactive(node: AnySchemaNode) {
+        node.clearWatch()
+        node.rule._actived = false
+    }
+
+    /**
      * Init the node rule
      */
     initNode(node: AnySchemaNode) {
@@ -89,6 +102,7 @@ export class RuleSchema {
      * construct from schema
      */
     constructor(schema: INodeSchema) {
+        this.type = schema.name
     }
 }
 
@@ -258,7 +272,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.Assign, RelationType.InitOnly:
+        case RelationType.Assign:
+        case RelationType.InitOnly:
             handler = (res: any) => {
                 node.rule.default = res
                 node.data = res
@@ -368,8 +383,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
     if (pushSchema.type !== RelationType.InitOnly)
     {
         args.filter(a => a.node).forEach(a => {
-            if (!a.node!.rule._actived)
-                a.node!.activeRule()
+            a.node!.activeRule()
             node.watch(a.node!, push)
         })
     }

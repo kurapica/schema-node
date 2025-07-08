@@ -15,8 +15,16 @@ export class StructRuleSchema extends RuleSchema
      * Active the rule schema for node
      */
     override active(node: StructNode, init?: boolean) {
+        super.active(node, init)
         node.fields.forEach(f => f.activeRule(init))
-        return super.active(node, init)
+    }
+
+    /**
+     * Deactive the rule schema for node
+     */
+    override deactive(node: StructNode): void {
+        node.fields.forEach(f => f.deactiveRule())
+        return super.deactive(node)
     }
 
     /**
@@ -24,7 +32,38 @@ export class StructRuleSchema extends RuleSchema
      */
     override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
     {
-        return this.schemas[(node.config as IStructFieldConfig).name]
+        const name = (node.config as IStructFieldConfig).name
+        let ruleSchema = this.schemas[name]
+        if (ruleSchema?.type !== node.config.type)
+        {
+            // type changed, rebuild rule schema
+            const structInfo = this._schema.struct!
+            const f = structInfo.fields.find(d => d.name === name)
+            
+            // build rule schema for field
+            const schema = getCachedSchema(node.config.type)
+            const ruleSchemaType = getRuleSchemaType(schema.type)
+            const nruleSchema = new ruleSchemaType(schema)
+            this.schemas[name] = nruleSchema
+            nruleSchema.loadConfig(f)
+
+            // copy push schemas
+            if (ruleSchema.pushSchemas?.length)
+            {
+                for(let i = 0; i < ruleSchema.pushSchemas.length; i++)
+                {
+                    const push = ruleSchema.pushSchemas[i]
+                    if (!nruleSchema.pushSchemas?.find(p => p.type !== push.type))
+                    {
+                        nruleSchema.pushSchemas ||= []
+                        nruleSchema.pushSchemas.push(push)
+                    }
+                }
+            }
+            ruleSchema = nruleSchema
+        }
+
+        return ruleSchema
     }
     
     /**
@@ -56,7 +95,7 @@ export class StructRuleSchema extends RuleSchema
                 if (accessPaths == null || accessPaths.length == 0 || !isPathAccessable(targetAccessPaths, accessPaths)) {
                     console.error(`The "${relation.field}" can't access path "${a.name}", check the realtions in ${this._schema.name} type`)
                     return
-                }
+                }   
 
                 // ref field
                 args.push({ schema: this, field: a.name })
@@ -98,7 +137,7 @@ export class StructRuleSchema extends RuleSchema
         }
 
         // Register the realtions
-        if (structInfo.relations && structInfo.relations.length > 0) {
+        if (structInfo.relations?.length) {
             for (let i = 0; i < structInfo.relations.length; i++) {
                 this.regRelation(structInfo.relations[i])
             }
