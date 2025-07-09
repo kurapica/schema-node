@@ -6,7 +6,7 @@ import { IStructFieldConfig, IStructFieldRelation, IStructSchema } from "../sche
 import { getCachedSchema } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayRuleSchema } from "./arrayRuleSchema"
-import { ARRAY_ITSELF, getRuleSchemaType, ISchemaNodePushArgSchema, ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
+import { ARRAY_ITSELF, getRuleSchema, ISchemaNodePushArgSchema, ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
 
 @regRuleSchema(SchemaType.Struct)
 export class StructRuleSchema extends RuleSchema
@@ -135,21 +135,30 @@ export class StructRuleSchema extends RuleSchema
     }
 
     private _schema: INodeSchema
-    constructor(schema: INodeSchema)
+    constructor(schema: INodeSchema, path: string = "", ruleFields: string[] = [])
     {
         super(schema)
         this._schema = schema
         const structInfo = schema.struct!
 
+        // only use schema name as root
+        path = path || schema.name
+
         // Register for each field
         for (let i = 0; i < structInfo.fields.length; i++) {
             const f = structInfo.fields[i]
 
+            // build rule fields
+            let rf = ruleFields.filter(s => s === f.name || s.startsWith(`${f.name}.`))
+            structInfo.relations?.filter(r => r.field === f.name || r.field.startsWith(`${f.name}.`)).forEach(r => {
+                if (!rf.includes(r.field)) rf.push(r.field)
+            })
+            rf = rf.map(n => n.substring(f.name.length + 1))
+            if (!rf.includes("")) rf.push("")
+
             // build rule schema for each field
             const schema = getCachedSchema(f.type)
-            const ruleSchemaType = getRuleSchemaType(schema.type)
-            if (!ruleSchemaType) continue
-            const ruleSchema = new ruleSchemaType(schema)
+            const ruleSchema = getRuleSchema(schema, `${path}.${f.name}`, rf)
             this.schemas[f.name] = ruleSchema
             ruleSchema.loadConfig(f)
         }

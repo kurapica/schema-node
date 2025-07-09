@@ -7,7 +7,7 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { _LS } from "../utils/locale"
-import { getRuleSchemaType } from "../ruleSchema/ruleSchema"
+import { getRuleSchema } from "../ruleSchema/ruleSchema"
 
 /**
  * The abstract schema node.
@@ -301,7 +301,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
         this._rule = {} as any as TR
-        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? new (getRuleSchemaType(this.schemaInfo.type))!(this.schemaInfo)) as any as TRS
+        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schemaInfo)) as any as TRS
         this._ruleSchema.initNode(this)
     }
 }

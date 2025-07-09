@@ -6,6 +6,7 @@ import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
+import { DataChangeWatcher } from "./dataChangeWatcher"
 
 export const NS_SYSTEM = "system"
 
@@ -87,6 +88,7 @@ const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
 const arraySchemaMap: { [key: string]: INodeSchema } = {}
 const serverCallOnly: Set<string> = new Set()
 const schemaRefs: { [key:string]: number } = {}
+const schemaChangeWatcher = new DataChangeWatcher()
 
 /**
  * Sets the schema provider
@@ -201,6 +203,45 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         if (schema.type === SchemaType.Namespace && schema.schemas)
             registerSchema([...schema.schemas], loadState)
     }
+    schemaChangeWatcher.notify(schemas.map(s => s.name))
+}
+
+/**
+ * Remove a schema
+ * @param name the schema name
+ * @return whether the schema is removed
+ */
+export function removeSchema(name: string): boolean
+{
+    name = name.toLowerCase()
+    const schema = getCachedSchema(name)
+    if (!schema) return true
+    if (schema.loadState & SchemaLoadState.System) return false
+    if (schema === rootSchema || schemaRefs[name]) return false
+    updateSchemaRefs(schema, false)
+    
+    const paths = name.split(".")
+    const pname = paths.slice(0, paths.length - 1).join(".")
+    const parent = getCachedSchema(pname)
+    if (parent)
+    {
+        const index = parent.schemas?.findIndex(s => s.name === schema.name)
+        if (!isNull(index) && index >= 0)
+        {
+            parent.schemas.splice(index, 1)
+        }
+    }
+    delete schemaCache[name]
+    schemaChangeWatcher.notify([name])
+    return true
+}
+
+/**
+ * Register a schema change
+ */
+export function subscribeSchemaChange(handler: Function)
+{
+    return schemaChangeWatcher.addWatcher(handler)
 }
 
 /**
@@ -805,35 +846,6 @@ export function isSchemaDeletable(name: string)
     if (schema.loadState & SchemaLoadState.System) return false
     if (schemaRefs[schema.name.toLowerCase()]) return false
     if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
-    return true
-}
-
-/**
- * Remove a schema
- * @param name the schema name
- * @return whether the schema is removed
- */
-export function removeSchema(name: string): boolean
-{
-    name = name.toLowerCase()
-    const schema = getCachedSchema(name)
-    if (!schema) return true
-    if (schema.loadState & SchemaLoadState.System) return false
-    if (schema === rootSchema || schemaRefs[name]) return false
-    updateSchemaRefs(schema, false)
-    
-    const paths = name.split(".")
-    const pname = paths.slice(0, paths.length - 1).join(".")
-    const parent = getCachedSchema(pname)
-    if (parent)
-    {
-        const index = parent.schemas?.findIndex(s => s.name === schema.name)
-        if (!isNull(index) && index >= 0)
-        {
-            parent.schemas.splice(index, 1)
-        }
-    }
-    delete schemaCache[name]
     return true
 }
 

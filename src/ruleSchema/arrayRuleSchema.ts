@@ -3,7 +3,7 @@ import { ArrayNode } from "../node/arrayNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
-import { getRuleSchemaType, regRuleSchema, RuleSchema } from "./ruleSchema"
+import { getRuleSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
 import { StructRuleSchema } from "./structRuleSchema"
 
 @regRuleSchema(SchemaType.Array)
@@ -52,12 +52,25 @@ export class ArrayRuleSchema extends RuleSchema
     /**
      * The constructor
      */
-    constructor(schema: INodeSchema){
+    constructor(schema: INodeSchema, path: string = "",  ruleFields: string[] = []){
         super(schema)
         
+        // remove
+        ruleFields = ruleFields.filter(r => r !== "")
+        if (!ruleFields.length) path = ""
+
         // The array and element share the rule schema
         const elementInfo = getCachedSchema(schema.array!.element)!
-        const eleRuleSchema = new (getRuleSchemaType(elementInfo.type)!)(elementInfo)
+
+        // update rule fields
+        ruleFields = [...ruleFields]
+        schema.array?.relations?.forEach(r => {
+            if (ruleFields.includes(r.field)) return
+            ruleFields.push(r.field)
+        })
+
+        // element rule schema
+        const eleRuleSchema = getRuleSchema(elementInfo, path, ruleFields)
         eleRuleSchema.isArrayElement = true
         this.element = eleRuleSchema
 

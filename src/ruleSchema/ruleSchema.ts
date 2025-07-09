@@ -8,7 +8,7 @@ import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { IStructFieldConfig } from "../schema/structSchema"
-import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
+import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING, subscribeSchemaChange } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { debounce, isEqual, isNull } from "../utils/toolset"
 
@@ -102,30 +102,43 @@ export class RuleSchema {
     /**
      * construct from schema
      */
-    constructor(schema: INodeSchema) {
+    constructor(schema: INodeSchema, path: string = "", ruleFields: string[] = []) {
         this.type = schema.name
     }
 }
 
 //#region decorator
 
-const ruleSchemaMap: Record<string, new (schema: INodeSchema) => RuleSchema> = {}
+const ruleSchemaMap: Record<string, new (schema: INodeSchema, path: string, ruleFields: string[]) => RuleSchema> = {}
+let shareRuleSchema: Record<string, Record<string, RuleSchema>> = {}
+subscribeSchemaChange(() => shareRuleSchema = {}) // reset all when schema changes
 
 /**
  * Register a document element
  */
 export function regRuleSchema(type: SchemaType) {
-    return function <T extends new (schema: INodeSchema) => RuleSchema>(constructor: T) {
+    return function <T extends new (schema: INodeSchema,  path: string, ruleFields: string[]) => RuleSchema>(constructor: T) {
       ruleSchemaMap[type] = constructor
     }
 }
 
 /**
- * Gets a ruleschema type by schema type
+ * Gets the rule schema by schema
  */
-export function getRuleSchemaType(type: SchemaType)
+export function getRuleSchema(schema: INodeSchema, path: string = "", ruleFields: string[] = [])
 {
-    return ruleSchemaMap[type]
+    const name = schema.name
+    // share by path, the first is root type, else are access path, split by '.'
+    if (shareRuleSchema[name] && shareRuleSchema[name][path]) return shareRuleSchema[name][path]
+
+    // rebuild
+    const ctor = ruleSchemaMap[schema.type]
+    const ruleSchema = new ctor(schema, path, ruleFields)
+
+    // cache
+    shareRuleSchema[name] = shareRuleSchema[name] || {}
+    shareRuleSchema[name][path] = ruleSchema
+    return ruleSchema
 }
 
 //#endregion
