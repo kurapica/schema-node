@@ -52,25 +52,14 @@ export class ArrayRuleSchema extends RuleSchema
     /**
      * The constructor
      */
-    constructor(schema: INodeSchema, path: string = "",  ruleFields: string[] = []){
+    constructor(schema: INodeSchema){
         super(schema)
         
-        // remove
-        ruleFields = ruleFields.filter(r => r !== "")
-        if (!ruleFields.length) path = ""
-
         // The array and element share the rule schema
         const elementInfo = getCachedSchema(schema.array!.element)!
 
-        // update rule fields
-        ruleFields = [...ruleFields]
-        schema.array?.relations?.forEach(r => {
-            if (ruleFields.includes(r.field)) return
-            ruleFields.push(r.field)
-        })
-
         // element rule schema
-        const eleRuleSchema = getRuleSchema(elementInfo, path, ruleFields)
+        const eleRuleSchema = getRuleSchema(elementInfo)
         eleRuleSchema.isArrayElement = true
         this.element = eleRuleSchema
 
