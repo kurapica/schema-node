@@ -127,7 +127,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             }
             else
             {
-                if ((exist.loadState || 0) >= loadState) continue
+                if ((exist.loadState || 0) > loadState) continue
                 exist.loadState = loadState
             }
 
@@ -142,6 +142,12 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
                 
                 case SchemaType.Enum:
+                    // keep sublist
+                    for(let i = 0; i < schema.enum.values.length; i++)
+                    {
+                        const value = schema.enum.values[i]
+                        value.subList = exist.enum.values.find(v => v.value === value.value)?.subList
+                    }
                     exist.enum = schema.enum
                     break
 
@@ -710,6 +716,24 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
     }
 
     return access
+}
+
+/**
+ * Save the enum sub list, only works for non-server schema 
+ */
+export function saveEnumSubList(name: string, value: any, subList: IEnumValueInfo[]): boolean {
+    if (isNull(value)) return false
+
+    const schema = getCachedSchema(name)
+    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & (SchemaLoadState.Server | SchemaLoadState.System))) return false
+    
+    let search = searchEnumValue(schema.enum.values, value)
+    let einfo = search.length ? search[search.length - 1] : undefined
+    if (einfo) {
+        einfo.subList = subList
+        return true
+    }
+    return false
 }
 
 //#endregion
