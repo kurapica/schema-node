@@ -244,6 +244,17 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this.notify(this.elements.length)
     }
 
+    /**
+     * Swap two row
+     */
+    swapRow(x: number, y: number) {
+        const xdata = deepClone(this._elements[x].data)
+        const ydata = deepClone(this._elements[y].data)
+
+        this._elements[x].data = ydata
+        this._elements[y].data = xdata
+    }
+
     //#endregion
 
     //#region Properties
