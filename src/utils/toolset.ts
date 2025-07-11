@@ -275,6 +275,14 @@ export function deepClone(value: any): any
 }
 
 /**
+ * clone value with json format
+ */
+export function jsonClone(value: any): any
+{
+  return isNull(value) ? value : JSON.parse(JSON.stringify(value))
+}
+
+/**
  * Generate guid parts
  */
 export function generateGuidPart(): string {

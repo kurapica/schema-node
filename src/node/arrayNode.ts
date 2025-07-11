@@ -228,7 +228,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         {
             this._elements.splice(index!, 0, newEle)
             newEle.activeRule(true)
-            this.notify(this.elements.length)
+            this.notify("add", this.elements.length)
         }
     }
 
@@ -241,18 +241,17 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (this._enumArrayNode || this.asSingleValue || start < 0 || start >= this._elements.length) return
         const remove = this._elements.splice(start, count)
         remove.forEach(r => r.dispose())
-        this.notify(this.elements.length)
+        this.notify("del", this.elements.length)
     }
 
     /**
      * Swap two row
      */
     swapRow(x: number, y: number) {
-        const xdata = deepClone(this._elements[x].data)
-        const ydata = deepClone(this._elements[y].data)
-
-        this._elements[x].data = ydata
-        this._elements[y].data = xdata
+        const temp = this._elements[x]
+        this._elements[x] = this._elements[y]
+        this._elements[y] = temp
+        this.notify("swap", x, y)
     }
 
     //#endregion

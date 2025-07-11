@@ -8,7 +8,7 @@ import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { IStructFieldConfig } from "../schema/structSchema"
-import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING, subscribeSchemaChange } from "../utils/schemaProvider"
+import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { debounce, isEqual, isNull } from "../utils/toolset"
 

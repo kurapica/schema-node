@@ -171,9 +171,6 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         // check the cascade
         if (this.cascade && access.length > this.cascade) return false
 
-        // check any level
-        if (!this.anyLevel && access.length < this.cascadeLevel) return false
-
         // check the black list
         if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex(b => `${a.value}` === `${b}`) >= 0) >= 0) return false
 

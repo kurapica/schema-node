@@ -611,7 +611,6 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined
     if (einfo) {
-        if (!einfo.hasSubList) return []
         if (einfo.subList && einfo.subList.length) return einfo.subList
     }
     
@@ -730,6 +729,14 @@ export function saveEnumSubList(name: string, value: any, subList: IEnumValueInf
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined
     if (einfo) {
+        subList.forEach(s => {
+            const e = einfo.subList?.find(l => l.value == s.value)
+            if(e)
+            {
+                s.subList = s.subList || e.subList
+            }
+        })
+
         einfo.subList = subList
         return true
     }
@@ -1173,7 +1180,7 @@ function searchEnumValue(values: IEnumValueInfo[], value: any): IEnumValueInfo[]
     for(let i = 0; i < values.length; i++)
     {
         if (values[i].value == value) return [ values[i] ]
-        if (values[i].hasSubList && values[i].subList?.length)
+        if (values[i].subList?.length)
         {
             const r = searchEnumValue(values[i].subList!, value)
             if (r.length) return [ values[i], ...r ]

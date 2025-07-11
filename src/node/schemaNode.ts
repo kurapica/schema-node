@@ -233,12 +233,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Notify the data changes
      */
-    notify = debounce(() => this._watcher.notify(this), 50)
+    notify = debounce((...args: any[]) => this._watcher.notify(...args), 10)
 
     /**
      * Notify the state changes like valid, error, invisible and etc
      */
-    notifyState = debounce(() => this._stateWatcher.notify(this), 50)
+    notifyState = debounce((...args: any[]) => this._stateWatcher.notify(...args), 10)
 
     /**
      * Swap the watcher, useful when field type changes
