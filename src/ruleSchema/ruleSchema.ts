@@ -10,7 +10,7 @@ import { INodeSchema } from "../schema/nodeSchema"
 import { IStructFieldConfig } from "../schema/structSchema"
 import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
-import { debounce, isEqual, isNull } from "../utils/toolset"
+import { debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
 
 /**
  * The field that point to array itself
@@ -21,6 +21,11 @@ export const ARRAY_ITSELF = "$array"
  * The rule schema for schema node
  */
 export class RuleSchema {
+
+    /**
+     * The guid of the node.
+     */
+    readonly guid: string = generateGuid()
 
     /**
      * The schema type
@@ -143,13 +148,13 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             let parent: AnySchemaNode | undefined = node
 
             // record the nodes on the path
-            while (parent && parent.ruleSchema !== a.schema) {
+            while (parent && parent.ruleSchema?.guid !== a.schema.guid) {
                 nodePaths.unshift(parent)
                 parent = parent.parent
             }
 
             // locate the data node
-            if (parent?.ruleSchema === a.schema) {
+            if (parent?.ruleSchema?.guid === a.schema.guid) {
                 nodePaths.unshift(parent)
 
                 if (a.field === ARRAY_ITSELF) {
@@ -193,9 +198,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         : undefined
 
                 if (valNode)
-                {
                     return { node: valNode, checkArrayNode, value: null }
-                }
             }
 
             console.error(`The node ${node.access} can't locate the relation node by path "${a.field}"`)
@@ -310,31 +313,88 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
+            else if (node instanceof ArrayNode && node.enumArrayNode)
+            {
+                handler = (res: any) => {
+                    node.enumArrayNode.rule.root = res
+                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                }
+            }
             break
 
         case RelationType.BlackList:
-            if (node instanceof EnumNode)
+            if (node instanceof ScalarNode || node instanceof EnumNode)
             {
                 handler = (res: any) => {
-                    node.rule.blackList = res
+                    node.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
                     node.validation().finally(() => node.notifyState())
+                }
+            }
+            else if (node instanceof ArrayNode && node.enumArrayNode)
+            {
+                handler = (res: any) => {
+                    node.enumArrayNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
                 }
             }
             break
 
         case RelationType.WhiteList:
-
-            if (node instanceof ScalarNode)
+            if (node instanceof ScalarNode || node instanceof EnumNode)
             {
                 handler = (res: any) => {
-                    node.rule.whiteList = res
+                    node.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(r)) : res
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof EnumNode)
+            else if (node instanceof ArrayNode && node.enumArrayNode)
             {
                 handler = (res: any) => {
-                    node.rule.whiteList = res
+                    node.enumArrayNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                }
+            }
+            break
+        
+        case RelationType.AnyLevel:
+            if (node instanceof EnumNode)
+            {
+                handler = (res: any) => {
+                    node.rule.anyLevel = res
+                    node.validation().finally(() => node.notifyState())
+                }
+            }
+            else if (node instanceof ArrayNode && node.enumArrayNode)
+            {
+                handler = (res: any) => {
+                    node.enumArrayNode.rule.anyLevel = res
+                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                }
+            }
+            break
+
+        case RelationType.Cascade:
+            if (node instanceof EnumNode)
+            {
+                handler = (res: any) => {
+                    node.rule.cascade = res
+                    node.validation().finally(() => node.notifyState())
+                }
+            }
+            else if (node instanceof ArrayNode && node.enumArrayNode)
+            {
+                handler = (res: any) => {
+                    node.enumArrayNode.rule.cascade = res
+                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                }
+            }
+            break
+
+        case RelationType.SingleFlag:
+            if (node instanceof EnumNode)
+            {
+                handler = (res: any) => {
+                    node.rule.singleFlag = res
                     node.validation().finally(() => node.notifyState())
                 }
             }
@@ -386,6 +446,20 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
     {
         args.filter(a => a.node).forEach(a => {
             a.node!.activeRule()
+            if (a.node.parent instanceof StructNode)
+            {
+                const name = (a.node.config as IStructFieldConfig).name
+                if (a.node.parent.isFieldChangable(name))
+                {
+                    let handler = a.node.subscribe(push)
+                    a.node.parent.subscribeMemberChange((n: string) => {
+                        if (n !== name) return
+                        handler()
+                        a.node = (a.node.parent as StructNode).getField(name)
+                        handler = a.node.subscribe(push)
+                    })
+                }
+            }
             node.watch(a.node!, push)
         })
     }

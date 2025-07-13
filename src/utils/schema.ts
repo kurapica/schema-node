@@ -328,11 +328,11 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.str.len"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "text",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 }
                             ],
@@ -345,16 +345,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.str.concat"),
                         func: {
-                            return: "system.string",
+                            return: NS_SYSTEM_STRING,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 }
                             ],
@@ -367,21 +367,21 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.str.substr"),
                         func: {
-                            return: "system.string",
+                            return: NS_SYSTEM_STRING,
                             args: [
                                 {
                                     name: "str",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 },
                                 {
                                     name: "start",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "stop",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -398,12 +398,12 @@ registerSchema([
                             args: [
                                 {
                                     name: "str",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 },
                                 {
                                     name: "sep",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false
                                 }
                             ],
@@ -425,7 +425,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.e"),
                         func: {
-                            return: "system.number",
+                            return: NS_SYSTEM_NUMBER,
                             args: [],
                             exps: [],
                             func: () => Math.E
@@ -436,7 +436,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.pi"),
                         func: {
-                            return: "system.number",
+                            return: NS_SYSTEM_NUMBER,
                             args: [],
                             exps: [],
                             func: () => Math.PI
@@ -447,7 +447,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "+",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -470,7 +470,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "+?",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -493,7 +493,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "÷",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -516,7 +516,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "%",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -539,7 +539,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "×",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -562,7 +562,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "×?",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -585,7 +585,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "-",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -608,7 +608,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "-?",
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -631,8 +631,8 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.percent"),
                         func: {
-                            generic: "system.number",
-                            return: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
+                            return: NS_SYSTEM_NUMBER,
                             args: [
                                 {
                                     name: "x",
@@ -654,7 +654,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.abs"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -672,11 +672,11 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.ceiling"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.number",
+                                    type: NS_SYSTEM_NUMBER,
                                     nullable: false
                                 }
                             ],
@@ -689,7 +689,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.clamp"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -717,11 +717,11 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.floor"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.number",
+                                    type: NS_SYSTEM_NUMBER,
                                     nullable: false
                                 }
                             ],
@@ -734,7 +734,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.max"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -757,7 +757,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.min"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -784,7 +784,7 @@ registerSchema([
                             args: [
                                 {
                                     name: "percent",
-                                    type: "system.percent",
+                                    type: NS_SYSTEM_PERCENT,
                                     nullable: true
                                 }
                             ],
@@ -793,7 +793,7 @@ registerSchema([
                                     name: "effective",
                                     type: ExpressionType.Call,
                                     func: "system.math.default",
-                                    return: "system.percent",
+                                    return: NS_SYSTEM_PERCENT,
                                     args: [
                                         {
                                             name: "percent"
@@ -834,7 +834,7 @@ registerSchema([
                                 },
                                 {
                                     name: "decimals",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -864,7 +864,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.todouble"),
                         func: {
-                            return: "system.double",
+                            return: NS_SYSTEM_DOUBLE,
                             args: [
                                 {
                                     name: "x",
@@ -881,7 +881,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.tointeger"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
@@ -898,7 +898,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.math.tosingle"),
                         func: {
-                            return: "system.float",
+                            return: NS_SYSTEM_FLOAT,
                             args: [
                                 {
                                     name: "x",
@@ -1238,16 +1238,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "&",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1260,16 +1260,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "<<",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1282,16 +1282,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "|",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1304,16 +1304,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: ">>",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "input",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "offset",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1326,11 +1326,11 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "~",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "input",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1343,16 +1343,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: "^",
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1385,7 +1385,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.getyear"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "date",
@@ -1402,7 +1402,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.getmonth"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "date",
@@ -1419,7 +1419,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.getday"),
                         func: {
-                            return: "system.int",
+                            return: NS_SYSTEM_INT,
                             args: [
                                 {
                                     name: "date",
@@ -1436,7 +1436,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.equal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1458,7 +1458,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.greateequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1480,7 +1480,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.greatethan"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1502,7 +1502,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.lessequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1524,7 +1524,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.lessthan"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1546,7 +1546,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.datetime.notequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -1577,7 +1577,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1603,7 +1603,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1636,7 +1636,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1662,7 +1662,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1688,7 +1688,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1714,7 +1714,7 @@ registerSchema([
                                 },
                                 {
                                     name: "count",
-                                    type: "system.int",
+                                    type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
                             ],
@@ -1844,7 +1844,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.arrlen"),
                         func: {
-                            generic: "system.array",
+                            generic: NS_SYSTEM_ARRAY,
                             return: NS_SYSTEM_INT,
                             args: [
                                 {
@@ -1861,7 +1861,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.newstruct"),
                         func: {
-                            generic: "system.struct",
+                            generic: NS_SYSTEM_STRUCT,
                             return: "T",
                             args: [],
                             exps: [],
@@ -1873,7 +1873,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.getfield"),
                         func: {
-                            generic: ["system.struct"],
+                            generic: [NS_SYSTEM_STRUCT],
                             return: "T2",
                             args: [
                                 {
@@ -1883,7 +1883,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 }
                             ],
@@ -1896,7 +1896,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.setfield"),
                         func: {
-                            generic: ["system.struct"],
+                            generic: [NS_SYSTEM_STRUCT],
                             return: "T1",
                             args: [
                                 {
@@ -1906,7 +1906,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 },
                                 {
@@ -1924,7 +1924,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.delfield"),
                         func: {
-                            generic: ["system.struct"],
+                            generic: [NS_SYSTEM_STRUCT],
                             return: "T2",
                             args: [
                                 {
@@ -1934,7 +1934,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 }
                             ],
@@ -1947,7 +1947,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.getfields"),
                         func: {
-                            generic: ["system.array"],
+                            generic: [NS_SYSTEM_ARRAY],
                             return: "T2",
                             args: [
                                 {
@@ -1957,7 +1957,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 }
                             ],
@@ -1970,7 +1970,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.sum"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -2002,7 +2002,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.average"),
                         func: {
-                            generic: "system.number",
+                            generic: NS_SYSTEM_NUMBER,
                             return: "T",
                             args: [
                                 {
@@ -2090,7 +2090,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.sumfields"),
                         func: {
-                            generic: ["system.array", NS_SYSTEM_NUMBER],
+                            generic: [NS_SYSTEM_ARRAY, NS_SYSTEM_NUMBER],
                             return: "T2",
                             args: [
                                 {
@@ -2100,7 +2100,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 }
                             ],
@@ -2138,7 +2138,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.collection.averagefields"),
                         func: {
-                            generic: ["system.array", NS_SYSTEM_NUMBER],
+                            generic: [NS_SYSTEM_ARRAY, NS_SYSTEM_NUMBER],
                             return: "T2",
                             args: [
                                 {
@@ -2148,7 +2148,7 @@ registerSchema([
                                 },
                                 {
                                     name: "field",
-                                    type: "system.string",
+                                    type: NS_SYSTEM_STRING,
                                     nullable: false,
                                 }
                             ],
@@ -2195,16 +2195,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.andalso"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 }
                             ],
@@ -2217,8 +2217,8 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.between"),
                         func: {
-                            generic: "system.number",
-                            return: "system.bool",
+                            generic: NS_SYSTEM_NUMBER,
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "v",
@@ -2237,12 +2237,12 @@ registerSchema([
                                 },
                                 {
                                     name: "includeMin",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 },
                                 {
                                     name: "includeMax",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 }
                             ],
@@ -2259,7 +2259,7 @@ registerSchema([
                             args: [
                                 {
                                     name: "cond",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 },
                                 {
@@ -2282,7 +2282,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.equal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2304,7 +2304,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.greateequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2326,7 +2326,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.greatethan"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2348,7 +2348,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.isnull"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "value",
@@ -2365,7 +2365,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.lessequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2387,7 +2387,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.lessthan"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2409,11 +2409,11 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.not"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 }
                             ],
@@ -2426,7 +2426,7 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.notequal"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
@@ -2448,16 +2448,16 @@ registerSchema([
                         type: SchemaType.Function,
                         desc: _LS("system.logic.orelse"),
                         func: {
-                            return: "system.bool",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
                                     name: "x",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 },
                                 {
                                     name: "y",
-                                    type: "system.bool",
+                                    type: NS_SYSTEM_BOOL,
                                     nullable: false
                                 }
                             ],

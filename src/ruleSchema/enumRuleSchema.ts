@@ -45,8 +45,8 @@ export class EnumRulechema extends RuleSchema
         const rule = node.rule
         rule.root = this.root
         rule.cascade = this.cascade
-        rule.blackList = (this.blackList ? [...this.blackList] : undefined) as any
-        rule.whiteList = (this.whiteList ? [...this.whiteList] : undefined) as any
+        rule.blackList = (Array.isArray(this.blackList) ? [...this.blackList] : this.blackList) as any
+        rule.whiteList = (Array.isArray(this.whiteList) ? [...this.whiteList] : this.whiteList) as any
         rule.anyLevel = this.anyLevel
         this.singleFlag = this.singleFlag
     }
@@ -58,8 +58,8 @@ export class EnumRulechema extends RuleSchema
         super.loadConfig(config)
         this.cascade = config.cascade
         this.root = config.root
-        this.whiteList = config.whiteList ? [...config.whiteList] : undefined
-        this.blackList = config.blackList ? [...config.blackList] : undefined
+        this.whiteList = Array.isArray(config.whiteList) ? [...config.whiteList] : config.whiteList
+        this.blackList = Array.isArray(config.blackList) ? [...config.blackList] : config.blackList
         this.anyLevel = config.anyLevel
         this.singleFlag = config.singleFlag
     }

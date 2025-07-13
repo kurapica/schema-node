@@ -54,4 +54,19 @@ export enum RelationType
    * Enum whitelist
    */
   WhiteList = "whiteList",
+
+  /**
+   * Enum can choose any level
+   */
+  AnyLevel = "anyLevel",
+
+  /**
+   * The cascade limit
+   */
+  Cascade = "cascade",
+
+  /**
+   * Single flag value for enum
+   */
+  SingleFlag = "singleFlag",
 }

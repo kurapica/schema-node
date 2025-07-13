@@ -301,17 +301,17 @@ export function getCachedSchema(name: string): INodeSchema | undefined {
 export async function getArraySchema(name: string | INodeSchema, noautocreate: boolean = false): Promise<INodeSchema | undefined> {
     const schema = typeof name === "string" ? await getSchema(name) : name
     if (!schema) return undefined
+    if (schema.type === SchemaType.Array) return schema
     name = schema.name.toLowerCase()
     if (noautocreate || arraySchemaMap[name]) return arraySchemaMap[name]
 
     // provide a default one
-    arraySchemaMap[name] = {
+    registerSchema([{
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
         desc: `Anonmous array for ${name}`,
         array: { element: schema.name }
-    }
-
+    }])
     return arraySchemaMap[name]
 }
 

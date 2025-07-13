@@ -128,7 +128,6 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         if (!fconf) return
 
         const existed = this._fields.findIndex(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase())
-        if (existed >= 0) this._fields[existed].dispose()
         
         fconf.type = type
         let field: AnySchemaNode | null = null
@@ -155,8 +154,8 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
             {
                 // other node may watch the existed node
                 field.swapWatcher(this._fields[existed])
+                this._fields[existed].dispose()
                 this._fields[existed] = field
-                this.notify()
             }
             else
             {

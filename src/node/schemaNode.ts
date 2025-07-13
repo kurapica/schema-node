@@ -300,7 +300,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._config = config as TC
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
-        this._original = deepClone(this._data)
+        this._original = data
         this._rule = {} as any as TR
         this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schemaInfo)) as any as TRS
         this._ruleSchema.initNode(this)

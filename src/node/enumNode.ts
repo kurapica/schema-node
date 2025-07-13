@@ -19,6 +19,23 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     // override properties
     get schemaType(): SchemaType { return SchemaType.Enum }
     
+    get data(): any { return deepClone(this._data) }
+    set data(value: any)
+    {
+        if (this._data === value) return
+
+        if (this.isFlags && !this._config.multiple)
+        {
+            if (this._data === 0 && Array.isArray(value) && value.includes(0))
+            {
+                value = value.filter(v => v !== 0)
+            }
+        }
+
+        this._data = deepClone(value)
+        this.validation().then(this.notify)
+    }
+
     // override methods
     async validate() {
         let data = deepClone(this._data)
@@ -26,9 +43,14 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         this._error = ""
 
         // conversion
-        if (this.isFlags)
+        if (this._config.multiple)
         {
-            const sublist = await getEnumSubList(this._schemaInfo.type)
+            if (!Array.isArray(data)) data = !isNull(data) ? [data] : []
+            data = data.map((d: any) => this.parseEnumValue(d)).filter((d: any) => !isNull(d))
+        }
+        else if (this.isFlags)
+        {
+            const sublist = await getEnumSubList(this._schemaInfo.name)
             const maxflag = Math.max(...sublist.map(v => v.value))
             data = fromFlagsView(data)
             if (!isNull(data)) {
@@ -48,11 +70,6 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
                 }
             }
         }
-        else if (this.isMultiple)
-        {
-            if (!Array.isArray(data)) data = !isNull(data) ? [data] : []
-            data = data.map((d: any) => this.parseEnumValue(d)).filter((d: any) => !isNull(d))
-        }
         else
         {
             data = this.parseEnumValue(data)
@@ -67,7 +84,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
                 this._error = sformat(_LS("ERR_CANT_BE_NULL"), this.display)
             }
         }
-        else if(!this.isFlags)
+        else if(this._config.multiple)
         {
             if (Array.isArray(data))
             {
@@ -90,7 +107,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         }
         
         // write back
-        if (!this.isFlags && this.isMultiple && Array.isArray(this._data))
+        if (this._config.multiple && Array.isArray(this._data))
         {
             this._data.splice(0, this._data.length, ...data)
         }
@@ -104,7 +121,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
      * Gets the view data, like convert the value to a flags array for flags enum,
      * useful for enum views
      */
-    get view(): any { return this.isFlags ? toFlagsView(this._data, !this.isMultiple) : this._data }
+    get view(): any { return !this._config.multiple && this.isFlags ? toFlagsView(this._data, this._rule.singleFlag || this._config.singleFlag) : this._data }
 
     //#endregion
 
@@ -118,7 +135,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Whether the node require multiple values
      */
-    get isMultiple(): boolean { return this.isFlags ? !this._config.singleFlag : (this._config.multiple || false)  }
+    get isMultiple(): boolean { return this._config.multiple || this.isFlags ? !(this._rule.singleFlag || this._config.singleFlag) : false  }
 
     /**
      * Gets the enum cascade
@@ -133,12 +150,12 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Gets the enum white list
      */
-    get whiteList() { return this.rule.whiteList || this._config.whiteList }
+    get whiteList(): string[] | number[]  { return this.rule.whiteList || this._config.whiteList }
 
     /**
      * Gets the black list
      */
-    get blackList() { return this.rule.blackList || this._config.blackList }
+    get blackList(): string[] | number[] { return this.rule.blackList || this._config.blackList }
 
     /**
      * Allow use enum value in any level
@@ -255,7 +272,7 @@ function toFlagsView(flag: any, single?: boolean) {
 function fromFlagsView(flags: any) {
     if (Array.isArray(flags)) {
         if (flags.includes(0)) return 0 // 0 means NONE
-        const filter = flags.map(parseInt).filter(f => isFinite(f) && f >= 0)
+        const filter = flags.map(x => parseInt(x)).filter(f => isFinite(f) && f >= 0)
         return filter.length ? filter.reduce((a, b) => a | b) : null
     }
     flags = parseInt(flags)

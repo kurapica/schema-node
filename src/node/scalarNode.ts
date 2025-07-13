@@ -94,7 +94,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
+            else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -120,7 +120,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
+            else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
             }
@@ -132,7 +132,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(_LS("ERR_NOT_DATE"), config.display)
             }
-            else 
+            else
             {
                 if (!isNull(uplimit)  && uplimit < value)
                 {
@@ -162,7 +162,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
 
     //#endregion
 
-    //#region Properties    
+    //#region Properties
 
     /**
      * Is number value
@@ -209,7 +209,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get upLimit(): any {
         // limit
-        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schemaInfo.scalar?.upLimit 
+        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schemaInfo.scalar?.upLimit
         if (isNull(uplimit)) return null
 
         // string
@@ -240,7 +240,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get lowLimit(): any {
         // limit
-        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schemaInfo.scalar?.lowLimit 
+        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schemaInfo.scalar?.lowLimit
         if (isNull(lowLimit)) return null
 
         // string
@@ -275,7 +275,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      * Gets the black list
      */
     get blackList() { return this.rule.blackList || this._config.blackList }
-    
+
     //#endregion
 
     //#region Fields

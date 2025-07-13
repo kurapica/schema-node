@@ -261,6 +261,7 @@ export function deepClone(value: any): any
   else if (value && typeof (value) === "object")
   {
     if (value instanceof Date) return value
+    if (value instanceof LocaleString) return `${value}`
     const ret:any = {}
     for (var k in value)
     {
@@ -279,7 +280,7 @@ export function deepClone(value: any): any
  */
 export function jsonClone(value: any): any
 {
-  return isNull(value) ? value : JSON.parse(JSON.stringify(value))
+  return isNull(value) ? value : JSON.parse(JSON.stringify(deepClone(value)))
 }
 
 /**
