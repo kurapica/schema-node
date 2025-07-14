@@ -6,7 +6,7 @@ import { IStructFieldConfig, IStructFieldRelation, IStructSchema } from "../sche
 import { getCachedSchema } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayRuleSchema } from "./arrayRuleSchema"
-import { ARRAY_ITSELF, getRuleSchema, ISchemaNodePushArgSchema, ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
+import { ARRAY_ELEMENT, ARRAY_ITSELF, getRuleSchema, ISchemaNodePushArgSchema, ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
 
 @regRuleSchema(SchemaType.Struct)
 export class StructRuleSchema extends RuleSchema
@@ -39,7 +39,7 @@ export class StructRuleSchema extends RuleSchema
             // type changed, rebuild rule schema
             const structInfo = this._schema.struct!
             const f = structInfo.fields.find(d => d.name === name)
-            
+
             // build rule schema for field
             const schema = getCachedSchema(node.config.type)
             ruleSchema = getRuleSchema(schema)
@@ -82,7 +82,7 @@ export class StructRuleSchema extends RuleSchema
 
         return ruleSchema
     }
-    
+
     /**
      * The rule schema for fields
      */
@@ -112,7 +112,7 @@ export class StructRuleSchema extends RuleSchema
                 if (accessPaths == null || accessPaths.length == 0 || !isPathAccessable(targetAccessPaths, accessPaths)) {
                     console.error(`The "${relation.field}" can't access path "${a.name}", check the realtions in ${this._schema.name} type`)
                     return
-                }   
+                }
 
                 // ref field
                 args.push({ schema: this, field: a.name })
@@ -123,7 +123,7 @@ export class StructRuleSchema extends RuleSchema
             }
         })
 
-        if (args.length < relation.args.length) 
+        if (args.length < relation.args.length)
             return
 
         // register
@@ -199,7 +199,13 @@ function getAccessPath(rootSchema: StructRuleSchema, path: string, rootTypeInfo:
             schema = (schema as ArrayRuleSchema).element
         }
 
-        if (fieldType?.type == SchemaType.Struct) {
+        // for array element
+        if (paths[i] === ARRAY_ELEMENT)
+        {
+            accessPaths.push({ name: ARRAY_ELEMENT, schema: schema })
+            return accessPaths
+        }
+        else if (fieldType?.type == SchemaType.Struct) {
             field = fieldType.struct!.fields?.find(f => f.name.toLowerCase() == paths[i])
             fieldType = field ? getCachedSchema(field.type) : null
             if (!field || !fieldType) return []

@@ -137,6 +137,7 @@ export default {
     "system.logic.greateequal": "Greater Than or Equal",
     "system.logic.greatethan": "Greater Than",
     "system.logic.isnull": "Is Null",
+    "system.logic.notnull": "Not null",
     "system.logic.lessequal": "Less Than or Equal",
     "system.logic.lessthan": "Less Than",
     "system.logic.not": "Not",

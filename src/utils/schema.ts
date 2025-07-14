@@ -2361,6 +2361,23 @@ registerSchema([
                         }
                     },
                     {
+                        name: "system.logic.notnull",
+                        type: SchemaType.Function,
+                        desc: _LS("system.logic.notnull"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: true
+                                }
+                            ],
+                            exps: [],
+                            func: (v:any) => !isNull(v)
+                        }
+                    },
+                    {
                         name: "system.logic.lessequal",
                         type: SchemaType.Function,
                         desc: _LS("system.logic.lessequal"),

@@ -16,6 +16,7 @@ import { debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
  * The field that point to array itself
  */
 export const ARRAY_ITSELF = "$array"
+export const ARRAY_ELEMENT = "$ele"
 
 /**
  * The rule schema for schema node

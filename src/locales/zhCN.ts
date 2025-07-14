@@ -137,6 +137,7 @@ export default {
     "system.logic.greateequal": "大于等于",
     "system.logic.greatethan": "大于",
     "system.logic.isnull": "判定是否为空",
+    "system.logic.notnull": "判定非空",
     "system.logic.lessequal": "小于等于",
     "system.logic.lessthan": "小于",
     "system.logic.not": "不满足",
