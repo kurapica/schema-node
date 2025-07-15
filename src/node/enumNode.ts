@@ -187,10 +187,10 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
 
         // check the cascade
         if (this.cascade && access.length > this.cascade) return false
-
+        
         // check the black list
         if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex(b => `${a.value}` === `${b}`) >= 0) >= 0) return false
-
+        
         // check the white list - the sub enum value of the allowed enum value also allowed, also their parent if any level
         if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex(b => `${a.value}` === `${b}`) >= 0) < 0)
         {
@@ -203,7 +203,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             }
             return false
         }
-
+        
         return true
     }
 

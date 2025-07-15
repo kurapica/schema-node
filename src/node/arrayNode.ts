@@ -326,6 +326,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         super(config, null, parent)
         if (isNull(data) || !Array.isArray(data)) data = []
 
+        // copy default
+        if (!data.length && Array.isArray(this._data) && this._data.length) data = [...this._data]
+
         // init the raw data
         this._data = data
 

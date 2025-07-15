@@ -1,3 +1,4 @@
+import { ISchemaConfig } from "../config/schemaConfig"
 import { SchemaType } from "../enum/schemaType"
 import { ArrayNode } from "../node/arrayNode"
 import { AnySchemaNode } from "../node/schemaNode"
@@ -39,6 +40,17 @@ export class ArrayRuleSchema extends RuleSchema
         }
 
         return super.deactive(node)
+    }
+
+
+    /**
+     * Load the config
+     */
+    override loadConfig(config: ISchemaConfig) {
+        super.loadConfig(config)
+
+        // element share the config
+        this.element.loadConfig(config)
     }
 
     /**
