@@ -261,7 +261,7 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     name = name.toLowerCase()
 
     // generic type
-    if (/^t\d*$/.test(name)) {
+    if (/^[tT]\d*$/.test(name)) {
         const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
         if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
         name = Array.isArray(generic) ? generic[index] : generic
