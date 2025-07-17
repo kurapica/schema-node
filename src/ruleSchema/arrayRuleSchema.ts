@@ -58,7 +58,7 @@ export class ArrayRuleSchema extends RuleSchema
      */
     override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
     {
-        return this.element
+        return this.element || this
     }
     
     /**
@@ -66,7 +66,8 @@ export class ArrayRuleSchema extends RuleSchema
      */
     constructor(schema: INodeSchema){
         super(schema)
-        
+        if (!schema.array.element) return
+
         // The array and element share the rule schema
         const elementInfo = getCachedSchema(schema.array!.element)!
 

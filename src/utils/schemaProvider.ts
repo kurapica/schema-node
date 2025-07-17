@@ -880,6 +880,24 @@ export function isSchemaDeletable(name: string)
     return true
 }
 
+/**
+ * Whether the schema is abstract
+ * @param name the schema name
+ * @return abstract
+ */
+export function isAbstractSchema(name: string)
+{
+    const schema = getCachedSchema(name)
+    switch (schema?.type)
+    {
+        case SchemaType.Array:
+            return !schema.array?.element
+        case SchemaType.Struct:
+            return !schema.struct?.fields?.length
+    }
+    return false
+}
+
 //#endregion
 
 //#region helper
