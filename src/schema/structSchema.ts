@@ -1,4 +1,4 @@
-import { RelationType } from "../enum/relationType"
+import { RelationTypeValue } from "../enum/relationType"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { IFunctionCallArgument } from "./functionSchema"
 import { IScalarConfig } from "../config/scalarConfig"
@@ -62,5 +62,5 @@ export interface IStructFieldRelation
   /**
    * The realtion type
   */
-  type: RelationType
+  type: RelationTypeValue
 }

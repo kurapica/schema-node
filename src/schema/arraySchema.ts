@@ -1,4 +1,4 @@
-import { DataCombineType } from "../enum/dataCombineType"
+import { DataCombineTypeValue } from "../enum/dataCombineType"
 import { IStructFieldRelation } from "./structSchema"
 
 /**
@@ -34,5 +34,5 @@ export interface IArraySchema {
 
 export interface IDataCombine {
     field: string
-    type: DataCombineType
+    type: DataCombineTypeValue
 }

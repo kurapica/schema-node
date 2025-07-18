@@ -1,4 +1,4 @@
-import { SchemaType } from "../enum/schemaType"
+import { SchemaTypeValue } from "../enum/schemaType"
 import { LocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
@@ -20,7 +20,7 @@ export interface INodeSchema
     /**
      * The schema type
      */
-    type: SchemaType
+    type: SchemaTypeValue
 
     /**
      * The schema description

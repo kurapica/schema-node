@@ -70,3 +70,5 @@ export enum RelationType
    */
   SingleFlag = "singleFlag",
 }
+
+export type RelationTypeValue = `${RelationType}`

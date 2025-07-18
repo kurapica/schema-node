@@ -252,11 +252,11 @@ export function useQueueQuery<T>(queryFunc: (...args: any[]) => Promise<T>)
 /**
  * deep clone
  */
-export function deepClone(value: any, noemptyarry = false): any
+export function deepClone(value: any, noemptyarr = false): any
 {
   if (Array.isArray(value))
   {
-    return value.map(v => deepClone(v, noemptyarry))
+    return value.map(v => deepClone(v, noemptyarr))
   }
   else if (value && typeof (value) === "object")
   {
@@ -265,9 +265,9 @@ export function deepClone(value: any, noemptyarry = false): any
     const ret:any = {}
     for (var k in value)
     {
-      const res = deepClone(value[k])
+      const res = deepClone(value[k], noemptyarr)
       if (isNull(res)) continue
-      if (noemptyarry && Array.isArray(res) && !res.length) continue
+      if (noemptyarr && Array.isArray(res) && !res.length) continue
       ret[k] = res 
     }
     return ret

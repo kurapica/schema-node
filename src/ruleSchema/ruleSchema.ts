@@ -1,5 +1,5 @@
 import { ISchemaConfig } from "../config/schemaConfig"
-import { RelationType } from "../enum/relationType"
+import { RelationType, RelationTypeValue } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
 import { ArrayNode } from "../node/arrayNode"
 import { EnumNode } from "../node/enumNode"
@@ -502,7 +502,7 @@ export interface ISchemaNodePushSchema {
     /**
      * The realtion type
      */
-    type: RelationType
+    type: RelationTypeValue
 }
 
 /**

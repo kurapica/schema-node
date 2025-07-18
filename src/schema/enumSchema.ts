@@ -1,4 +1,4 @@
-import { EnumValueType } from "../enum/enumValueType"
+import { EnumValueTypeValue } from "../enum/enumValueType"
 import { LocaleString } from "../utils/locale"
 
 /**
@@ -8,7 +8,7 @@ export interface IEnumSchema {
     /**
      * The enum value type
     */
-    type: EnumValueType
+    type: EnumValueTypeValue
 
     /**
      * The cascades of the enum value
@@ -38,7 +38,7 @@ export interface IEnumValueInfo {
     /**
      * Whether the enum value is disabled
     */
-    disabled?: boolean
+    disable?: boolean
 
     /**
      * Whether the enum value has sub enum values

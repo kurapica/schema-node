@@ -1,4 +1,4 @@
-import { SchemaType } from "../enum/schemaType"
+import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
@@ -19,7 +19,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The schema type of the node.
      */
-    get schemaType(): SchemaType { return SchemaType.Namespace }
+    get schemaType(): SchemaTypeValue { return SchemaType.Namespace }
 
     /**
      * The guid of the node.
@@ -322,7 +322,7 @@ const schemaNodeMap: Record<string, new (config: ISchemaConfig, data: any, paren
 /**
  * Register a document element
  */
-export function regSchemaNode(type: SchemaType) {
+export function regSchemaNode(type: SchemaTypeValue) {
     return function <T extends new (config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined) => AnySchemaNode>(constructor: T) {
       schemaNodeMap[type] = constructor
     }
@@ -331,7 +331,7 @@ export function regSchemaNode(type: SchemaType) {
 /**
  * Gets a ruleschema type by schema type
  */
-export function getSchemaNodeType(type: SchemaType)
+export function getSchemaNodeType(type: SchemaTypeValue)
 {
     return schemaNodeMap[type]
 }

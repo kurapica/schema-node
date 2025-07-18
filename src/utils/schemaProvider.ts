@@ -1,5 +1,5 @@
 import { EnumValueType } from "../enum/enumValueType"
-import { ExpressionType } from "../enum/expressionType"
+import { ExpressionType, ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
@@ -1284,7 +1284,7 @@ interface Expression {
     /**
      * The call type
      */
-    type: ExpressionType
+    type: ExpressionTypeValue
 
     /**
      * The call func

@@ -28,3 +28,5 @@ export enum EnumValueType
      */
     Flags = "flags",
 }
+
+export type EnumValueTypeValue = `${EnumValueType}`

@@ -25,3 +25,5 @@ export enum DataCombineType
     /// </summary>
     Max = "max",
 }
+
+export type DataCombineTypeValue = `${DataCombineType}`

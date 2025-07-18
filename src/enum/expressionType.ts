@@ -33,3 +33,5 @@ export enum ExpressionType
      */
     Filter = "filter",
 }
+
+export type ExpressionTypeValue = `${ExpressionType}`

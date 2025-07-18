@@ -1,4 +1,4 @@
-import { ExpressionType } from "../enum/expressionType"
+import { ExpressionTypeValue } from "../enum/expressionType"
 
 /**
  * The schema of function
@@ -80,7 +80,7 @@ export interface IFunctionExpression {
   /**
    * The calling type
    */
-  type: ExpressionType
+  type: ExpressionTypeValue
 
   /**
    * The expression type
