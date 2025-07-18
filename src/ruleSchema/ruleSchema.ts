@@ -240,6 +240,12 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 {
                     node.rule.invisible = res
                     node.notifyState()
+
+                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    {
+                        node.enumArrayNode.rule.invisible = res
+                        node.enumArrayNode.notifyState()
+                    }
                 }
             }
             break
@@ -252,6 +258,12 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 {
                     node.rule.disable = res
                     node.notifyState()
+
+                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    {
+                        node.enumArrayNode.rule.disable = res
+                        node.enumArrayNode.notifyState()
+                    }
                 }
             }
             break

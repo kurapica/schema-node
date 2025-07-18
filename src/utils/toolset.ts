@@ -124,7 +124,7 @@ export function isEqual(a: any, b: any, t: string | null = null): boolean {
   }
   
   // Object
-  if (typeof a === "object" && typeof b === "object")
+  if (a && b && typeof a === "object" && typeof b === "object")
   {
     const flds = new Set<string>()
     for(let f in Object.getOwnPropertyNames(a))
@@ -252,11 +252,11 @@ export function useQueueQuery<T>(queryFunc: (...args: any[]) => Promise<T>)
 /**
  * deep clone
  */
-export function deepClone(value: any): any
+export function deepClone(value: any, noemptyarry = false): any
 {
   if (Array.isArray(value))
   {
-    return value.map(deepClone)
+    return value.map(v => deepClone(v, noemptyarry))
   }
   else if (value && typeof (value) === "object")
   {
@@ -265,7 +265,10 @@ export function deepClone(value: any): any
     const ret:any = {}
     for (var k in value)
     {
-      ret[k] = deepClone(value[k])
+      const res = deepClone(value[k])
+      if (isNull(res)) continue
+      if (noemptyarry && Array.isArray(res) && !res.length) continue
+      ret[k] = res 
     }
     return ret
   }

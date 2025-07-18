@@ -304,6 +304,8 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._rule = {} as any as TR
         this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schemaInfo)) as any as TRS
         this._ruleSchema.initNode(this)
+
+        setTimeout(() => this.validation(), 10)
     }
 }
 
