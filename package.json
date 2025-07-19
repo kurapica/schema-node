@@ -1,0 +1,32 @@
+{
+  "name": "schema-node",
+  "version": "0.1.0",
+  "description": "A TypeScript library for building data nodes from JSON-defined structures and relationships.",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "keywords": [
+    "typescript",
+    "schema",
+    "node",
+    "data",
+    "relation",
+    "json"
+  ],
+  "files": [
+    "dist"
+  ],
+  "author": "kurapica125@outlook.com",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bignumber.js": "^9.3.0",
+    "vite": "^6.3.5"
+  },
+  "devDependencies": {
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
