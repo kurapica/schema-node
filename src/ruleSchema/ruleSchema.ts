@@ -312,6 +312,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
+                    if (node.isNumber && node.rule.useOriginForUplimit)
+                    {
+                        const origin = node.original
+                        if (isFinite(res) && isFinite(origin))
+                        {
+                            res = res + origin
+                        }
+                    }
+                        
                     node.rule.upLimit = res
                     node.validation().finally(() => node.notifyState())
                 }

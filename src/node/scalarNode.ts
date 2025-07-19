@@ -276,6 +276,11 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get blackList() { return this.rule.blackList || this._config.blackList }
 
+    /**
+     * Gets the original value
+     */
+    get original() { return this._original }
+
     //#endregion
 
     //#region Fields
