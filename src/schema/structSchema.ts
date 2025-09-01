@@ -3,6 +3,7 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { IFunctionCallArgument } from "./functionSchema"
 import { IScalarConfig } from "../config/scalarConfig"
 import { IEnumConfig } from "../config/enumConfig"
+
 /**
  * The struct schema.
 */

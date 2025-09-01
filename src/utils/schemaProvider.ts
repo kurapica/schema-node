@@ -7,6 +7,7 @@ import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
+import { IAppSchema } from "../schema/applicationSchema"
 
 export const NS_SYSTEM = "system"
 
@@ -31,6 +32,9 @@ export const NS_SYSTEM_STRINGS = "system.strings"
 export const NS_SYSTEM_NUMBERS = "system.numbers"
 export const NS_SYSTEM_INTS = "system.ints"
 
+
+//#region Schema Provider
+
 /**
  * The schema information provider interface
  *
@@ -53,6 +57,12 @@ export interface ISchemaProvider {
      * @returns The schema information
      */
     loadSchema(schemaName: string): Promise<INodeSchema>
+
+    /**
+     * Load the application schema information
+     * @param app the name of the application
+     */
+    loadAppSchema(app: string): Promise<IAppSchema>
 
     /**
      * Call the function schema from the server with the arguments and type, gets the result
@@ -80,15 +90,7 @@ export interface ISchemaProvider {
     loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean): Promise<IEnumValueAccess[]>
 }
 
-//#region Methods
-
 let schemaProvider: ISchemaProvider | null = null
-const schemaCache: { [key: string]: INodeSchema } = {}
-const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
-const arraySchemaMap: { [key: string]: INodeSchema } = {}
-const serverCallOnly: Set<string> = new Set()
-const schemaRefs: { [key:string]: number } = {}
-const schemaChangeWatcher = new DataChangeWatcher()
 
 /**
  * Sets the schema provider
@@ -105,6 +107,161 @@ export function useSchemaProvider(provider: ISchemaProvider): void {
 export function getSchemaProvider(): ISchemaProvider | null {
     return schemaProvider
 }
+
+//#endregion
+
+//#region Application Schema
+
+const appSchemaCache: { [key: string]: IAppSchema } = {}
+const rootAppSchema: IAppSchema = { name: "", apps: [] }
+const appSchemaChangeWatcher = new DataChangeWatcher()
+
+/**
+ * Register the application schemas
+ * @param schemas The application schemas
+ */
+export function registerAppSchema(schemas: IAppSchema[]): void {
+    for (const schema of schemas) {
+        const name = schema.name.toLowerCase()
+        const exist = appSchemaCache[name]
+
+        // combine
+        if (exist)
+        {
+            updateAppSchemaRefs(schema, false)
+
+            exist.display = schema.display
+            exist.desc = schema.desc
+            exist.hasApps = schema.hasApps
+            exist.hasFields = schema.hasFields
+            exist.relations = schema.relations
+            exist.fields = schema.fields
+
+            if (schema.hasFields || schema.fields?.length)
+                delete exist.apps
+            else if(schema.apps?.length)
+                registerAppSchema(schema.apps)
+
+            updateAppSchemaRefs(schema, true)
+            continue
+        }
+        
+        // root namespace
+        const paths = name.split(".").filter(n => !isNull(n))
+        let root: IAppSchema = rootAppSchema
+        for (let i = 0; i < paths.length - 1; i++)
+        {
+            const p = paths.slice(0, i + 1).join(".")
+            let app = appSchemaCache[p]
+            if (!app)
+            {
+                app = {
+                    name: p,
+                    apps: []
+                }
+                appSchemaCache[p] = app
+                root.apps = root.apps || []
+                root.apps.push(app)
+            }
+            root = app
+        }
+        
+        appSchemaCache[name] = schema
+        root.apps.push(schema)
+
+        if (schema.hasFields || schema.fields?.length)
+        {
+            delete schema.apps
+            updateAppSchemaRefs(schema, true)
+        }
+        else if(schema.apps?.length)
+        {
+            const apps = schema.apps
+            schema.apps = []
+            registerAppSchema(apps)
+        }
+    }
+    appSchemaChangeWatcher.notify(schemas.map(s => s.name))
+}
+
+/**
+ * Remove an application schema
+ * @param name The application name
+ */
+export function removeAppSchema(name: string): boolean {
+    name = name.toLowerCase()
+    const schema = appSchemaCache[name]
+    if (!schema) return true
+    if (schema === rootSchema) return false
+    updateAppSchemaRefs(schema, false)
+    
+    const paths = name.split(".")
+    const pname = paths.slice(0, paths.length - 1).join(".")
+    const parent = appSchemaCache[pname]
+    if (parent)
+    {
+        const index = parent.apps?.findIndex(s => s.name === schema.name)
+        if (!isNull(index) && index >= 0)
+        {
+            parent.apps.splice(index, 1)
+        }
+    }
+    delete appSchemaCache[name]
+    appSchemaChangeWatcher.notify([name])
+    return true
+}
+
+/**
+ * Subscribe application schema change
+ */
+export function subscribeAppSchemaChange(handler: Function)
+{
+    return appSchemaChangeWatcher.addWatcher(handler)
+}
+
+/**
+ * Gets the schema information
+ * @param schemaName The name of the schema
+ * @param generic the generic types
+ * @returns The schema information
+ */
+export async function getAppSchema(name: string): Promise<IAppSchema | undefined> {
+    // all schema names should be case insensitive
+    name = name.toLowerCase()
+
+    let schema = !name ? rootAppSchema : appSchemaCache[name]
+    if(schema)
+    {
+        return schema
+    }
+    if (!schemaProvider) throw new Error(`Schema provider not provided to get app ${name}`)
+
+    // load schema from provider
+    schema = await schemaProvider.loadAppSchema(name)
+    registerAppSchema([schema])
+    return schema
+}
+
+/**
+ * Gets the cached schema info, when the schema node created, their info and all other required must be cached, avoid async codes
+ * @param name The schema name
+ * @returns The schema info
+ */
+export function getAppCachedSchema(name: string): IAppSchema | undefined {
+    name = name.toLowerCase()
+    return !name ? rootAppSchema : appSchemaCache[name]
+}
+
+//#endregion
+
+//#region Data Schema
+
+const schemaCache: { [key: string]: INodeSchema } = {}
+const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
+const arraySchemaMap: { [key: string]: INodeSchema } = {}
+const serverCallOnly: Set<string> = new Set()
+const schemaRefs: { [key:string]: number } = {}
+const schemaChangeWatcher = new DataChangeWatcher()
 
 /**
  * Register the frontend schemas
@@ -243,7 +400,7 @@ export function removeSchema(name: string): boolean
 }
 
 /**
- * Register a schema change
+ * Subscribe schema change
  */
 export function subscribeSchemaChange(handler: Function)
 {
@@ -1249,6 +1406,14 @@ function updateSchemaRefs(schema: INodeSchema, add: boolean)
             })
             break
     }
+}
+
+function updateAppSchemaRefs(schema: IAppSchema, add: boolean)
+{
+    schema.fields?.forEach(f => {
+        updateRef(f.type, add)
+        updateRef(f.func, add)
+    })
 }
 
 //#endregion

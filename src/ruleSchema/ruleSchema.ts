@@ -308,7 +308,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.Uplimit:
+        case RelationType.UpLimit:
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {

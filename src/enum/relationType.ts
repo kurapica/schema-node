@@ -38,7 +38,7 @@ export enum RelationType
   /**
    * up limit
    */
-  Uplimit = "upLimit",
+  UpLimit = "upLimit",
   
   /**
    * root, for enum or scalar values with tree structure
