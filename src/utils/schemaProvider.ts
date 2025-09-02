@@ -201,7 +201,7 @@ export function removeAppSchema(name: string): boolean {
     
     const paths = name.split(".")
     const pname = paths.slice(0, paths.length - 1).join(".")
-    const parent = appSchemaCache[pname]
+    const parent = pname ? appSchemaCache[pname] : rootAppSchema
     if (parent)
     {
         const index = parent.apps?.findIndex(s => s.name === schema.name)
@@ -234,11 +234,8 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
     name = name.toLowerCase()
 
     let schema = !name ? rootAppSchema : appSchemaCache[name]
-    if(schema)
-    {
-        return schema
-    }
-    if (!schemaProvider) throw new Error(`Schema provider not provided to get app ${name}`)
+    if(schema) return schema
+    if (!schemaProvider) return undefined
 
     // load schema from provider
     schema = await schemaProvider.loadAppSchema(name)
