@@ -163,7 +163,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         parent = parent.parent
                     }
                     if (parent) {
-                        return { node: parent, checkArrayNode: true, value: null }
+                        return { checkArrayNode: true, value: null }
                     }
 
                     // no way
@@ -437,7 +437,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             let value = a.node.rawData
                             if (a.checkArrayNode) {
                                 let n = node
-                                while (n.parent && n.parent !== a.node)
+                                while (n.parent && !(n.parent instanceof ArrayNode))
                                     n = n.parent
 
                                 const arrayIndex = (n.parent as ArrayNode).indexof(n) as number

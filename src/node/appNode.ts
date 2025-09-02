@@ -1,4 +1,4 @@
-import { IAppSchema } from "../schema/applicationSchema";
+import { IAppSchema } from "../schema/appSchema";
 
 /**
  * The application schema node.

@@ -1,4 +1,4 @@
-import { RelationTypeValue } from "../enum/relationType"
+import { SchemaLoadState } from "./nodeSchema"
 import { IStructFieldRelation } from "./structSchema"
 
 /**
@@ -45,6 +45,11 @@ export interface IAppSchema
      * The realtions between the fields
      */
     relations?: IStructFieldRelation[]
+
+    /**
+     * The schema info is loaded from server
+     */
+    loadState?: SchemaLoadState    
 }
 
 /**

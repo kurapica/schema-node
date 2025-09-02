@@ -7,7 +7,7 @@ import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
-import { IAppSchema } from "../schema/applicationSchema"
+import { IAppSchema } from "../schema/appSchema"
 
 export const NS_SYSTEM = "system"
 
@@ -120,7 +120,7 @@ const appSchemaChangeWatcher = new DataChangeWatcher()
  * Register the application schemas
  * @param schemas The application schemas
  */
-export function registerAppSchema(schemas: IAppSchema[]): void {
+export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
         const exist = appSchemaCache[name]
@@ -128,6 +128,9 @@ export function registerAppSchema(schemas: IAppSchema[]): void {
         // combine
         if (exist)
         {
+            if ((exist.loadState || 0) > loadState) continue
+            exist.loadState = loadState
+
             updateAppSchemaRefs(schema, false)
 
             exist.display = schema.display
@@ -135,12 +138,12 @@ export function registerAppSchema(schemas: IAppSchema[]): void {
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
-            exist.fields = schema.fields
+            exist.fields = schema.fields?.length ? schema.fields : exist.fields
 
             if (schema.hasFields || schema.fields?.length)
                 delete exist.apps
             else if(schema.apps?.length)
-                registerAppSchema(schema.apps)
+                registerAppSchema(schema.apps, loadState)
 
             updateAppSchemaRefs(schema, true)
             continue
@@ -166,6 +169,7 @@ export function registerAppSchema(schemas: IAppSchema[]): void {
             root = app
         }
         
+        schema.loadState = loadState
         appSchemaCache[name] = schema
         root.apps.push(schema)
 
@@ -178,7 +182,7 @@ export function registerAppSchema(schemas: IAppSchema[]): void {
         {
             const apps = schema.apps
             schema.apps = []
-            registerAppSchema(apps)
+            registerAppSchema(apps, loadState)
         }
     }
     appSchemaChangeWatcher.notify(schemas.map(s => s.name))
