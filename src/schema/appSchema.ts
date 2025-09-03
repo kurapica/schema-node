@@ -105,7 +105,7 @@ export interface IAppFieldSchema
     /**
      * The field is front-end only, no need store data
      */
-    frontEnd?: boolean
+    frontend?: boolean
 
     /**
      * The field is disabled
