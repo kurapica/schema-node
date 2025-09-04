@@ -24,15 +24,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get valid(): boolean { return this._fields.findIndex(f => !f.node.valid && !f.node.invisible) < 0 }
     get error(): any { return this._fields.find(f => !f.node.valid)?.node.error }
     get changed(): boolean { return this._fields.findIndex(f => f.node.changed) >= 0 }
-
-    get data()
-    {
-        const result: { [key:string]: any } = {}
-        this._fields.forEach(f => {
-            result[(f.node.config as IStructFieldConfig).name] = f.node.data
-        })
-        return result
-    }
+    get data() { return undefined }
 
     // override methods
 
@@ -58,6 +50,9 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      */
     resetChanges(): void { this._fields.forEach(f => f.node.resetChanges() ) }
 
+    /**
+     * Dispose the whole application
+     */
     override dispose(): void {
         this._fields.forEach(f => f.node.dispose() )
         this._fields = []
@@ -65,7 +60,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     }
 
     //#endregion
-
 
     //#region Properties
 
