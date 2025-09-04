@@ -115,6 +115,7 @@ export function getSchemaProvider(): ISchemaProvider | null {
 const appSchemaCache: { [key: string]: IAppSchema } = {}
 const rootAppSchema: IAppSchema = { name: "", apps: [] }
 const appSchemaChangeWatcher = new DataChangeWatcher()
+const appStructSchemaRoot = "__app_struct"
 
 /**
  * Register the application schemas
@@ -139,6 +140,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
             exist.fields = schema.fields?.length ? schema.fields : exist.fields
+            exist.nodeSchema = undefined
 
             if (schema.hasFields || schema.fields?.length)
                 delete exist.apps
@@ -170,6 +172,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         }
         
         schema.loadState = loadState
+        schema.nodeSchema = undefined
         appSchemaCache[name] = schema
         root.apps.push(schema)
 
@@ -251,6 +254,14 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
 export function getAppCachedSchema(name: string): IAppSchema | undefined {
     name = name.toLowerCase()
     return !name ? rootAppSchema : appSchemaCache[name]
+}
+
+/**
+ * Conv app as struct schema
+ */
+export function getAppStructSchemaName(name: string)
+{
+    return `${appStructSchemaRoot}.${name}`
 }
 
 //#endregion
@@ -450,6 +461,36 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
  */
 export function getCachedSchema(name: string): INodeSchema | undefined {
     name = name.toLowerCase()
+
+    // conv app to struct
+    if (name.startsWith(appStructSchemaRoot))
+    {
+        const appName = name.substring(appStructSchemaRoot.length + 1)
+        const appSchema = getAppCachedSchema(appName)
+        if (appSchema)
+        {
+            if (!appSchema.nodeSchema && appSchema.fields?.length)
+            {
+                appSchema.nodeSchema = {
+                    name,
+                    type: SchemaType.Struct,
+                    desc: appSchema.display,
+                    struct: {
+                        fields: appSchema.fields.map(f => ({
+                            name: f.name,
+                            type: f.type,
+                            display: f.display,
+                            desc: f.desc,
+                        })),
+                        relations: appSchema.relations?.map(r => r)
+                    }
+                }
+            }
+            return appSchema.nodeSchema
+        }
+        return
+    }
+
     return !name ? rootSchema : schemaCache[name]
 }
 

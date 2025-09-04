@@ -314,6 +314,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _total: number | undefined
     private _pageCount: number | undefined
     private _page: number | undefined
+    private _descend: boolean | undefined
 
     //#endregion
 
@@ -333,8 +334,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this._data = data
 
         this._total = this._config.total
-        this._pageCount = this._config.pageCount
-        this._page = 0
+        this._pageCount = this._config.count
+        this._descend = this._config.descend
+        this._page = this._pageCount ? Math.floor((this._config.offset || 0) / this._pageCount) : 0
 
         // element check
         this._eleSchemaInfo = getCachedSchema(this._schemaInfo.array!.element)!

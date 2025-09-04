@@ -1,4 +1,4 @@
-import { SchemaLoadState } from "./nodeSchema"
+import { INodeSchema, SchemaLoadState } from "./nodeSchema"
 import { IStructFieldRelation } from "./structSchema"
 
 /**
@@ -49,7 +49,12 @@ export interface IAppSchema
     /**
      * The schema info is loaded from server
      */
-    loadState?: SchemaLoadState    
+    loadState?: SchemaLoadState
+
+    /**
+     * The auto-gen node schema
+     */
+    nodeSchema?: INodeSchema
 }
 
 /**
@@ -111,4 +116,92 @@ export interface IAppFieldSchema
      * The field is disabled
      */
     disable?: boolean
+}
+
+/**
+ * The app data query
+ */
+export interface IAppDataQuery {
+    /**
+     * The query fields
+     */
+    fields: string[]
+
+    /**
+     * The query detail for array fields
+     */
+    querys: { [key:string]: IAppDataFieldQuery }
+}
+
+/**
+ * The app data field query
+ */
+export interface IAppDataFieldQuery {
+    /**
+     * The key to be query, like
+     * 
+     * query: { 'name': 'ann', class: 'math' }
+     * query: { 'name': ['ann', 'ben'] }
+     */
+    query?: { [key:string]: any }
+
+    /**
+     * The query count
+     */
+    count?: number
+
+    /**
+     * The query data offset
+     */
+    offset?: number
+
+    /**
+     * Use descend order
+     */
+    descend?: boolean
+}
+
+/**
+ * The app data query result
+ */
+export interface IAppDataResult {
+    /**
+     * The app data
+     */
+    results: { [key:string]: any }
+
+    /**
+     * The additional field data info
+     */
+    infos: { [key:string]: IAppDataFieldInfo }
+}
+
+/**
+ * The app data field query result info
+ */
+export interface IAppDataFieldInfo {
+    /**
+     * The key of the query, like
+     */
+    query?: { [key:string]: any }
+
+    /**
+     * The query count
+     */
+    count?: number
+
+    /**
+     * The query offset
+     */
+    offset?: number
+
+    /**
+     * The data total count
+     */
+    total?: number
+    
+    /**
+     * Use descend order
+     */
+    descend?: boolean
 }

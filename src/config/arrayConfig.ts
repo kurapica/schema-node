@@ -9,9 +9,14 @@ export interface IArrayConfig extends ISchemaConfig
     isIncrUpdate?: boolean
 
     /**
-     * The page count
+     * The query count for a page
      */
-    pageCount?: number
+    count?: number
+
+    /**
+     * The query offset
+     */
+    offset?: number
 
     /**
      * The data total count

@@ -89,21 +89,21 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
 
     //#endregion
 
-    //#region Methods
-
-    private refreshRawData = debounce(() => {
-        this._fields.forEach(f => this._data[(f.config as IStructFieldConfig).name] = f.rawData)
-        this.notify()
-    }, 20)
-
-    //#endregion
-
     //#region Properties
 
     /**
      * Gets the struct fields
      */
     get fields(): AnySchemaNode[] { return this._fields }
+
+    //#endregion
+
+    //#region Methods
+
+    private refreshRawData = debounce(() => {
+        this._fields.forEach(f => this._data[(f.config as IStructFieldConfig).name] = f.rawData)
+        this.notify()
+    }, 20)
 
     /**
      * Gets the struct field by name
