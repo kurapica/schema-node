@@ -1,6 +1,7 @@
 import { ISchemaConfig } from "../config/schemaConfig"
 import { RelationType, RelationTypeValue } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
+import { AppNode } from "../node/appNode"
 import { ArrayNode } from "../node/arrayNode"
 import { EnumNode } from "../node/enumNode"
 import { ScalarNode } from "../node/scalarNode"
@@ -194,7 +195,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 // locate the rest path
                 let valNode: AnySchemaNode | undefined = nodePaths[ni - 1]
                 for (; i < paths.length; i++)
-                    valNode = valNode instanceof StructNode
+                    valNode = (valNode instanceof StructNode || valNode instanceof AppNode)
                         ? valNode.getField(paths[i])
                         : undefined
 

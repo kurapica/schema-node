@@ -65,15 +65,6 @@ export interface ISchemaProvider {
     loadAppSchema(app: string): Promise<IAppSchema>
 
     /**
-     * Call the function schema from the server with the arguments and type, gets the result
-     * @param schemaName The name of the function schema
-     * @param args The arguments of the function
-     * @param generic The generic type of the function
-     * @returns The schema information
-     */
-    callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
-
-    /**
      * Load the enum value sub list from the server
      * @param schemaName The name of the enum schema
      * @param value The root enum value if provided
@@ -88,13 +79,21 @@ export interface ISchemaProvider {
      * @param noSubList no sub list should be loaded
      */
     loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean): Promise<IEnumValueAccess[]>
+
+    /**
+     * Call the function schema from the server with the arguments and type, gets the result
+     * @param schemaName The name of the function schema
+     * @param args The arguments of the function
+     * @param generic The generic type of the function
+     * @returns The schema information
+     */
+    callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
 }
 
 let schemaProvider: ISchemaProvider | null = null
 
 /**
  * Sets the schema provider
- * @param provider The schema provider
  */
 export function useSchemaProvider(provider: ISchemaProvider): void {
     schemaProvider = provider
@@ -102,7 +101,6 @@ export function useSchemaProvider(provider: ISchemaProvider): void {
 
 /**
  * Gets the schema provider
- * @returns The schema provider
  */
 export function getSchemaProvider(): ISchemaProvider | null {
     return schemaProvider
@@ -148,6 +146,9 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
                 registerAppSchema(schema.apps, loadState)
 
             updateAppSchemaRefs(schema, true)
+
+            // register type schema
+            if (schema.types) registerSchema(schema.types, loadState)
             continue
         }
         
@@ -186,6 +187,12 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             const apps = schema.apps
             schema.apps = []
             registerAppSchema(apps, loadState)
+        }
+
+        // register type schema
+        if (schema.types) {
+            registerSchema(schema.types, loadState)
+            schema.types = undefined
         }
     }
     appSchemaChangeWatcher.notify(schemas.map(s => s.name))
@@ -242,7 +249,7 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
 
     // load schema from provider
     schema = await schemaProvider.loadAppSchema(name)
-    registerAppSchema([schema])
+    if (schema) registerAppSchema([schema], SchemaLoadState.Server)
     return schema
 }
 
@@ -315,7 +322,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     for(let i = 0; i < schema.enum.values.length; i++)
                     {
                         const value = schema.enum.values[i]
-                        value.subList = exist.enum.values.find(v => v.value === value.value)?.subList
+                        value.subList = value.subList || exist.enum.values.find(v => v.value === value.value)?.subList
                     }
                     exist.enum = schema.enum
                     break

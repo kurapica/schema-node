@@ -47,12 +47,17 @@ export interface IAppSchema
     relations?: IStructFieldRelation[]
 
     /**
-     * The schema info is loaded from server
+     * The schema info is loaded from server or else
      */
     loadState?: SchemaLoadState
 
     /**
-     * The auto-gen node schema
+     * The types related to the application, loaded from server
+     */
+    types?: INodeSchema[]
+
+    /**
+     * The auto-gen node schema in frontend
      */
     nodeSchema?: INodeSchema
 }
@@ -123,7 +128,17 @@ export interface IAppFieldSchema
  */
 export interface IAppDataQuery {
     /**
-     * The query fields
+     * The application name
+     */
+    app: string
+
+    /**
+     * The application target
+     */
+    target: string
+
+    /**
+     * The query fields, empty means query all
      */
     fields: string[]
 
@@ -131,6 +146,26 @@ export interface IAppDataQuery {
      * The query detail for array fields
      */
     querys: { [key:string]: IAppDataFieldQuery }
+
+    /**
+     * The default query count
+     */
+    count?: number
+
+    /**
+     * Use descend order as default
+     */
+    descend?: boolean
+
+    /**
+     * Only query the application schema
+     */
+    schemaOnly?: boolean
+
+    /**
+     * Don't include the type schema
+     */
+    noSchema?: boolean
 }
 
 /**
@@ -165,6 +200,21 @@ export interface IAppDataFieldQuery {
  * The app data query result
  */
 export interface IAppDataResult {
+    /**
+     * The application name
+     */
+    app: string
+
+    /**
+     * The application target
+     */
+    target: string
+
+    /**
+     * The application schema
+     */
+    schema?: IAppSchema
+
     /**
      * The app data
      */
@@ -204,4 +254,66 @@ export interface IAppDataFieldInfo {
      * Use descend order
      */
     descend?: boolean
+}
+
+/**
+ * The application field data push query
+ */
+export interface IAppDataPushQuery {
+    /**
+     * The application name
+     */
+    app: string
+
+    /**
+     * The application target
+     */
+    target: string
+
+    /**
+     * The push data field
+     */
+    datas: { [key:string]: IAppDataFieldPushQuery }
+
+    /**
+     * Whether a full data push, incr-upate field will ignore this
+     */
+    full?: boolean
+}
+
+export interface IAppDataFieldPushQuery {
+    /**
+     * The update data, include new & update
+     */
+    data?: any
+
+    /**
+     * The delete data from array node
+     */
+    delete?: any[]
+}
+
+/**
+ * The data push result
+ */
+export interface IAppDataPushResult {
+    /**
+     * The application name
+     */
+    app: string
+
+    /**
+     * The application target
+     */
+    target: string
+
+    /**
+     * The push result
+     */
+    result: boolean
+
+    /**
+     * The error result
+     */
+    error?: any
 }

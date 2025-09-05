@@ -1,4 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
+import { AppNode } from "../node/appNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
@@ -14,7 +15,7 @@ export class StructRuleSchema extends RuleSchema
     /**
      * Active the rule schema for node
      */
-    override active(node: StructNode, init?: boolean) {
+    override active(node: StructNode | AppNode, init?: boolean) {
         super.active(node, init)
         node.fields.forEach(f => f.activeRule(init))
     }
@@ -22,7 +23,7 @@ export class StructRuleSchema extends RuleSchema
     /**
      * Deactive the rule schema for node
      */
-    override deactive(node: StructNode): void {
+    override deactive(node: StructNode | AppNode): void {
         node.fields.forEach(f => f.deactiveRule())
         return super.deactive(node)
     }

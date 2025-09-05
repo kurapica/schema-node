@@ -1,5 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataResult, IAppSchema } from "../schema/appSchema"
+import { IAppDataResult } from "../schema/appSchema"
 import { getAppCachedSchema, getAppStructSchemaName, getCachedSchema } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
@@ -21,9 +21,9 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
 
     // override properties
     get schemaType(): SchemaType { return SchemaType.Struct }
-    get valid(): boolean { return this._fields.findIndex(f => !f.node.valid && !f.node.invisible) < 0 }
-    get error(): any { return this._fields.find(f => !f.node.valid)?.node.error }
-    get changed(): boolean { return this._fields.findIndex(f => f.node.changed) >= 0 }
+    get valid(): boolean { return this.loadedInputFields.findIndex(f => !f.valid && !f.invisible) < 0 }
+    get error(): any { return this.loadedInputFields.find(f => !f.valid)?.error }
+    get changed(): boolean { return this.loadedInputFields.findIndex(f => f.changed) >= 0 }
     get data() { return undefined }
 
     // override methods
@@ -39,16 +39,15 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * valiate the value
      */
     async validate(): Promise<void> {
-        for(let i = 0; i < this._fields.length; i++)
-        {
-            await this._fields[i].node.validation()
-        }
+        const fields = this.loadedInputFields
+        for(let i = 0; i < fields.length; i++)
+            await fields[i].validation()
     }
 
     /**
      * reset changes
      */
-    resetChanges(): void { this._fields.forEach(f => f.node.resetChanges() ) }
+    resetChanges(): void { this.loadedInputFields.forEach(f => f.resetChanges() ) }
 
     /**
      * Dispose the whole application
@@ -66,9 +65,24 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get target(): string { return this._target }
 
     /**
-     * Gets the struct fields
+     * Gets all app fields
      */
     get fields(): AnySchemaNode[] { return this._fields.map(f => f.node) }
+
+    /**
+     * Gets all input fields
+     */
+    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref))).map(f => f.node) }
+
+    /**
+     * Gets all the non-ref push fields
+     */
+    get pushFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Push) && !(f.state & AppFieldNodeState.Ref)).map(f => f.node) }
+
+    /**
+     * Gets all loaded input fields
+     */
+    get loadedInputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref)) && (f.state & AppFieldNodeState.Loaded)).map(f => f.node) }
 
     //#endregion
 
@@ -84,16 +98,16 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      */
     isFieldLoaded(name: string | AnySchemaNode): boolean {
         if (typeof(name) !== "string") name = (name.config as IStructFieldConfig).name.toLowerCase()
-        return this._fields.find(f => (f.node.config as IStructFieldConfig).name.toLowerCase() === name)?.loaded || false 
+        return ((this._fields.find(f => (f.node.config as IStructFieldConfig).name.toLowerCase() === name)?.state || AppFieldNodeState.None) & AppFieldNodeState.Loaded) > 0
     }
-
+    
     //#endregion
 
     //#region Field
 
     protected _fields: {
         node: AnySchemaNode,
-        loaded?: boolean
+        state: AppFieldNodeState
     }[]
     protected _target: string
 
@@ -108,11 +122,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         const schema = getAppCachedSchema(app)
         if (schema) throw `Unkown application ${app}`
         if (!schema.fields?.length) throw `Application ${app} has no fields`
-        super({ type: getAppStructSchemaName(app), readonly }, data?.results)
-
-        // no data ref
-        this._data = undefined
-        this._original = undefined
+        super({ type: getAppStructSchemaName(app), display: schema.display, desc: schema.desc, readonly }, data?.results)
 
         // init target & fields
         this._target = target || ""
@@ -126,7 +136,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             const fschema = getCachedSchema(fconf.type)
             const d = data?.results[fconf.name]
             let node: AnySchemaNode | null = null
-            let loaded = !isNull(d)
             
             switch (fschema?.type)
             {
@@ -147,8 +156,20 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             }
             if (node)
             {
-                this._fields.push({ node, loaded })
+                let state = AppFieldNodeState.None
+                if ((!isNull(d) || data?.infos[fconf.name])) state |= AppFieldNodeState.Loaded
+                if (fconf.func) state |= AppFieldNodeState.Push
+                if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+                this._fields.push({ node, state })
             }
         }
     }
+}
+
+enum AppFieldNodeState 
+{
+    None    = 0,
+    Loaded  = 1 << 0,
+    Push    = 1 << 1,
+    Ref     = 1 << 2 
 }
