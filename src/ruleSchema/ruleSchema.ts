@@ -422,6 +422,26 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 }
             }
             break
+
+        case RelationType.Validation:
+            if (node instanceof EnumNode || node instanceof ScalarNode)
+            {
+                handler = (res: any) => {
+                    if (!res)
+                    {
+                        if (!node.rule.error)
+                        {
+                            node.rule.error = true
+                            node.validation().finally(() => node.notifyState())
+                        }
+                    }
+                    else if (node.rule.error)
+                    {
+                        node.rule.error = undefined
+                        node.validation().finally(() => node.notifyState())
+                    }
+                }
+            }
     }
 
     if (!handler) return

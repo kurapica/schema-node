@@ -69,6 +69,11 @@ export enum RelationType
    * Single flag value for enum
    */
   SingleFlag = "singleFlag",
+
+  /**
+   * Validate the value
+   */
+  Validation = "validation",
 }
 
 export type RelationTypeValue = `${RelationType}`

@@ -188,6 +188,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    // refresh raw data
     private refreshRawData = debounce(() => {
         if (Array.isArray(this._data))
             this._data.splice(0, this._data.length, ...this._elements.map(e => e.rawData))
@@ -199,6 +200,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this.notify()
     }, 20)
 
+    // create new element
     private newElement(data?: any) {
         let eleNode: AnySchemaNode | null = null
         switch (this._eleSchemaInfo.type)
@@ -215,6 +217,21 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         eleNode?.subscribe(this.refreshRawData)
         return eleNode
+    }
+
+    // get the unique key combine from primarys
+    private getPrimaryKey(node: AnySchemaNode) {
+        const primarys = this._eleSchemaInfo.array?.primary
+        if (!primarys?.length || node.schemaType === SchemaType.Struct) return
+        const keys: string[] = []
+        for(let i = 0; i < primarys.length; i++)
+        {
+            let k = primarys[i]
+            const v = node.rawData[k]
+            if (isNull(k)) return undefined
+            keys.push(`${v}`)
+        }
+        return keys.join(".")
     }
 
     /**
@@ -303,6 +320,26 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * @TODO
      */
     set page(page: number) { this._page = page }
+
+    /**
+     * Gets the deleted data
+     */
+    get deleteData(): any[] | undefined {
+        if (this.asSingleValue || this._enumArrayNode || this._eleSchemaInfo.type !== SchemaType.Struct || !this._schemaInfo.array?.primary?.length) return undefined
+        if (!this._original || !Array.isArray(this._original) || !this._original.length) return []
+
+        const primary = this._schemaInfo.array!.primary!
+        const keys = new Set<string>()
+        this._elements.map(e => e.rawData).filter(d => primary.findIndex(p => isNull(d[p])) < 0)
+            .forEach(d => keys.add(primary.map(p => `${d[p]}`).join(".")))
+
+        const deletes: any[] = []
+        this._original.filter(d => primary.findIndex(p => isNull(d[p])) < 0).forEach(d => {
+            if (keys.has(primary.map(p => `${d[p]}`).join(".")))
+                deletes.push(d)
+        })
+        return deletes
+    }
 
     //#endregion
 

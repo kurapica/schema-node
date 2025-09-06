@@ -4,7 +4,7 @@ import { IEnumConfig } from '../config/enumConfig'
 import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
-import { _LS } from '../utils/locale'
+import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
 import { EnumRule } from '../rule/enumRule'
@@ -104,6 +104,14 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
                     this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
                 }
             }
+        }
+        
+        // relation valiation
+        if (this._valid && this.rule.error)
+        {
+            this._valid = false
+            const error = this._config.error ||  "ERR_DATA_NOT_VALID"
+            this._error = sformat(_L(`${error}`), this._config.display)
         }
         
         // write back

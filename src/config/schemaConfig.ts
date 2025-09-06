@@ -21,6 +21,11 @@ export interface ISchemaConfig
     desc?: string | LocaleString
 
     /**
+     * The error message if validation failed.
+     */
+    error?: string | LocaleString
+
+    /**
      * The node data is required.
      */
     require?: boolean
@@ -54,10 +59,4 @@ export interface ISchemaConfig
      * The default value of the node.
      */
     default?: any
-
-    /**
-     * The validation provided by parent
-     * return error message if failed
-     */
-    validation?: Function
 }

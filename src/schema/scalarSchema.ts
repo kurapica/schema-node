@@ -36,12 +36,12 @@ export interface IScalarSchema
   regex?: string
 
   /**
-   * The eval function to validate the scalar value
+   * The function to validate the scalar value in frontend
   */
-  valid?: string
+  prevalid?: string
 
   /**
-   * The eval function to convert the scalar value
+   * The function to validate the scalar value in backend
   */
-  conv?: string
+  postvalid?: string
 }

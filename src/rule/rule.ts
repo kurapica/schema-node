@@ -20,6 +20,11 @@ export abstract class Rule {
     disable?: boolean
 
     /**
+     * Validation failed
+     */
+    error?: boolean
+
+    /**
      * Already actived
      */
     _actived?: boolean

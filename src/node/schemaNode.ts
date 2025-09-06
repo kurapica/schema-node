@@ -171,9 +171,10 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     {
         // validation
         const valid = this._valid
+        const error = this._error
         const res = this.validate()
         if (res instanceof Promise) await res
-        if (valid !== this._valid)
+        if (valid !== this._valid || error !== this._error)
             this.notifyState()
     }
 
@@ -253,7 +254,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Set the error by parent
      */
     setError (err: string) {
-        if (this._valid)
+        if (this._valid || this._error !== err)
         {
             this._valid = false
             this._error = err
@@ -300,7 +301,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._config = config as TC
         this._schemaInfo = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
-        this._original = data
+        this._original = deepClone(data)
         this._rule = {} as any as TR
         this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schemaInfo)) as any as TRS
         this._ruleSchema.initNode(this)

@@ -2,7 +2,7 @@ import { SchemaType } from '../enum/schemaType'
 import { IScalarConfig } from '../config/scalarConfig'
 import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
-import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
+import { callSchemaFunction, getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
@@ -57,7 +57,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     }
 
     // override methods
-    validate(): void {
+    async validate(): Promise<void> {
         const value = this.data
         const config = this._config
         const scalarInfo = this.schemaInfo.scalar
@@ -148,14 +148,30 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             }
         }
 
-        // custom validation
-        if (this._valid && this._config.validation)
+        // rule valiation failed
+        if (this._valid && this.rule.error)
         {
-            const error = this._config.validation.call(this)
-            if (!isNull(error))
+            this._valid = false
+            const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
+            this._error = sformat(_L(`${error}`), config.display)
+        }
+
+        // frontend validation
+        if (this._valid && scalarInfo.prevalid)
+        {
+            try
+            {
+                const res = await callSchemaFunction(scalarInfo.prevalid, [ value ])
+                if (!res) {
+                    this._valid = false
+                    const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
+                    this._error = sformat(_L(`${error}`), config.display)
+                }
+            }
+            catch(ex)
             {
                 this._valid = false
-                this._error = error
+                this._error = `${ex}` //TODO
             }
         }
     }
