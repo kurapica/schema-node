@@ -32,7 +32,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         this._fields.forEach(f => {
             if (f.displayOnly) return // no display only
             if (f.invisible && !f.valid) return // no invisiable and not valid
-            result[(f.config as IStructFieldConfig).name] = f.data
+            result[f.name] = f.data
         })
         return result
     }
@@ -40,7 +40,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     set data(data: any)
     {
         if (!data || Array.isArray(data) || typeof data !== "object") data = {}
-        this._fields.forEach(f => f.data = data[(f.config as IStructFieldConfig).name])
+        this._fields.forEach(f => f.data = data[f.name])
     }
 
     // override methods
@@ -53,7 +53,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         if (node instanceof StructNode)
         {
             this._fields.forEach(f => {
-                const m = node.getField((f.config as IStructFieldConfig).name)
+                const m = node.getField(f.name)
                 if (m) node.swapWatcher(m)
             })
         }
@@ -63,7 +63,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * indexof the sub node
      */
     indexof(node: AnySchemaNode): number | string | undefined | null {
-        return (this._fields.find(f => f === node)?.config as IStructFieldConfig)?.name || undefined
+        return this._fields.find(f => f === node)?.name || undefined
     }
 
     /**
@@ -101,14 +101,14 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     //#region Methods
 
     private refreshRawData = debounce(() => {
-        this._fields.forEach(f => this._data[(f.config as IStructFieldConfig).name] = f.rawData)
+        this._fields.forEach(f => this._data[f.name] = f.rawData)
         this.notify()
     }, 20)
 
     /**
      * Gets the struct field by name
      */
-    getField(name: string) { return this._fields.find(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase() ) }
+    getField(name: string) { return this._fields.find(f => f.name.toLowerCase() === name.toLowerCase() ) }
 
     /**
      * Gets whether the field is changable
@@ -127,7 +127,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         const fconf = this._schemaInfo.struct!.fields.find(f => f.name === name)
         if (!fconf) return
 
-        const existed = this._fields.findIndex(f => (f.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase())
+        const existed = this._fields.findIndex(f => f.name.toLowerCase() === name.toLowerCase())
         
         fconf.type = type
         let field: AnySchemaNode | null = null

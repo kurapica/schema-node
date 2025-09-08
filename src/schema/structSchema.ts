@@ -10,20 +10,20 @@ import { IArrayConfig } from "../config/arrayConfig"
 */
 export interface IStructSchema
 {
-  /**
-   * The base struct type to be inherited from.
-  */
-  base?: string
+    /**
+     * The base struct type to be inherited from.
+    */
+    base?: string
 
-  /**
-   * The struct fields.
-  */
-  fields: IStructFieldConfig[]
+    /**
+     * The struct fields.
+    */
+    fields: IStructFieldConfig[]
 
-  /**
-   * The realtions between the fields
-   */
-  relations?: IStructFieldRelation[]
+    /**
+     * The realtions between the fields
+     */
+    relations?: IStructFieldRelation[]
 }
 
 /**
@@ -31,10 +31,10 @@ export interface IStructSchema
  */
 export interface IStructFieldConfig extends ISchemaConfig
 {
-  /**
-   * The field name
-   */
-  name: string
+    /**
+     * The field name
+     */
+    name: string
 }
 
 export interface IStructScalarFieldConfig extends IStructFieldConfig, IScalarConfig {}
@@ -46,23 +46,23 @@ export interface IStructArrayFieldConfig extends IStructFieldConfig, IArrayConfi
 */
 export interface IStructFieldRelation
 {
-  /**
-   * The target field, can use . for deep fields
-  */
-  field: string
+    /**
+     * The target field, can use . for deep fields
+    */
+    field: string
 
-  /**
-   * The relation function
-  */
-  func: string
+    /**
+     * The relation function
+    */
+    func: string
 
-  /**
-   * The func arguments
-  */
-  args: IFunctionCallArgument[]
+    /**
+     * The func arguments
+    */
+    args: IFunctionCallArgument[]
 
-  /**
-   * The realtion type
-  */
-  type: RelationTypeValue
+    /**
+     * The realtion type
+    */
+    type: RelationTypeValue
 }

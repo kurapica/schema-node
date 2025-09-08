@@ -1,6 +1,6 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataResult } from "../schema/appSchema"
-import { getAppCachedSchema, getAppStructSchemaName, getCachedSchema } from "../utils/schemaProvider"
+import { IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import { getAppCachedSchema, getAppSchema, getAppStructSchemaName, getCachedSchema, registerAppSchema } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
@@ -11,6 +11,23 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
 import { StructRuleSchema } from "../ruleSchema"
 import { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
+import { getAppDataProvider } from "../utils/appDataProvider"
+import { SchemaLoadState } from "../schema/nodeSchema"
+
+
+//#region Inner Type
+
+// The app field node states
+enum AppFieldNodeState 
+{
+    None    = 0,
+    Loaded  = 1 << 0,
+    Push    = 1 << 1,
+    Ref     = 1 << 2,
+    FrontEnd= 1 << 3,
+}
+
+//#endregion
 
 /**
  * The application schema node.
@@ -24,7 +41,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get valid(): boolean { return this.loadedInputFields.findIndex(f => !f.valid && !f.invisible) < 0 }
     get error(): any { return this.loadedInputFields.find(f => !f.valid)?.error }
     get changed(): boolean { return this.loadedInputFields.findIndex(f => f.changed) >= 0 }
-    get data() { return undefined }
+    get data() { return undefined } // no raw data access
 
     // override methods
 
@@ -32,9 +49,9 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * indexof the sub node
      */
     indexof(node: AnySchemaNode): number | string | undefined | null {
-        return (this._fields.find(f => f.node === node)?.node.config as IStructFieldConfig)?.name || undefined
+        return this._fields.find(f => f.node === node)?.node?.name || undefined
     }
-
+ 
     /**
      * valiate the value
      */
@@ -75,9 +92,24 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref))).map(f => f.node) }
 
     /**
+     * Gets all the front-end fields
+     */
+    get frontEndFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.FrontEnd)).map(f => f.node) }
+
+    /**
+     * Gets all the front-end push fields
+     */
+    get frontEndPushFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Push) && (f.state & AppFieldNodeState.FrontEnd) && !(f.state & AppFieldNodeState.Ref)).map(f => f.node) }
+
+    /**
      * Gets all the non-ref push fields
      */
     get pushFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Push) && !(f.state & AppFieldNodeState.Ref)).map(f => f.node) }
+
+    /**
+     * Gets all the non-push ref fields
+     */
+    get refFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Ref) && !(f.state & AppFieldNodeState.Push)).map(f => f.node) }
 
     /**
      * Gets all loaded input fields
@@ -91,14 +123,94 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Gets the data field by name
      */
-    getField(name: string) { return this._fields.find(f => (f.node.config as IStructFieldConfig).name.toLowerCase() === name.toLowerCase() )?.node }
+    getField(name: string) { return this._fields.find(f => f.node.name.toLowerCase() === name.toLowerCase() )?.node }
 
     /**
      * Whether the given field is loaded
      */
     isFieldLoaded(name: string | AnySchemaNode): boolean {
-        if (typeof(name) !== "string") name = (name.config as IStructFieldConfig).name.toLowerCase()
-        return ((this._fields.find(f => (f.node.config as IStructFieldConfig).name.toLowerCase() === name)?.state || AppFieldNodeState.None) & AppFieldNodeState.Loaded) > 0
+        if (typeof(name) !== "string") name = name.name.toLowerCase()
+        return ((this._fields.find(f => f.node.name.toLowerCase() === name)?.state || AppFieldNodeState.None) & AppFieldNodeState.Loaded) > 0
+    }
+
+    /**
+     * Calculate the front-end push fields
+     */
+    async calculate(): Promise<void> {
+        // build the process order
+        const processOrder: { [name: string]: number } = {}
+        {
+            let changed = true
+            while (changed)
+            {
+                changed = false
+
+                // scan push order
+                for (let i = 0; i < this._fields.length; i++) {
+                    const finfo = this._fields[i]
+                    const name = finfo.node.name
+                    if (!isNull(processOrder[name])) continue
+
+                    if ((finfo.state & AppFieldNodeState.FrontEnd) && (finfo.state & AppFieldNodeState.Push))
+                    {
+                        const fieldScehma = this._appSchema.fields.find(f => f.name === name)
+                        if (!fieldScehma || !fieldScehma.func || !fieldScehma.args?.length) 
+                        {
+                            changed = true
+                            processOrder[name] = -1 // cover case
+                            continue
+                        }
+
+                        // check args
+                        let maxLevel = 0
+                        let skip = false
+                        for(let i = 0; i < fieldScehma.args.length; i++)
+                        {
+                            const relf = fieldScehma.args[i].split(".").filter(f => !isNull(f))[0]
+                            if (!relf) {
+                                changed = true
+                                skip = true
+                                processOrder[name] = -1
+                                break
+                            }
+
+                            const rlvl = processOrder[name]
+                            if(!isNull(rlvl))
+                            {
+                                if (rlvl === -1)
+                                {
+                                    // depends field not loaded
+                                    maxLevel = -1
+                                    break
+                                }
+                                maxLevel = Math.max(maxLevel, rlvl + 1)
+                            }
+                            else
+                            {
+                                skip = true
+                                break
+                            }
+                        }
+                        if (!skip) {
+                            changed = true
+                            processOrder[name] = maxLevel
+                        }
+                    }
+                    else
+                    {
+                        changed = true
+                        if (finfo.state & AppFieldNodeState.Loaded)
+                        {
+                            processOrder[name] = 0 // loaded, no push require
+                        }
+                        else 
+                        {
+                            processOrder[name] = -1 // not loaded, skip
+                        }
+                    }
+                }
+            }
+        }
     }
     
     //#endregion
@@ -109,6 +221,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         node: AnySchemaNode,
         state: AppFieldNodeState
     }[]
+    protected _appSchema: IAppSchema
     protected _target: string
 
     //#endregion
@@ -125,6 +238,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         super({ type: getAppStructSchemaName(app), display: schema.display, desc: schema.desc, readonly }, data?.results)
 
         // init target & fields
+        this._appSchema = schema
         this._target = target || ""
         this._fields = []
 
@@ -137,39 +251,85 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             const d = data?.results[fconf.name]
             let node: AnySchemaNode | null = null
             
+            // calculate the node state
+            let state = AppFieldNodeState.None
+            if (!isNull(d) || data?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
+            if (fconf.func) state |= AppFieldNodeState.Push
+            if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+            if (fconf.frontend) {
+                // front-end field always consider loaded
+                state |= AppFieldNodeState.FrontEnd
+                state |= AppFieldNodeState.Loaded
+            }
+
+            // ref | push field is readonly
+            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push))) ? true : false
+
             switch (fschema?.type)
             {
                 case SchemaType.Scalar:
-                    node = new ScalarNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly } as IStructScalarFieldConfig, d, this)
+                    node = new ScalarNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField } as IStructScalarFieldConfig, d, this)
                     break
                 case SchemaType.Enum:
-                    node = new EnumNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly } as IStructEnumFieldConfig, d, this)
+                    node = new EnumNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField } as IStructEnumFieldConfig, d, this)
                     break
                 case SchemaType.Struct:
-                    node = new StructNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly } as IStructFieldConfig, d, this)
+                    node = new StructNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField } as IStructFieldConfig, d, this)
                     break
                 case SchemaType.Array:
                     const info = data?.infos[fconf.name]
-                    node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly,
+                    node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
                         isIncrUpdate: fconf.incrUpdate, count: info?.count, total: info?.total, offset: info?.offset, descend: info?.descend } as IStructArrayFieldConfig, d, this)
                     break
             }
             if (node)
             {
-                let state = AppFieldNodeState.None
-                if ((!isNull(d) || data?.infos[fconf.name])) state |= AppFieldNodeState.Loaded
-                if (fconf.func) state |= AppFieldNodeState.Push
-                if (fconf.sourceApp) state |= AppFieldNodeState.Ref
                 this._fields.push({ node, state })
             }
         }
     }
 }
 
-enum AppFieldNodeState 
+/**
+ * 
+ * @param query the app data query
+ * @param readonly readonly mode
+ */
+export async function getAppNode(query: IAppDataQuery, readonly?: boolean): Promise<AppNode | undefined>
 {
-    None    = 0,
-    Loaded  = 1 << 0,
-    Push    = 1 << 1,
-    Ref     = 1 << 2 
+    const appSchema = getAppCachedSchema(query.app)
+    if (appSchema)
+    {
+        if (query.target)
+        {
+            const appDataProvider = getAppDataProvider()
+            if (!appDataProvider) throw "No app data provider"
+
+            query.noSchema = true // no schema required
+            const results = await appDataProvider.batchQueryAppData([query])
+            if (results?.length)
+            {
+                return new AppNode(query.app, query.target, results[0], readonly)
+            }
+        }
+        else
+        {
+            return new AppNode(query.app, "", undefined, readonly)
+        }
+    }
+    else
+    {
+        const appDataProvider = getAppDataProvider()
+        if (!appDataProvider) throw "No app data provider"
+        if (!query.target) query.schemaOnly = true
+        query.noSchema = false
+
+        const results = await appDataProvider.batchQueryAppData([query])
+        if (results?.length)
+        {
+            // register app schemas
+            registerAppSchema([results[0].schema], SchemaLoadState.Server)
+            return new AppNode(query.app, query.target || "", results[0], readonly)
+        }
+    }
 }

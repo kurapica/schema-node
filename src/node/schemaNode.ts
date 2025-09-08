@@ -46,7 +46,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
             }
         }
         return ""
-     }
+    }
+
+    /**
+     * Gets the name of the field as struct member
+     */
+    get name(): string { return this._config["name"] || "" }
 
     /**
      * The config of the node.

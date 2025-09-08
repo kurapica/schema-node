@@ -179,7 +179,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
                 // locate the diff point
                 for (; i < paths.length; i++, ni++) {
-                    if (paths[i].toLowerCase() !== (nodePaths[ni].config as IStructFieldConfig).name.toLowerCase()) break
+                    if (paths[i].toLowerCase() !== nodePaths[ni].name.toLowerCase()) break
                     if (nodePaths[ni].schemaType === SchemaType.Array) {
                         // If the last is the array node
                         if (i === paths.length - 1) {
@@ -226,7 +226,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     {
                         getSchema(res).then(schema => {
                             // replace the node
-                            (node.parent as StructNode).rebuildField((node.config as IStructFieldConfig).name, schema.name)
+                            (node.parent as StructNode).rebuildField(node.name, schema.name)
                         })
                     }
                 }
@@ -491,7 +491,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             a.node!.activeRule()
             if (a.node.parent instanceof StructNode)
             {
-                const name = (a.node.config as IStructFieldConfig).name
+                const name = a.node.name
                 if (a.node.parent.isFieldChangable(name))
                 {
                     let handler = a.node.subscribe(push)

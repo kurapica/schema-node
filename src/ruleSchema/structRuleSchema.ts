@@ -33,7 +33,7 @@ export class StructRuleSchema extends RuleSchema
      */
     override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
     {
-        let name = (node.config as IStructFieldConfig).name
+        let name = node.name
         let ruleSchema = this.schemas[name]
         if (ruleSchema?.type !== node.config.type)
         {
@@ -64,7 +64,7 @@ export class StructRuleSchema extends RuleSchema
                 }
                 else if (parent.ruleSchema instanceof StructRuleSchema)
                 {
-                    const fldname = (curr.config as IStructFieldConfig).name
+                    const fldname = curr.name
                     const fld = pschema.struct?.fields?.find(f => f.name === fldname)
                     if (!fld) break
                     name = curr === node ? name : `${fld.name}.${name}`

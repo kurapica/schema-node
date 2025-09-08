@@ -9,7 +9,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     /**
      * Batch query the application data
      */
-    batchQueryAppData(querys: IAppDataQuery[]): Promise<IAppDataResult>
+    batchQueryAppData(querys: IAppDataQuery[]): Promise<IAppDataResult[]>
 
     /**
      * Batch import the application data
