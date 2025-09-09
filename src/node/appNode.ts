@@ -168,9 +168,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                         {
                             const relf = fieldScehma.args[i].split(".").filter(f => !isNull(f))[0]
                             if (!relf) {
-                                changed = true
-                                skip = true
-                                processOrder[name] = -1
+                                maxLevel = -1 // skip
                                 break
                             }
 
@@ -209,6 +207,31 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                         }
                     }
                 }
+            }
+        }
+
+        // process
+        let processed = true
+        let processlvl = 1
+        while (processed)
+        {
+            processed = false
+
+            for (let i = 0; i < this._fields.length; i++) {
+                const finfo = this._fields[i]
+                const name = finfo.node.name
+                if (processOrder[name] !== processlvl) continue
+                processed = true
+
+                const fieldScehma = this._appSchema.fields.find(f => f.name === name)
+                const args = fieldScehma.args.map(a => {
+                    const access = a.split(".")
+                    let data = this.getField(access[0])?.rawData
+                    access.slice(1).forEach(a => data = data && typeof(data) === 'object' ? data[a] : null)
+                    return data
+                })
+
+                
             }
         }
     }
