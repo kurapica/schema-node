@@ -1,6 +1,6 @@
 import { SchemaType } from "../enum/schemaType"
 import { IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
-import { getAppCachedSchema, getAppSchema, getAppStructSchemaName, getCachedSchema, registerAppSchema } from "../utils/schemaProvider"
+import { callSchemaFunction, getAppCachedSchema, getAppSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, registerAppSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
@@ -13,6 +13,7 @@ import { StructRuleSchema } from "../ruleSchema"
 import { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { getAppDataProvider } from "../utils/appDataProvider"
 import { SchemaLoadState } from "../schema/nodeSchema"
+import { DataCombineType } from "../enum/dataCombineType"
 
 
 //#region Inner Type
@@ -224,6 +225,8 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 processed = true
 
                 const fieldScehma = this._appSchema.fields.find(f => f.name === name)
+                
+                // gather arguments
                 const args = fieldScehma.args.map(a => {
                     const access = a.split(".")
                     let data = this.getField(access[0])?.rawData
@@ -231,7 +234,89 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                     return data
                 })
 
-                
+                // calculate
+                let result: any = null
+
+                // check func arguments
+                const funcSchema = (await getSchema(fieldScehma.func)).func
+                if (!funcSchema) throw `unable to find function ${fieldScehma.func}`
+
+                let arrindex = -1
+                let argchk = true
+                for (let i = 0; i < funcSchema.args.length; i++)
+                {
+                    const carg = funcSchema.args[i]
+                    const arg = args.length > i ? args[i] : null
+                    if (isNull(arg) && !carg.nullable)
+                    {
+                        argchk = false
+                        break
+                    }
+                    
+                    if (arrindex < 0 && Array.isArray(arg) && (await getSchema(carg.type))?.type !== SchemaType.Array)
+                    {
+                        arrindex = i
+                    }
+                }
+                if (!argchk) continue // skip
+
+                if (arrindex >= 0)
+                {
+                    // map
+                    try
+                    {
+                        result = []
+                        const array = args[arrindex]
+                        for(let i = 0; i < array.length; i++)
+                        {
+                            args[arrindex] = array[i]
+                            const r = await callSchemaFunction(fieldScehma.func, args, fieldScehma.type)
+                            if (Array.isArray(r))
+                            {
+                                result.splice(result.length, 0, ...r)
+                            }
+                            else if(!isNull(r))
+                            {
+                                result.push(r)
+                            }
+                        }
+                    }
+                    catch (ex)
+                    {
+                        throw `call ${fieldScehma.func} for app field ${name} failed - ${ex}`
+                    }
+                } else {
+                    // direct
+                    try
+                    {
+                        result = await callSchemaFunction(fieldScehma.func, args, fieldScehma.type)
+                    }
+                    catch (ex)
+                    {
+                        throw `call ${fieldScehma.func} for app field ${name} failed - ${ex}`
+                    }
+                }
+
+                // combine
+                if (Array.isArray(result))
+                {
+                    const retSchema = await getSchema(fieldScehma.type)
+                    if (retSchema.type === SchemaType.Scalar)
+                    {
+                        const combineType = ((await getScalarValueType(retSchema.type)) & ScalarValueType.Number) ? DataCombineType.Sum : DataCombineType.Assign
+                    }
+                    else if (retSchema.type === SchemaType.Struct)
+                    {
+
+                    }
+                    else if (retSchema.type === SchemaType.Array)
+                    {
+
+                    }
+                }
+
+                // assign
+                finfo.node.data = result
             }
         }
     }
