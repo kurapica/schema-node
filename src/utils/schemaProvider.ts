@@ -746,8 +746,10 @@ const scalarValueMap:{ [key:string]: ScalarValueType } = {}
  * @returns the value type
  */
 export async function getScalarValueType(type: string):Promise<ScalarValueType> {
+    if ((await getSchema(type))?.type !== SchemaType.Scalar) return ScalarValueType.None
+
     let valueType = 0
-    type = type.toLowerCase()    
+    type = type.toLowerCase()
     if (scalarValueMap[type]) return scalarValueMap[type]
 
     // check by name

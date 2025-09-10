@@ -1,28 +1,33 @@
 export enum DataCombineType
 {
-    /// <summary>
-    /// Assign
-    /// </summary>
+    /**
+     * Assign, always use last
+     */
     Assign = "assign",
 
-    /// <summary>
-    /// Sum
-    /// </summary>
+    /**
+     * Use the first assign value
+     */
+    Init = "init",
+
+    /**
+     * Sum
+     */
     Sum = "sum",
 
-    /// <summary>
-    /// Count
-    /// </summary>
+    /**
+     * Count
+     */
     Count = "count",
 
-    /// <summary>
-    /// The min value
-    /// </summary>
+    /**
+     * The min value
+     */
     Min = "min",
 
-    /// <summary>
-    /// The max value
-    /// </summary>
+    /**
+     * The max value
+     */
     Max = "max",
 }
 

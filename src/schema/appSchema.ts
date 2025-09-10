@@ -1,3 +1,5 @@
+import { DataCombineTypeValue } from "../enum/dataCombineType"
+import { IDataCombine } from "./arraySchema"
 import { INodeSchema, SchemaLoadState } from "./nodeSchema"
 import { IStructFieldRelation } from "./structSchema"
 
@@ -121,6 +123,16 @@ export interface IAppFieldSchema
      * The field is disabled
      */
     disable?: boolean
+
+    /**
+     * The combine rule if field type is scalar or enum
+     */
+    combine?: DataCombineTypeValue
+
+    /**
+     * The combine rule if field type is struct or struct-array
+     */
+    combines?: IDataCombine[]
 }
 
 /**
@@ -145,7 +157,7 @@ export interface IAppDataQuery {
     /**
      * The query detail for array fields
      */
-    querys: { [key:string]: IAppDataFieldQuery }
+    querys?: { [key:string]: IAppDataFieldQuery }
 
     /**
      * The default query count
