@@ -60,7 +60,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     async validate(): Promise<void> {
         const value = this.data
         const config = this._config
-        const scalarInfo = this.schemaInfo.scalar
+        const scalarInfo = this.schema.scalar
         const rule = this._rule
 
         // reset
@@ -225,7 +225,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get upLimit(): any {
         // limit
-        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schemaInfo.scalar?.upLimit
+        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schema.scalar?.upLimit
         if (isNull(uplimit)) return null
 
         // string
@@ -256,7 +256,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get lowLimit(): any {
         // limit
-        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schemaInfo.scalar?.lowLimit
+        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schema.scalar?.lowLimit
         if (isNull(lowLimit)) return null
 
         // string
@@ -312,6 +312,6 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
         super(config, data, parent)
-        getScalarValueType(config.type).then(v => this._valueType = v)
+        this._valueType = getScalarValueType(config.type)
     }
 }

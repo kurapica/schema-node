@@ -1,6 +1,6 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
-import { callSchemaFunction, getAppCachedSchema, getAppSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, registerAppSchema, ScalarValueType } from "../utils/schemaProvider"
+import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
@@ -11,8 +11,8 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
 import { StructRuleSchema } from "../ruleSchema"
 import { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
-import { getAppDataProvider } from "../utils/appDataProvider"
-import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
+import { pushAppData, queryAppData } from "../utils/appDataProvider"
+import { INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, DataCombineTypeValue } from "../enum/dataCombineType"
 
 
@@ -43,13 +43,14 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get error(): any { return this.loadedInputFields.find(f => !f.valid)?.error }
     get changed(): boolean { return this.loadedInputFields.findIndex(f => f.changed) >= 0 }
     get data() { return undefined } // no raw data access
+    get name() { return this._appSchema.name }
 
     // override methods
 
     /**
      * indexof the sub node
      */
-    indexof(node: AnySchemaNode): number | string | undefined | null {
+    override indexof(node: AnySchemaNode): number | string | undefined | null {
         return this._fields.find(f => f.node === node)?.node?.name || undefined
     }
  
@@ -65,7 +66,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * reset changes
      */
-    resetChanges(): void { this.loadedInputFields.forEach(f => f.resetChanges() ) }
+    override resetChanges(): void { this.loadedInputFields.forEach(f => f.resetChanges() ) }
+
+    /**
+     * reset
+     */
+    override reset(): void { this.loadedInputFields.forEach(f => f.reset() ) }
 
     /**
      * Dispose the whole application
@@ -378,6 +384,52 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         }
     }
 
+    /**
+     * Submit all changes
+     * @param nodes the submit node fields, default all
+     * @param full do a full data push
+     */
+    async submit(nodes: AnySchemaNode[] | string[], full: boolean = false): Promise<IAppDataPushResult | undefined> {
+        if (!this.target) return undefined
+        const push: IAppDataPushQuery = {
+            app: this.name,
+            target: this.target,
+            datas: {},
+            full
+        }
+
+        const pushNodes: AnySchemaNode[] = []
+        if (!nodes.length) nodes = this.loadedInputFields
+        for (let i = 0; i < nodes.length; i++)
+        {
+            let n = nodes[i]
+            if (typeof(n) === "string") n = this.getField(n)
+            const state = this._fields.find(f => f.node === n)?.state
+            if (state 
+                && (state & AppFieldNodeState.Loaded) 
+                && !(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
+                && n.changed)
+            {
+                pushNodes.push(n)
+
+                push.datas[n.name] = { data: n.data }
+                
+                if (n instanceof ArrayNode)
+                {
+                    const deletes = n.deletes
+                    if (deletes?.length) push.datas[n.name].deletes = deletes
+                }
+            }
+        }
+
+        const result = await pushAppData(push)
+
+        // clear changes
+        pushNodes.forEach(n => n.resetChanges())
+
+        return result
+    }
+
     //#endregion
 
     //#region Field
@@ -398,7 +450,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     {
         // app schema check
         const schema = getAppCachedSchema(app)
-        if (schema) throw `Unkown application ${app}`
+        if (!schema) throw `Unkown application ${app}`
         if (!schema.fields?.length) throw `Application ${app} has no fields`
         super({ type: getAppStructSchemaName(app), display: schema.display, desc: schema.desc, readonly }, data?.results)
 
@@ -444,13 +496,10 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 case SchemaType.Array:
                     const info = data?.infos[fconf.name]
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        isIncrUpdate: fconf.incrUpdate, count: info?.count, total: info?.total, offset: info?.offset, descend: info?.descend } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, count: info?.count, total: info?.total, offset: info?.offset, descend: info?.descend, query: info?.query } as IStructArrayFieldConfig, d, this)
                     break
             }
-            if (node)
-            {
-                this._fields.push({ node, state })
-            }
+            if (node) this._fields.push({ node, state })
         }
     }
 }
@@ -462,45 +511,11 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
  */
 export async function getAppNode(query: IAppDataQuery, readonly?: boolean): Promise<AppNode | undefined>
 {
-    const appSchema = getAppCachedSchema(query.app)
-    if (appSchema)
-    {
-        if (query.target)
-        {
-            const appDataProvider = getAppDataProvider()
-            if (!appDataProvider) throw "No app data provider"
-
-            query.noSchema = true // no schema required
-            const results = await appDataProvider.batchQueryAppData([query])
-            if (results?.length)
-            {
-                return new AppNode(query.app, query.target, results[0], readonly)
-            }
-        }
-        else
-        {
-            return new AppNode(query.app, "", undefined, readonly)
-        }
-    }
-    else
-    {
-        const appDataProvider = getAppDataProvider()
-        if (!appDataProvider) throw "No app data provider"
-        if (!query.target) query.schemaOnly = true
-        query.noSchema = false
-
-        const results = await appDataProvider.batchQueryAppData([query])
-        if (results?.length)
-        {
-            // register app schemas
-            registerAppSchema([results[0].schema], SchemaLoadState.Server)
-            return new AppNode(query.app, query.target || "", results[0], readonly)
-        }
-    }
+    const result = await queryAppData(query)
+    return result ? new AppNode(query.app, query.target, result, readonly) : undefined
 }
 
 //#region Utility
-
 
 // combine result for schema
 async function combineResult(schema: INodeSchema | string, result: any[], combine: DataCombineTypeValue = null): Promise<any>
@@ -510,7 +525,7 @@ async function combineResult(schema: INodeSchema | string, result: any[], combin
     switch (schema.type)
     {
         case SchemaType.Scalar:
-            isnumber = ((await getScalarValueType(schema.type)) & ScalarValueType.Number) ? true : false
+            isnumber = ((getScalarValueType(schema.type)) & ScalarValueType.Number) ? true : false
             combine ||= isnumber ? DataCombineType.Sum : DataCombineType.Assign
             break
 

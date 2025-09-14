@@ -50,7 +50,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         }
         else if (this.isFlags)
         {
-            const sublist = await getEnumSubList(this._schemaInfo.name)
+            const sublist = await getEnumSubList(this._schema.name)
             const maxflag = Math.max(...sublist.map(v => v.value))
             data = fromFlagsView(data)
             if (!isNull(data)) {
@@ -138,7 +138,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Whether the enum is a flags enum
      */
-    get isFlags(): boolean { return this._schemaInfo.enum?.type === EnumValueType.Flags }
+    get isFlags(): boolean { return this._schema.enum?.type === EnumValueType.Flags }
 
     /**
      * Whether the node require multiple values
@@ -173,7 +173,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * The max cascade level
      */
-    get cascadeLevel() { return this._schemaInfo.enum?.cascade?.length || 1 }
+    get cascadeLevel() { return this._schema.enum?.cascade?.length || 1 }
 
     //#endregion
 
@@ -217,7 +217,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
 
     // parse enum value    
     private parseEnumValue(value: any) {
-        switch (this._schemaInfo.enum!.type) {
+        switch (this._schema.enum!.type) {
             case EnumValueType.Int:
             case EnumValueType.Flags:
                 value = !isNull(value) ? parseInt(value) : null

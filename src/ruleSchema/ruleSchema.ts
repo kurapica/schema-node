@@ -242,10 +242,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.rule.invisible = res
                     node.notifyState()
 
-                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    if (node instanceof ArrayNode && node.enumNode)
                     {
-                        node.enumArrayNode.rule.invisible = res
-                        node.enumArrayNode.notifyState()
+                        node.enumNode.rule.invisible = res
+                        node.enumNode.notifyState()
                     }
                 }
             }
@@ -260,10 +260,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.rule.disable = res
                     node.notifyState()
 
-                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    if (node instanceof ArrayNode && node.enumNode)
                     {
-                        node.enumArrayNode.rule.disable = res
-                        node.enumArrayNode.notifyState()
+                        node.enumNode.rule.disable = res
+                        node.enumNode.notifyState()
                     }
                 }
             }
@@ -336,11 +336,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.root = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.root = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -353,11 +353,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -370,11 +370,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -387,11 +387,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.anyLevel = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.anyLevel = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -404,11 +404,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.cascade = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.cascade = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break

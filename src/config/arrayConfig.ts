@@ -6,7 +6,7 @@ export interface IArrayConfig extends ISchemaConfig
      * The array data is increase update
      * only usable in application
      */
-    isIncrUpdate?: boolean
+    incrUpdate?: boolean
 
     /**
      * The query count for a page
@@ -27,4 +27,9 @@ export interface IArrayConfig extends ISchemaConfig
      * Use descend order
      */
     descend?: boolean
+
+    /**
+     * The query keys
+     */
+    query?: { [key:string]: any }
 }

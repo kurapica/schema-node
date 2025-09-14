@@ -61,24 +61,33 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The schema info.
      */
-    get schemaInfo(): INodeSchema { return this._schemaInfo }
+    get schema(): INodeSchema { return this._schema }
 
     /**
      * The schema type name.
      */
-    get schemaName(): string { return this._schemaInfo.name }
+    get schemaName(): string { return this._schema.name }
 
     /**
-     * The data of the node.
+     * The raw data of the node.
      */
     get rawData(): any { return this._data }
+
+    /**
+     * The original data
+     */
+    get original(): any { return deepClone(this._original) }
+
+    /**
+     * The data of the node for submit
+     */
     get data(): any { return deepClone(this._data) }
     set data(value: any)
     {
         if (this._data === value) return
         this._data = deepClone(value)
         this.validation().then(this.notify)
-    }
+   }
 
     /**
      * The data is changed.
@@ -203,6 +212,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     resetChanges(): void { this._original = deepClone(this._data) }
 
     /**
+     * Reset to original value
+     */
+    reset(): void { this._data = deepClone(this._original) }
+
+    /**
      * Subscribe a data change handler
      *
      * @param func the change handler
@@ -218,7 +232,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Subscribe a state change handler
      */
     subscribeState(func: Function, immediate?: boolean) : Function {
-        const result = this._stateWatcher.addWatcher(func) 
+        const result = this._swatcher.addWatcher(func) 
         if (immediate) func()
         return result
     }
@@ -244,7 +258,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Notify the state changes like valid, error, invisible and etc
      */
-    notifyState = debounce((...args: any[]) => this._stateWatcher.notify(...args), 10)
+    notifyState = debounce((...args: any[]) => this._swatcher.notify(...args), 10)
 
     /**
      * Swap the watcher, useful when field type changes
@@ -272,7 +286,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      */
     dispose(): void {
         this._watches.forEach(w => w())
-        this._stateWatcher.dispose()
+        this._swatcher.dispose()
         this._watcher.dispose()
     }
 
@@ -280,9 +294,9 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
 
     //#region Field
 
-    protected _stateWatcher: DataChangeWatcher = new DataChangeWatcher()
+    protected _swatcher: DataChangeWatcher = new DataChangeWatcher()
     protected _watcher: DataChangeWatcher = new DataChangeWatcher()
-    protected _schemaInfo: INodeSchema = { name: '', type: SchemaType.Namespace }
+    protected _schema: INodeSchema = { name: '', type: SchemaType.Namespace }
     protected _parent?: AnySchemaNode
     protected _rule: TR
     protected _ruleSchema: TRS
@@ -304,11 +318,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     {
         this._parent = parent
         this._config = config as TC
-        this._schemaInfo = getCachedSchema(config.type)!
+        this._schema = getCachedSchema(config.type)!
         this._data = isNull(data) ? deepClone(config.default) : data
         this._original = deepClone(data)
         this._rule = {} as any as TR
-        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schemaInfo)) as any as TRS
+        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schema)) as any as TRS
         this._ruleSchema.initNode(this)
 
         setTimeout(() => this.validation(), 10)
@@ -346,18 +360,18 @@ export function getSchemaNodeType(type: SchemaTypeValue)
  * Gets the schema node with config
  */
 export async function getSchemaNode(config: ISchemaConfig, data: any = null) {
-    const schemaInfo = await getSchema(config.type)
-    if (!schemaInfo) return undefined
+    const schema = await getSchema(config.type)
+    if (!schema) return undefined
 
-    let schemaType = getSchemaNodeType(schemaInfo.type)
+    let schemaType = getSchemaNodeType(schema.type)
     if (!schemaType) return undefined
 
     // validate data
-    if (schemaInfo.type === SchemaType.Array)
+    if (schema.type === SchemaType.Array)
     {
         if (isNull(data) || !Array.isArray(data)) data = []
     }
-    else if (schemaInfo.type === SchemaType.Struct)
+    else if (schema.type === SchemaType.Struct)
     {
         if (isNull(data) || typeof(data) !== "object") data = {}
     }

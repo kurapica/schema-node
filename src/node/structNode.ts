@@ -25,6 +25,14 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get valid(): boolean { return this._fields.findIndex(f => !f.valid && !f.invisible) < 0 }
     get error(): any { return this._fields.find(f => !f.valid)?.error }
     get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
+    get original(): any {
+        const result: { [key:string]: any } = {}
+        this._fields.forEach(f => {
+            if (f.displayOnly) return // no display only
+            result[f.name] = f.original
+        })
+        return result
+    }
 
     get data()
     {
@@ -79,7 +87,12 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     /**
      * reset changes
      */
-    resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
+    override resetChanges(): void { this._fields.forEach(f => f.resetChanges() ) }
+
+    /**
+     * reset
+     */
+    override reset(): void { this._fields.forEach(f => f.reset() )}
 
     override dispose(): void {
         this._fields.forEach(f => f.dispose() )
@@ -124,7 +137,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
      * rebuild the field with the given type
      */
     rebuildField(name: string, type: string) {
-        const fconf = this._schemaInfo.struct!.fields.find(f => f.name === name)
+        const fconf = this._schema.struct!.fields.find(f => f.name === name)
         if (!fconf) return
 
         const existed = this._fields.findIndex(f => f.name.toLowerCase() === name.toLowerCase())
@@ -202,9 +215,9 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         super(config, data, parent)
 
         // init fields
-        for(let i = 0; i < this._schemaInfo.struct!.fields.length; i++)
+        for(let i = 0; i < this._schema.struct!.fields.length; i++)
         {
-            const fconf = this._schemaInfo.struct!.fields[i]
+            const fconf = this._schema.struct!.fields[i]
             let field: AnySchemaNode | null = null
             const fschema = getCachedSchema(fconf.type!)
             switch (fschema?.type)

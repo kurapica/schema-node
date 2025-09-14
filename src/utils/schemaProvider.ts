@@ -175,6 +175,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         schema.loadState = loadState
         schema.nodeSchema = undefined
         appSchemaCache[name] = schema
+        root.apps ||= []
         root.apps.push(schema)
 
         if (schema.hasFields || schema.fields?.length)
@@ -528,17 +529,17 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
  * @param array check the element type if target is array
  */
 export async function isSchemaCanBeUseAs(name: string, target: string, array?: boolean): Promise<boolean> {
-    let schemaInfo = await getSchema(name)
+    let schema = await getSchema(name)
     let tarSchemInfo = await getSchema(target)
-    if (!schemaInfo || !tarSchemInfo) return false
-    if (schemaInfo === tarSchemInfo) return true
+    if (!schema || !tarSchemInfo) return false
+    if (schema === tarSchemInfo) return true
 
     // Compares by type
-    if (schemaInfo.type === SchemaType.Enum) {
+    if (schema.type === SchemaType.Enum) {
         // Enum > Scalar
         if (tarSchemInfo.type === SchemaType.Scalar) {
             // Enum > string
-            if (schemaInfo.enum?.type === EnumValueType.String) {
+            if (schema.enum?.type === EnumValueType.String) {
                 return await isSchemaCanBeUseAs(target, NS_SYSTEM_STRING)
             }
             // Enum > number
@@ -547,7 +548,7 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
             }
         }
     }
-    else if (schemaInfo.type === SchemaType.Scalar) {
+    else if (schema.type === SchemaType.Scalar) {
         // Scalar > Enum
         if (tarSchemInfo.type === SchemaType.Enum) {
             // String > enum
@@ -569,12 +570,12 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
             let isTarInt = false
 
             // Gets the base type
-            while (schemaInfo) {
-                if (schemaInfo.name === NS_SYSTEM_INT)
+            while (schema) {
+                if (schema.name === NS_SYSTEM_INT)
                     isInt = true
-                if (!schemaInfo.scalar?.base)
+                if (!schema.scalar?.base)
                     break
-                schemaInfo = await getSchema(schemaInfo.scalar.base)
+                schema = await getSchema(schema.scalar.base)
             }
 
             while (tarSchemInfo) {
@@ -589,38 +590,38 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
             if (tarSchemInfo?.name === NS_SYSTEM_STRING) return true
 
             // The root type must be the same
-            if (schemaInfo?.name !== tarSchemInfo?.name) return false
+            if (schema?.name !== tarSchemInfo?.name) return false
 
             // number can be coverted
-            if (schemaInfo?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true
+            if (schema?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true
         }
         // Scalar > Array Element
         else if (tarSchemInfo.type === SchemaType.Array && array) {
             return await isSchemaCanBeUseAs(name, tarSchemInfo.array!.element)
         }
     }
-    else if (schemaInfo.type === SchemaType.Struct) {
+    else if (schema.type === SchemaType.Struct) {
         // Array element
         if (tarSchemInfo.type === SchemaType.Array && array)
             tarSchemInfo = await getSchema(tarSchemInfo.array!.element)
 
         // The target must be struct
         if (tarSchemInfo?.type !== SchemaType.Struct) return false
-        if (schemaInfo.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
+        if (schema.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
 
         // Compare the field
         for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
             const tarfield = tarSchemInfo.struct!.fields[i]
-            const field = schemaInfo.struct!.fields.find(f => f.name === tarfield.name)
+            const field = schema.struct!.fields.find(f => f.name === tarfield.name)
             if (!field && !tarfield.require) continue // pass require field
             if (!field || !await isSchemaCanBeUseAs(field.type, tarfield.type)) return false
         }
         return true
     }
-    else if (schemaInfo.type === SchemaType.Array) {
-        if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schemaInfo.array!.element, target) : false
-        if (schemaInfo.name === NS_SYSTEM_ARRAY || tarSchemInfo.name === NS_SYSTEM_ARRAY) return true
-        return await isSchemaCanBeUseAs(schemaInfo.array!.element, tarSchemInfo.array!.element)
+    else if (schema.type === SchemaType.Array) {
+        if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schema.array!.element, target) : false
+        if (schema.name === NS_SYSTEM_ARRAY || tarSchemInfo.name === NS_SYSTEM_ARRAY) return true
+        return await isSchemaCanBeUseAs(schema.array!.element, tarSchemInfo.array!.element)
     }
     return false
 }
@@ -637,7 +638,7 @@ export async function validateSchemaValue(name: string, value: any): Promise<boo
 
     if (schema.type === SchemaType.Scalar)
     {
-        const valueType = await getScalarValueType(name)
+        const valueType = getScalarValueType(name)
         if (!schema.scalar || !valueType) return true
         if (valueType && ScalarValueType.Boolean)
         {
@@ -708,7 +709,7 @@ export async function isStructFieldIndexable(config: IStructFieldConfig)
     if (!schema) return false
     switch (schema.type) {
         case SchemaType.Scalar:
-            const valueType = await getScalarValueType(schema.name)
+            const valueType = getScalarValueType(schema.name)
             if (!valueType) return false
             if (valueType & ScalarValueType.String) 
             {
@@ -745,8 +746,8 @@ const scalarValueMap:{ [key:string]: ScalarValueType } = {}
  * @param type The scalar type
  * @returns the value type
  */
-export async function getScalarValueType(type: string):Promise<ScalarValueType> {
-    if ((await getSchema(type))?.type !== SchemaType.Scalar) return ScalarValueType.None
+export function getScalarValueType(type: string):ScalarValueType {
+    if ((getCachedSchema(type))?.type !== SchemaType.Scalar) return ScalarValueType.None
 
     let valueType = 0
     type = type.toLowerCase()
@@ -782,7 +783,7 @@ export async function getScalarValueType(type: string):Promise<ScalarValueType> 
                 valueType |= ScalarValueType.Integer
                 break;
         }
-        typeName = (await getSchema(typeName))?.scalar?.base
+        typeName = (getCachedSchema(typeName))?.scalar?.base
     }
     scalarValueMap[type] = valueType
     return valueType

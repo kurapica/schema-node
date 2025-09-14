@@ -1,7 +1,9 @@
 import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
 import { getAppCachedSchema, ISchemaProvider, registerAppSchema, useSchemaProvider } from "./schemaProvider";
-import { debounce, deepClone, isNull, useQueueQuery } from "./toolset";
+import { debounce, deepClone, isNull } from "./toolset";
+
+let DEBOUNCE_BATCH_QUERY = 50
 
 //#region App data provider
 
@@ -16,9 +18,9 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     batchQueryAppData(querys: IAppDataQuery[]): Promise<IAppDataResult[]>
 
     /**
-     * Batch push the application data to server
+     * push the application data to server
      */
-    batchPushAppData(pushes: IAppDataPushQuery[]): Promise<IAppDataPushResult[]>
+    pushAppData(pushes: IAppDataPushQuery): Promise<IAppDataPushResult>
 }
 
 let schemaProvider: IAppSchemaDataProvider | null = null
@@ -26,8 +28,9 @@ let schemaProvider: IAppSchemaDataProvider | null = null
 /**
  * Sets the data schema provider
  */
-export function useAppDataProvider(provider: IAppSchemaDataProvider): void {
+export function useAppDataProvider(provider: IAppSchemaDataProvider, debounce: number = 50): void {
     schemaProvider = provider
+    DEBOUNCE_BATCH_QUERY = debounce || 50
     useSchemaProvider(provider)
 }
 
@@ -42,11 +45,7 @@ export function getAppDataProvider(): IAppSchemaDataProvider | null {
 
 //#region Get app data result api
 
-let appDataQueryQueue: {
-    query: IAppDataQuery,
-    resolve: Function,
-    reject: Function
-}[] = []
+let appDataQueryQueue: { query: IAppDataQuery, resolve: Function, reject: Function }[] = []
 
 /**
  * Process the app data query with auto combine
@@ -60,10 +59,10 @@ export function queryAppData(query: IAppDataQuery): Promise<IAppDataResult>
     if (isNull(query.target))
     {
         if (cacheSchema)
-            return new Promise((resolve, reject) => resolve({
+            return new Promise((resolve, _) => resolve({
                 app: query.app,
                 target: query.target,
-                schema: !query.noSchema ? cacheSchema : null,
+                schema: !query.noSchema ? cacheSchema : undefined,
                 results: {},
                 infos: {}
             }))
@@ -85,12 +84,13 @@ const processAppDataQueryQueue = debounce(() => {
     appDataQueryQueue = []
     if (!queue.length) return
 
-    // combine
+    //#region combine
     const combineQueries: IAppDataQuery[] = []
     const schemaLoaded = new Set<string>()
 
     // with target
     queue.filter(q => !isNull(q.query.target)).forEach(q => {
+        // schema only load once
         if (!q.query.noSchema)
         {
             if (schemaLoaded.has(q.query.app))
@@ -99,10 +99,11 @@ const processAppDataQueryQueue = debounce(() => {
                 schemaLoaded.add(q.query.app)
         }
 
+        // combine query
         const exist = combineQueries.find(c => c.app === q.query.app && c.target === q.query.target)
         if (exist)
         {
-            // combine fields
+            // combine fields, 0 means all
             if (exist.fields.length)
             {
                 if (!q.query.fields.length)
@@ -151,12 +152,13 @@ const processAppDataQueryQueue = debounce(() => {
         else
             combineQueries.push(deepClone(q.query))
     })
-
-    // reduce schema querys
+    
+    //#endregion
 
     // process
     schemaProvider.batchQueryAppData(combineQueries)
         .then(res => {
+            // reg schema
             registerAppSchema(res.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
 
             // resolve
@@ -194,29 +196,20 @@ const processAppDataQueryQueue = debounce(() => {
             })
         })
         .catch(ex => queue.forEach(q => q.reject(ex)))
-}, 50)
+}, DEBOUNCE_BATCH_QUERY)
 
 //#endregion
 
 //#region Import app data api
 
-let appDataPushQueue: {
-    push: IAppDataPushQuery,
-    resolve: Function,
-    reject: Function
-}[] = []
-
+/**
+ * Push the app data
+ */
 export async function pushAppData(push: IAppDataPushQuery): Promise<IAppDataPushResult>
 {
     if (isNull(push.target)) throw "Push target must be provided"
     if (!schemaProvider) throw "No App data provider"
-    processAppDataPushQueue()
-    return new Promise((resolve, reject) => appDataPushQueue.push({ push, resolve, reject }))
+    return await schemaProvider.pushAppData(push)
 }
-
-// process the app data batch push
-const processAppDataPushQueue = debounce(() => {
-    
-}, 50)
 
 //#endregion

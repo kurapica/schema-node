@@ -24,6 +24,11 @@ export interface IAppSchema
     desc?: string
 
     /**
+     * The main app used for distribution lock
+     */
+    main?: string
+
+    /**
      * Has sub applications, app can only have sub apps or fields
      */
     hasApps?: boolean
@@ -302,7 +307,7 @@ export interface IAppDataFieldPushQuery {
     /**
      * The delete data from array node
      */
-    delete?: any[]
+    deletes?: any[]
 }
 
 /**
