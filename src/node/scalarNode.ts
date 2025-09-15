@@ -157,11 +157,11 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
 
         // frontend validation
-        if (this._valid && scalarInfo.prevalid)
+        if (this._valid && scalarInfo.preValid)
         {
             try
             {
-                const res = await callSchemaFunction(scalarInfo.prevalid, [ value ])
+                const res = await callSchemaFunction(scalarInfo.preValid, [ value ])
                 if (!res) {
                     this._valid = false
                     const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"

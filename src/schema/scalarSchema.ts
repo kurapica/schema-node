@@ -38,10 +38,10 @@ export interface IScalarSchema
   /**
    * The function to validate the scalar value in frontend
   */
-  prevalid?: string
+  preValid?: string
 
   /**
    * The function to validate the scalar value in backend
   */
-  postvalid?: string
+  postValid?: string
 }
