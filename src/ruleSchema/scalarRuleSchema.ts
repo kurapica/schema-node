@@ -37,7 +37,7 @@ export class ScalarRuleSchema extends RuleSchema
     /**
      * Calc the origin value for up limit
      */
-    useOriginForUplimit?: boolean
+    useOriginForUpLimit?: boolean
 
     /**
      * init the node rule
@@ -51,7 +51,7 @@ export class ScalarRuleSchema extends RuleSchema
         rule.lowLimit = this.lowLimit
         rule.upLimit = this.upLimit
         rule.asSuggest = this.asSuggest
-        rule.useOriginForUplimit = this.useOriginForUplimit
+        rule.useOriginForUpLimit = this.useOriginForUpLimit
     }
 
     /**
@@ -64,7 +64,7 @@ export class ScalarRuleSchema extends RuleSchema
         this.lowLimit = config.lowLimit
         this.upLimit = config.upLimit
         this.asSuggest = config.asSuggest
-        this.useOriginForUplimit = config.useOriginForUplimit
+        this.useOriginForUpLimit = config.useOriginForUpLimit
     }
 
     constructor(schema: INodeSchema)

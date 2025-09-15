@@ -313,7 +313,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
-                    if (node.isNumber && node.rule.useOriginForUplimit)
+                    if (node.isNumber && node.rule.useOriginForUpLimit)
                     {
                         const origin = node.original
                         if (isFinite(res) && isFinite(origin))

@@ -297,7 +297,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
-            exist.desc = schema.desc || exist.desc
+            exist.display = schema.display || exist.display
             if (schema.type === SchemaType.Namespace)
             {
                 exist.loadState = (exist.loadState || 0) | loadState
@@ -482,7 +482,7 @@ export function getCachedSchema(name: string): INodeSchema | undefined {
                 appSchema.nodeSchema = {
                     name,
                     type: SchemaType.Struct,
-                    desc: appSchema.display,
+                    display: appSchema.display,
                     struct: {
                         fields: appSchema.fields.map(f => ({
                             name: f.name,
@@ -516,7 +516,7 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
     registerSchema([{
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
-        desc: `Anonmous array for ${name}`,
+        display: `Anonmous array for ${name}`,
         array: { element: schema.name }
     }])
     return arraySchemaMap[name]

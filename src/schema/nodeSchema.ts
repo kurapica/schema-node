@@ -25,7 +25,7 @@ export interface INodeSchema
     /**
      * The schema description
      */
-    desc?: string | LocaleString
+    display?: string | LocaleString
 
     /**
      * The scalar schema if type is scalar

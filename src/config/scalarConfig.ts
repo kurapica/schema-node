@@ -35,5 +35,5 @@ export interface IScalarConfig extends ISchemaConfig
     /**
      * When calculating the up limit, use the original value.
      */
-    useOriginForUplimit?: boolean
+    useOriginForUpLimit?: boolean
 }
