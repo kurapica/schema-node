@@ -61,6 +61,7 @@ export interface ISchemaProvider {
     /**
      * Load the application schema information
      * @param app the name of the application
+     * @return the application schema
      */
     loadAppSchema(app: string): Promise<IAppSchema>
 
@@ -69,6 +70,7 @@ export interface ISchemaProvider {
      * @param schemaName The name of the enum schema
      * @param value The root enum value if provided
      * @param fullList Whether load the full list of enum values
+     * @return the enum sub list
      */
     loadEnumSubList(schemaName: string, value?: any, fullList?: boolean): Promise<IEnumValueInfo[]>
 
@@ -77,15 +79,16 @@ export interface ISchemaProvider {
      * @param schemaName the name of the enum schema
      * @param value the enum value to be queried
      * @param noSubList no sub list should be loaded
+     * @return the enum access list
      */
     loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean): Promise<IEnumValueAccess[]>
 
     /**
      * Call the function schema from the server with the arguments and type, gets the result
-     * @param schemaName The name of the function schema
-     * @param args The arguments of the function
-     * @param generic The generic type of the function
-     * @returns The schema information
+     * @param schemaName the name of the function schema
+     * @param args the arguments of the function
+     * @param generic the generic type of the function
+     * @returns the result
      */
     callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
 }
