@@ -6,7 +6,6 @@ import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../
 import { ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
-import { _LS } from "../utils/locale"
 import { getRuleSchema } from "../ruleSchema/ruleSchema"
 
 /**
@@ -122,22 +121,22 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Gets the display of the node
      */
-    get display(): string { return `${this._config.display}` }
+    get display() { return this._config.display }
 
     /**
      * The placeholder for input
      */
-    get inputPlaceHolder(): string { return sformat(_LS("PLACEHOLDER_INPUT"), this.display) }
+    get inputPlaceHolder(): string { return sformat("PLACEHOLDER_INPUT", this.display) }
 
     /**
      * The placeholder for select
      */
-    get selectPlaceHolder(): string { return sformat(_LS("PLACEHOLDER_SELECT"), this.display) }
+    get selectPlaceHolder(): string { return sformat("PLACEHOLDER_SELECT", this.display) }
 
     /**
      * Gets the description of the node
      */
-    get desc(): string { return `${this._config.desc}` }
+    get desc() { return this._config.desc }
 
     /**
      * Whether the node is readonly
@@ -162,7 +161,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Gets the unit of the data
      */
-    get unit(): string { return this._config.unit || "" }
+    get unit() { return this._config.unit }
 
     //#endregion
 

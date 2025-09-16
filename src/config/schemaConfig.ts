@@ -1,5 +1,4 @@
-import { ILocaleString } from "../schema/nodeSchema"
-import { LocaleString } from "../utils/locale"
+import { ILocaleString } from "../utils/locale"
 
 /**
  * The config of the schema node.
@@ -14,17 +13,17 @@ export interface ISchemaConfig
     /**
      * The label of the node.
      */
-    display?: string | LocaleString | ILocaleString
+    display?: ILocaleString
 
     /**
      * The description of the node.
      */
-    desc?: string | LocaleString | ILocaleString
+    desc?: ILocaleString
 
     /**
      * The error message if validation failed.
      */
-    error?: string | LocaleString | ILocaleString
+    error?: ILocaleString
 
     /**
      * The node data is required.
@@ -54,7 +53,7 @@ export interface ISchemaConfig
     /**
      * The unit of the node data like 'm/s', '%', '°C'.
      */
-    unit?: string
+    unit?: ILocaleString
 
     /**
      * The default value of the node.

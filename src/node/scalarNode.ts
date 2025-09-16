@@ -3,7 +3,6 @@ import { IScalarConfig } from '../config/scalarConfig'
 import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { callSchemaFunction, getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
-import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
 import { ScalarRule } from '../rule/scalarRule'
@@ -71,7 +70,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         if (isNull(this._data)) {
             if (config.require) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_NULL"), config.display)
+                this._error = sformat("ERR_CANT_BE_NULL", config.display)
             }
             return
         }
@@ -84,19 +83,19 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         if (this.isString) {
             if (uplimit && value.length > uplimit) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_LEN_CANT_BE_GREATTHAN"), config.display, uplimit)
+                this._error = sformat("ERR_LEN_CANT_BE_GREATTHAN", config.display, uplimit)
             }
             else if (lowlimit && value.length < lowlimit) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_LEN_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                this._error = sformat("ERR_LEN_CANT_BE_LESSTHAN", config.display, lowlimit)
             }
             else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(value)) {
                 this._valid = false
-                this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
+                this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
             else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
+                this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
         }
         // number
@@ -104,25 +103,25 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             if (isNull(value))
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_NUMBER"), config.display)
+                this._error = sformat("ERR_NOT_NUMBER", config.display)
             }
             else if (!isNull(uplimit) && value > uplimit)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+                this._error = sformat("ERR_CANT_BE_GREATTHAN", config.display, uplimit)
             }
             else if (!isNull(lowlimit) && value < lowlimit)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                this._error = sformat("ERR_CANT_BE_LESSTHAN", config.display, lowlimit)
             }
             else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(`${this._data}`)) {
                 this._valid = false
-                this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
+                this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
             else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
+                this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
         }
         // date
@@ -130,20 +129,20 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             if (isNull(value))
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_DATE"), config.display)
+                this._error = sformat("ERR_NOT_DATE", config.display)
             }
             else
             {
                 if (!isNull(uplimit)  && uplimit < value)
                 {
                     this._valid = false
-                    this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+                    this._error = sformat("ERR_CANT_BE_GREATTHAN", config.display, uplimit)
                 }
 
                 if (!isNull(lowlimit) && this._valid && lowlimit > value)
                 {
                     this._valid = false
-                    this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                    this._error = sformat("ERR_CANT_BE_LESSTHAN", config.display, lowlimit)
                 }
             }
         }
@@ -153,7 +152,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         {
             this._valid = false
             const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
-            this._error = sformat(_L(`${error}`), config.display)
+            this._error = sformat(error, config.display)
         }
 
         // frontend validation
@@ -165,7 +164,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 if (!res) {
                     this._valid = false
                     const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
-                    this._error = sformat(_L(`${error}`), config.display)
+                    this._error = sformat(error, config.display)
                 }
             }
             catch(ex)

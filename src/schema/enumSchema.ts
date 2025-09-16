@@ -1,6 +1,5 @@
 import { EnumValueTypeValue } from "../enum/enumValueType"
-import { LocaleString } from "../utils/locale"
-import { ILocaleString } from "./nodeSchema"
+import { ILocaleString } from "../utils/locale"
 
 /**
  * The enum type schema
@@ -34,7 +33,7 @@ export interface IEnumValueInfo {
     /**
      * The name of the enum value
     */
-    name: string | LocaleString | ILocaleString
+    name: ILocaleString
 
     /**
      * Whether the enum value is disabled

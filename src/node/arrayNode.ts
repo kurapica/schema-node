@@ -236,7 +236,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 if (!await validateSchemaValue(elename, this._data[i]))
                 {
                     this._valid = false
-                    this._error = sformat(_LS("ERR_ARRAY_DATA_NOT_VALID"), this.display)
+                    this._error = sformat("ERR_ARRAY_DATA_NOT_VALID", this.display)
                     break
                 }
             }
@@ -318,7 +318,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 if (k >= primarys.length)
                 {
                     const errfld = ele.getField(primarys[primarys.length - 1])
-                    errfld?.setError(sformat(_LS("ERR_ARRAY_PRIMARY_DUPLICATE"), errfld.display))
+                    errfld?.setError(sformat("ERR_ARRAY_PRIMARY_DUPLICATE", errfld.display))
                     return
                 }
             }

@@ -1,5 +1,4 @@
-import { LocaleString } from "../utils/locale"
-import { ILocaleString } from "./nodeSchema"
+import { ILocaleString } from "../utils/locale"
 
 /**
  * The schema of the scalar type
@@ -14,7 +13,7 @@ export interface IScalarSchema
   /**
    * The default unit of the scalar value
   */
-  unit?: string | LocaleString | ILocaleString
+  unit?: ILocaleString
 
   /**
    * The default low limit of the scalar value
@@ -29,7 +28,7 @@ export interface IScalarSchema
   /**
    * The default error message of the scalar value
   */
-  error?: string | LocaleString | ILocaleString
+  error?: ILocaleString
 
   /**
    * The regex of the scalar value

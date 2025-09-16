@@ -9,54 +9,39 @@ const locales: {[key:string]: {[key:string]: string}} = {
     'zh': zhCN,
 }
 
-// gather all infos
-const items = {}
-gatherItems(enUS)
-gatherItems(zhCN)
-fillItems()
-
 // language
 const langWatches = new DataChangeWatcher()
-const shareLocaleStrings: { [key:string]: LocaleString } = {}
 let currLang = navigator.languages.map(l => l.replace("-", "")).find(l => locales[l]) || 'en'
 let currLocale = locales[currLang] || locales['en']
 
-function gatherItems(l: any) {
-    for(let k in l)
-    {
-        if (k !== "language")
-            items[k] = k
-    }
-}
+/**
+ * The locale translate
+ */
+interface ILocaleTran {
+    /**
+     * The language like zhCN
+     */
+    lang: string,
 
-function fillItems() {
-    const temp: Set<any> = new Set()
-    for(let k in locales)
-    {
-        const locale = locales[k]
-        if (temp.has(locale)) return
-        temp.add(locale)
-
-        for(let j in items){
-            locale[j] = locale[j] || j
-        }
-    }
+    /**
+     * The translate
+     */
+    tran: string,
 }
 
 /**
- * The locale string entity
+ * A locale string
  */
-export class LocaleString {
-    private key: string
+export interface ILocaleString {
+    /**
+     * The default value
+     */
+    key: string,
 
-    constructor(key: string)
-    {
-        this.key = key
-    }
-
-    public toString = (): string => {
-        return currLocale[this.key] || this.key
-    }
+    /**
+     * The transaltes
+     */
+    trans?: ILocaleTran[]
 }
 
 /**
@@ -109,25 +94,46 @@ export function importLanguage(lang: string, items:{ [key:string]: string })
         for(let k in items)
             locale[k] = items[k]
     }
-    gatherItems(locale)
-    fillItems()
 }
 
-/**
- * Get the locale message by current language
- */
-export function _L(key: string)
-{
-    return currLocale[key] || key
+export type LocaleFunction = {
+  (key?: string | ILocaleString): string
+  [key: string]: string | LocaleFunction
 }
 
 /**
  * Gets a dynamic locale string entity
  */
-export function _LS(key: string)
+export function _LS(key: string): ILocaleString
 {
-    if (shareLocaleStrings[key]) return shareLocaleStrings[key]
-    const localeStr = new LocaleString(key)
-    shareLocaleStrings[key] = localeStr
-    return localeStr
+    return { key }
 }
+
+/**
+ * Get the locale message by current language
+ */
+export const _L = new Proxy(function(key: string) { return currLocale[key] ?? key } as LocaleFunction, {
+    get (target, prop) {
+        if (typeof(prop) === "string")
+        {
+            if (prop in currLocale) return currLocale[prop]
+            return prop
+        }
+    },
+    apply(target, thisArg, args) {
+        const [key] = args
+
+        if (!key) return ""
+        if (typeof(key) === "string")
+        {
+            if (key in currLocale) return currLocale[key]
+            return key
+        }
+        else if(typeof(key) === "object") 
+        {
+            const l = key as ILocaleString
+            const tran = l.trans?.find(t => currLang.startsWith(t.lang) || t.lang.startsWith(currLang))
+            return tran?.tran || currLocale[l.key] || l.key
+        }
+    }
+})

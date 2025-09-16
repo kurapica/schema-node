@@ -1,5 +1,5 @@
 import { SchemaTypeValue } from "../enum/schemaType"
-import { LocaleString } from "../utils/locale"
+import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
 import { IFunctionSchema } from "./functionSchema"
@@ -25,7 +25,7 @@ export interface INodeSchema
     /**
      * The schema description
      */
-    display?: string | LocaleString | ILocaleString
+    display?: ILocaleString
 
     /**
      * The scalar schema if type is scalar
@@ -86,34 +86,4 @@ export enum SchemaLoadState {
      * Loaded from server
      */
     Server = 1,
-}
-
-/**
- * The locale translate
- */
-export interface ILocaleTran {
-    /**
-     * The language like zhCN
-     */
-    lang: string,
-
-    /**
-     * The translate
-     */
-    tran: string,
-}
-
-/**
- * A locale string
- */
-export interface ILocaleString {
-    /**
-     * The default value
-     */
-    default: string,
-
-    /**
-     * The transaltes
-     */
-    trans?: ILocaleTran[]
 }

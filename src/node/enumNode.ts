@@ -81,7 +81,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             if (this.require)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_NULL"), this.display)
+                this._error = sformat("ERR_CANT_BE_NULL", this.display)
             }
         }
         else if(this._config.multiple)
@@ -92,7 +92,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
                 {
                     if (!await this.isValidEnumValue(data[i])){
                         this._valid = false
-                        this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                        this._error = sformat("ERR_NOT_IN_ENUMLIST", this.display)
                         break
                     }
                 }
@@ -101,7 +101,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             {
                 if (!await this.isValidEnumValue(data)){
                     this._valid = false
-                    this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                    this._error = sformat("ERR_NOT_IN_ENUMLIST", this.display)
                 }
             }
         }
@@ -110,8 +110,8 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         if (this._valid && this.rule.error)
         {
             this._valid = false
-            const error = this._config.error ||  "ERR_DATA_NOT_VALID"
-            this._error = sformat(_L(`${error}`), this._config.display)
+            const error = this._config.error || "ERR_DATA_NOT_VALID"
+            this._error = sformat(error, this._config.display)
         }
         
         // write back
