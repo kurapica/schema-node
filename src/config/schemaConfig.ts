@@ -1,3 +1,4 @@
+import { ILocaleString } from "../schema/nodeSchema"
 import { LocaleString } from "../utils/locale"
 
 /**
@@ -13,17 +14,17 @@ export interface ISchemaConfig
     /**
      * The label of the node.
      */
-    display?: string | LocaleString
+    display?: string | LocaleString | ILocaleString
 
     /**
      * The description of the node.
      */
-    desc?: string | LocaleString
+    desc?: string | LocaleString | ILocaleString
 
     /**
      * The error message if validation failed.
      */
-    error?: string | LocaleString
+    error?: string | LocaleString | ILocaleString
 
     /**
      * The node data is required.

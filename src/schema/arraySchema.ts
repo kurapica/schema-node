@@ -22,6 +22,11 @@ export interface IArraySchema {
     primary?: string[]
 
     /**
+     * The indexes
+     */
+    indexes?: IDataIndex[]
+
+    /**
      * The data combine rule
      */
     combine?: IDataCombine[]
@@ -35,4 +40,9 @@ export interface IArraySchema {
 export interface IDataCombine {
     field: string
     type: DataCombineTypeValue
+}
+
+export interface IDataIndex {
+    name: string,
+    fields: string[]
 }

@@ -25,7 +25,7 @@ export interface INodeSchema
     /**
      * The schema description
      */
-    display?: string | LocaleString
+    display?: string | LocaleString | ILocaleString
 
     /**
      * The scalar schema if type is scalar
@@ -86,4 +86,34 @@ export enum SchemaLoadState {
      * Loaded from server
      */
     Server = 1,
+}
+
+/**
+ * The locale translate
+ */
+export interface ILocaleTran {
+    /**
+     * The language like zhCN
+     */
+    lang: string,
+
+    /**
+     * The translate
+     */
+    tran: string,
+}
+
+/**
+ * A locale string
+ */
+export interface ILocaleString {
+    /**
+     * The default value
+     */
+    default: string,
+
+    /**
+     * The transaltes
+     */
+    trans?: ILocaleTran[]
 }

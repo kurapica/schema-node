@@ -1,7 +1,7 @@
 import { DataCombineTypeValue } from "../enum/dataCombineType"
 import { LocaleString } from "../utils/locale"
 import { IDataCombine } from "./arraySchema"
-import { INodeSchema, SchemaLoadState } from "./nodeSchema"
+import { ILocaleString, INodeSchema, SchemaLoadState } from "./nodeSchema"
 import { IStructFieldRelation } from "./structSchema"
 
 /**
@@ -17,12 +17,12 @@ export interface IAppSchema
     /**
      * The display name
      */
-    display?: string | LocaleString
+    display?: string | LocaleString | ILocaleString
 
     /**
      * The description
      */
-    desc?: string | LocaleString
+    desc?: string | LocaleString | ILocaleString
 
     /**
      * The main app used for distribution lock
@@ -88,12 +88,12 @@ export interface IAppFieldSchema
     /**
      * The display name
      */
-    display?: string | LocaleString
+    display?: string | LocaleString | ILocaleString
 
     /**
      * The description
      */
-    desc?: string | LocaleString
+    desc?: string | LocaleString | ILocaleString
 
     /**
      * The source application
