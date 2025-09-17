@@ -79,9 +79,10 @@ export interface ISchemaProvider {
      * @param schemaName the name of the enum schema
      * @param value the enum value to be queried
      * @param noSubList no sub list should be loaded
+     * @param withSubList with the value's sub list if existed
      * @return the enum access list
      */
-    loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean): Promise<IEnumValueAccess[]>
+    loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean, withSubList?: boolean): Promise<IEnumValueAccess[]>
 
     /**
      * Call the function schema from the server with the arguments and type, gets the result
