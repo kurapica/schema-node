@@ -222,7 +222,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node.parent instanceof StructNode)
             {
                 handler = (res: any) => {
-                    if (!isNull(res) && res.toLowerCase() !== node.rule.type.toLowerCase())
+                    console.log(res, typeof(res))
+                    if (!isNull(res) && typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
                     {
                         getSchema(res).then(schema => {
                             // replace the node

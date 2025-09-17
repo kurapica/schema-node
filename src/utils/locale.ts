@@ -1,6 +1,7 @@
 import { DataChangeWatcher } from './dataChangeWatcher'
 import enUS from '../locales/enUS'
 import zhCN from '../locales/zhCN'
+import { isNull } from './toolset'
 
 const locales: {[key:string]: {[key:string]: string}} = {
     'enUS': enUS,
@@ -98,7 +99,7 @@ export function importLanguage(lang: string, items:{ [key:string]: string })
 
 export type LocaleFunction = {
   (key?: string | ILocaleString): string
-  [key: string]: string | LocaleFunction
+  [key: string]: string
 }
 
 /**
@@ -123,7 +124,7 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
     apply(target, thisArg, args) {
         const [key] = args
 
-        if (!key) return ""
+        if (isNull(key)) return ""
         if (typeof(key) === "string")
         {
             if (key in currLocale) return currLocale[key]
@@ -133,7 +134,7 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
         {
             const l = key as ILocaleString
             const tran = l.trans?.find(t => currLang.startsWith(t.lang) || t.lang.startsWith(currLang))
-            return tran?.tran || currLocale[l.key] || l.key
+            return tran?.tran || currLocale[l.key] || l.key || ""
         }
     }
 })
