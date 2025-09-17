@@ -267,7 +267,7 @@ registerSchema([
                     {
                         name: "system.conv.assign",
                         type: SchemaType.Function,
-                        display: "=",
+                        display: _LS("="),
                         func: {
                             return: "T",
                             args: [
@@ -445,7 +445,7 @@ registerSchema([
                     {
                         name: "system.math.add",
                         type: SchemaType.Function,
-                        display: "+",
+                        display: _LS("+"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -468,7 +468,7 @@ registerSchema([
                     {
                         name: "system.math.addnull",
                         type: SchemaType.Function,
-                        display: "+?",
+                        display: _LS("+?"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -491,7 +491,7 @@ registerSchema([
                     {
                         name: "system.math.divide",
                         type: SchemaType.Function,
-                        display: "÷",
+                        display: _LS("÷"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -514,7 +514,7 @@ registerSchema([
                     {
                         name: "system.math.modulo",
                         type: SchemaType.Function,
-                        display: "%",
+                        display: _LS("%"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -537,7 +537,7 @@ registerSchema([
                     {
                         name: "system.math.multiply",
                         type: SchemaType.Function,
-                        display: "×",
+                        display: _LS("×"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -560,7 +560,7 @@ registerSchema([
                     {
                         name: "system.math.multiplynull",
                         type: SchemaType.Function,
-                        display: "×?",
+                        display: _LS("×?"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -583,7 +583,7 @@ registerSchema([
                     {
                         name: "system.math.subtract",
                         type: SchemaType.Function,
-                        display: "-",
+                        display: _LS("-"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -606,7 +606,7 @@ registerSchema([
                     {
                         name: "system.math.subtractnull",
                         type: SchemaType.Function,
-                        display: "-?",
+                        display: _LS("-?"),
                         func: {
                             generic: NS_SYSTEM_NUMBER,
                             return: "T",
@@ -1236,7 +1236,7 @@ registerSchema([
                     {
                         name: "system.math.bitand",
                         type: SchemaType.Function,
-                        display: "&",
+                        display: _LS("&"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [
@@ -1258,7 +1258,7 @@ registerSchema([
                     {
                         name: "system.math.bitleftshift",
                         type: SchemaType.Function,
-                        display: "<<",
+                        display: _LS("<<"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [
@@ -1280,7 +1280,7 @@ registerSchema([
                     {
                         name: "system.math.bitor",
                         type: SchemaType.Function,
-                        display: "|",
+                        display: _LS("|"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [
@@ -1302,7 +1302,7 @@ registerSchema([
                     {
                         name: "system.math.bitrightshift",
                         type: SchemaType.Function,
-                        display: ">>",
+                        display: _LS(">>"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [
@@ -1324,7 +1324,7 @@ registerSchema([
                     {
                         name: "system.math.bitunary",
                         type: SchemaType.Function,
-                        display: "~",
+                        display: _LS("~"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [
@@ -1341,7 +1341,7 @@ registerSchema([
                     {
                         name: "system.math.bitxor",
                         type: SchemaType.Function,
-                        display: "^",
+                        display: _LS("^"),
                         func: {
                             return: NS_SYSTEM_INT,
                             args: [

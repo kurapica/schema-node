@@ -8,6 +8,7 @@ import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
+import { _LS } from "./locale"
 
 export const NS_SYSTEM = "system"
 
@@ -520,7 +521,7 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
     registerSchema([{
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
-        display: `Anonmous array for ${name}`,
+        display: _LS(`Anonmous array for ${name}`),
         array: { element: schema.name }
     }])
     return arraySchemaMap[name]
