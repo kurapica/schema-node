@@ -222,7 +222,6 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node.parent instanceof StructNode)
             {
                 handler = (res: any) => {
-                    console.log(res, typeof(res))
                     if (!isNull(res) && typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
                     {
                         getSchema(res).then(schema => {
