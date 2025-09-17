@@ -294,7 +294,6 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         case RelationType.Assign:
         case RelationType.InitOnly:
             handler = (res: any) => {
-                console.log("Assign", res)
                 node.rule.default = res
                 node.data = res
             }
