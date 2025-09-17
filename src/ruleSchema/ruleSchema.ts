@@ -164,7 +164,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         parent = parent.parent
                     }
                     if (parent) {
-                        return { checkArrayNode: true, value: null }
+                        return { checkArrayNode: true, value: null, node: parent }
                     }
 
                     // no way
@@ -294,6 +294,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         case RelationType.Assign:
         case RelationType.InitOnly:
             handler = (res: any) => {
+                console.log("Assign", res)
                 node.rule.default = res
                 node.data = res
             }
