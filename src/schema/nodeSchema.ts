@@ -68,6 +68,11 @@ export interface INodeSchema
  */
 export enum SchemaLoadState {
     /**
+     * From deep server
+     */
+    Root = 16,
+
+    /**
      * system defined
      */
     System = 8,
