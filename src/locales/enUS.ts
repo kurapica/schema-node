@@ -158,8 +158,9 @@ export default {
     "ERR_CANT_BE_GREATTHAN": "{0} cannot be greater than {1}",
     "ERR_CANT_BE_LESSTHAN": "{0} cannot be less than {1}",
     "ERR_NOT_DATE": "{0} is not a valid date",
-    "ERR_ARRAY_DATA_NOT_VALID": "{0} data is invalid",
+    "ERR_ARRAY_DATA_NOT_VALID": "{0} invalid",
     "ERR_ARRAY_PRIMARY_DUPLICATE": "{0} must be unique",
+    "ERR_DATA_NOT_VALID": "{0} invalid ",
 
     "PLACEHOLDER_INPUT": "Please enter {0}",
     "PLACEHOLDER_SELECT": "Please select {0}",

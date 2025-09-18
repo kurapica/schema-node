@@ -20,8 +20,8 @@ export class ArrayRuleSchema extends RuleSchema
      */
     override active(node: ArrayNode, init?: boolean) {
         super.active(node, init)
-        if (node.enumArrayNode) {
-            node.enumArrayNode.activeRule(init)
+        if (node.enumNode) {
+            node.enumNode.activeRule(init)
         }
         else {
             node.elements.forEach(e => e.activeRule(init))
@@ -32,8 +32,8 @@ export class ArrayRuleSchema extends RuleSchema
      * Deactive the rule schema
      */
     override deactive(node: ArrayNode): void {
-        if (node.enumArrayNode) {
-            node.enumArrayNode.deactiveRule()
+        if (node.enumNode) {
+            node.enumNode.deactiveRule()
         }
         else {
             node.elements.forEach(e => e.deactiveRule())

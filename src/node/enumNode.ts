@@ -4,7 +4,7 @@ import { IEnumConfig } from '../config/enumConfig'
 import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
-import { _LS } from '../utils/locale'
+import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
 import { EnumRule } from '../rule/enumRule'
@@ -50,7 +50,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         }
         else if (this.isFlags)
         {
-            const sublist = await getEnumSubList(this._schemaInfo.name)
+            const sublist = await getEnumSubList(this._schema.name)
             const maxflag = Math.max(...sublist.map(v => v.value))
             data = fromFlagsView(data)
             if (!isNull(data)) {
@@ -81,7 +81,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             if (this.require)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_NULL"), this.display)
+                this._error = sformat("ERR_CANT_BE_NULL", this.display)
             }
         }
         else if(this._config.multiple)
@@ -92,7 +92,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
                 {
                     if (!await this.isValidEnumValue(data[i])){
                         this._valid = false
-                        this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                        this._error = sformat("ERR_NOT_IN_ENUMLIST", this.display)
                         break
                     }
                 }
@@ -101,9 +101,17 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             {
                 if (!await this.isValidEnumValue(data)){
                     this._valid = false
-                    this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), this.display)
+                    this._error = sformat("ERR_NOT_IN_ENUMLIST", this.display)
                 }
             }
+        }
+        
+        // relation valiation
+        if (this._valid && this.rule.error)
+        {
+            this._valid = false
+            const error = this._config.error || "ERR_DATA_NOT_VALID"
+            this._error = sformat(error, this._config.display)
         }
         
         // write back
@@ -130,7 +138,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Whether the enum is a flags enum
      */
-    get isFlags(): boolean { return this._schemaInfo.enum?.type === EnumValueType.Flags }
+    get isFlags(): boolean { return this._schema.enum?.type === EnumValueType.Flags }
 
     /**
      * Whether the node require multiple values
@@ -165,7 +173,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * The max cascade level
      */
-    get cascadeLevel() { return this._schemaInfo.enum?.cascade?.length || 1 }
+    get cascadeLevel() { return this._schema.enum?.cascade?.length || 1 }
 
     //#endregion
 
@@ -209,7 +217,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
 
     // parse enum value    
     private parseEnumValue(value: any) {
-        switch (this._schemaInfo.enum!.type) {
+        switch (this._schema.enum!.type) {
             case EnumValueType.Int:
             case EnumValueType.Flags:
                 value = !isNull(value) ? parseInt(value) : null

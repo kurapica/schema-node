@@ -1,4 +1,4 @@
-import { LocaleString } from "./locale"
+import { _L, ILocaleString } from "./locale"
 
 /**
  * is null
@@ -261,7 +261,6 @@ export function deepClone(value: any, noemptyarr = false): any
   else if (value && typeof (value) === "object")
   {
     if (value instanceof Date) return value
-    if (value instanceof LocaleString) return `${value}`
     const ret:any = {}
     for (var k in value)
     {
@@ -311,8 +310,8 @@ export function generateGuid(): string {
 /**
  * format string
  */
-export function sformat(template: string | LocaleString, ...args: any[]) {
-  return `${template}`.replace(/{(\d+)}/g, (match, index) => {
-    return typeof args[index] !== 'undefined' ? args[index] : match;
+export function sformat(template: string | ILocaleString, ...args: any[]) {
+  return `${_L(template)}`.replace(/{(\d+)}/g, (match, index) => {
+    return typeof args[index] !== 'undefined' ? _L(args[index]) : match;
   });
 }

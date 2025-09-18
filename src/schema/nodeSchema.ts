@@ -1,5 +1,5 @@
 import { SchemaTypeValue } from "../enum/schemaType"
-import { LocaleString } from "../utils/locale"
+import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
 import { IFunctionSchema } from "./functionSchema"
@@ -25,7 +25,7 @@ export interface INodeSchema
     /**
      * The schema description
      */
-    desc?: string | LocaleString
+    display?: ILocaleString
 
     /**
      * The scalar schema if type is scalar
@@ -67,6 +67,11 @@ export interface INodeSchema
  * The schema load state
  */
 export enum SchemaLoadState {
+    /**
+     * From deep server
+     */
+    Root = 16,
+
     /**
      * system defined
      */

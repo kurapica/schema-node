@@ -43,7 +43,7 @@ export default {
     "system.ints": "整型数组",
 
     // system.conv
-    "system.conv": "数值转换",    
+    "system.conv": "数值转换",
     "system.conv.default": "缺省",
     "system.conv.null": "空值",
 
@@ -159,6 +159,7 @@ export default {
     "ERR_NOT_DATE": "{0}不是有效的日期",
     "ERR_ARRAY_DATA_NOT_VALID": "{0}数据无效",
     "ERR_ARRAY_PRIMARY_DUPLICATE": "{0}不能重复",
+    "ERR_DATA_NOT_VALID": "{0}数据无效",
 
     "PLACEHOLDER_INPUT": "请输入{0}",
     "PLACEHOLDER_SELECT": "请选择{0}",

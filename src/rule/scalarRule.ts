@@ -35,5 +35,5 @@ export class ScalarRule extends Rule
     /**
      * Calc the origin value for up limit
      */
-    useOriginForUplimit?: boolean
+    useOriginForUpLimit?: boolean
 }

@@ -2,8 +2,7 @@ import { SchemaType } from '../enum/schemaType'
 import { IScalarConfig } from '../config/scalarConfig'
 import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
-import { getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
-import { _L, _LS } from '../utils/locale'
+import { callSchemaFunction, getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
 import { ScalarRule } from '../rule/scalarRule'
@@ -57,10 +56,10 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     }
 
     // override methods
-    validate(): void {
+    async validate(): Promise<void> {
         const value = this.data
         const config = this._config
-        const scalarInfo = this.schemaInfo.scalar
+        const scalarInfo = this.schema.scalar
         const rule = this._rule
 
         // reset
@@ -71,7 +70,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         if (isNull(this._data)) {
             if (config.require) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_NULL"), config.display)
+                this._error = sformat("ERR_CANT_BE_NULL", config.display)
             }
             return
         }
@@ -84,19 +83,19 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         if (this.isString) {
             if (uplimit && value.length > uplimit) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_LEN_CANT_BE_GREATTHAN"), config.display, uplimit)
+                this._error = sformat("ERR_LEN_CANT_BE_GREATTHAN", config.display, uplimit)
             }
             else if (lowlimit && value.length < lowlimit) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_LEN_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                this._error = sformat("ERR_LEN_CANT_BE_LESSTHAN", config.display, lowlimit)
             }
             else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(value)) {
                 this._valid = false
-                this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
+                this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
             else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
+                this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
         }
         // number
@@ -104,25 +103,25 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             if (isNull(value))
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_NUMBER"), config.display)
+                this._error = sformat("ERR_NOT_NUMBER", config.display)
             }
             else if (!isNull(uplimit) && value > uplimit)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+                this._error = sformat("ERR_CANT_BE_GREATTHAN", config.display, uplimit)
             }
             else if (!isNull(lowlimit) && value < lowlimit)
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                this._error = sformat("ERR_CANT_BE_LESSTHAN", config.display, lowlimit)
             }
             else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(`${this._data}`)) {
                 this._valid = false
-                this._error = sformat(scalarInfo.error || _LS("ERR_REGEX_NOT_MATCH"), config.display)
+                this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
             else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_IN_ENUMLIST"), config.display)
+                this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
         }
         // date
@@ -130,32 +129,48 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             if (isNull(value))
             {
                 this._valid = false
-                this._error = sformat(_LS("ERR_NOT_DATE"), config.display)
+                this._error = sformat("ERR_NOT_DATE", config.display)
             }
             else
             {
                 if (!isNull(uplimit)  && uplimit < value)
                 {
                     this._valid = false
-                    this._error = sformat(_LS("ERR_CANT_BE_GREATTHAN"), config.display, uplimit)
+                    this._error = sformat("ERR_CANT_BE_GREATTHAN", config.display, uplimit)
                 }
 
                 if (!isNull(lowlimit) && this._valid && lowlimit > value)
                 {
                     this._valid = false
-                    this._error = sformat(_LS("ERR_CANT_BE_LESSTHAN"), config.display, lowlimit)
+                    this._error = sformat("ERR_CANT_BE_LESSTHAN", config.display, lowlimit)
                 }
             }
         }
 
-        // custom validation
-        if (this._valid && this._config.validation)
+        // rule valiation failed
+        if (this._valid && this.rule.error)
         {
-            const error = this._config.validation.call(this)
-            if (!isNull(error))
+            this._valid = false
+            const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
+            this._error = sformat(error, config.display)
+        }
+
+        // frontend validation
+        if (this._valid && scalarInfo.preValid)
+        {
+            try
+            {
+                const res = await callSchemaFunction(scalarInfo.preValid, [ value ])
+                if (!res) {
+                    this._valid = false
+                    const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
+                    this._error = sformat(error, config.display)
+                }
+            }
+            catch(ex)
             {
                 this._valid = false
-                this._error = error
+                this._error = `${ex}` //TODO
             }
         }
     }
@@ -209,7 +224,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get upLimit(): any {
         // limit
-        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schemaInfo.scalar?.upLimit
+        let uplimit  = !isNull(this._rule.upLimit)  ? this._rule.upLimit  : !isNull(this._config.upLimit)  ? this._config.upLimit  : this._schema.scalar?.upLimit
         if (isNull(uplimit)) return null
 
         // string
@@ -240,7 +255,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     get lowLimit(): any {
         // limit
-        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schemaInfo.scalar?.lowLimit
+        let lowLimit  = !isNull(this._rule.lowLimit)  ? this._rule.lowLimit  : !isNull(this._config.lowLimit)  ? this._config.lowLimit  : this._schema.scalar?.lowLimit
         if (isNull(lowLimit)) return null
 
         // string
@@ -296,6 +311,6 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
      */
     constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
         super(config, data, parent)
-        getScalarValueType(config.type).then(v => this._valueType = v)
+        this._valueType = getScalarValueType(config.type)
     }
 }

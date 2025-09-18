@@ -1,4 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
+import { AppNode } from "../node/appNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
@@ -14,7 +15,7 @@ export class StructRuleSchema extends RuleSchema
     /**
      * Active the rule schema for node
      */
-    override active(node: StructNode, init?: boolean) {
+    override active(node: StructNode | AppNode, init?: boolean) {
         super.active(node, init)
         node.fields.forEach(f => f.activeRule(init))
     }
@@ -22,7 +23,7 @@ export class StructRuleSchema extends RuleSchema
     /**
      * Deactive the rule schema for node
      */
-    override deactive(node: StructNode): void {
+    override deactive(node: StructNode | AppNode): void {
         node.fields.forEach(f => f.deactiveRule())
         return super.deactive(node)
     }
@@ -32,7 +33,7 @@ export class StructRuleSchema extends RuleSchema
      */
     override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
     {
-        let name = (node.config as IStructFieldConfig).name
+        let name = node.name
         let ruleSchema = this.schemas[name]
         if (ruleSchema?.type !== node.config.type)
         {
@@ -63,7 +64,7 @@ export class StructRuleSchema extends RuleSchema
                 }
                 else if (parent.ruleSchema instanceof StructRuleSchema)
                 {
-                    const fldname = (curr.config as IStructFieldConfig).name
+                    const fldname = curr.name
                     const fld = pschema.struct?.fields?.find(f => f.name === fldname)
                     if (!fld) break
                     name = curr === node ? name : `${fld.name}.${name}`

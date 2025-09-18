@@ -1,13 +1,13 @@
 import { ISchemaConfig } from "../config/schemaConfig"
 import { RelationType, RelationTypeValue } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
+import { AppNode } from "../node/appNode"
 import { ArrayNode } from "../node/arrayNode"
 import { EnumNode } from "../node/enumNode"
 import { ScalarNode } from "../node/scalarNode"
 import { AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
-import { IStructFieldConfig } from "../schema/structSchema"
 import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
@@ -163,7 +163,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         parent = parent.parent
                     }
                     if (parent) {
-                        return { node: parent, checkArrayNode: true, value: null }
+                        return { checkArrayNode: true, value: null, node: parent }
                     }
 
                     // no way
@@ -178,7 +178,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
                 // locate the diff point
                 for (; i < paths.length; i++, ni++) {
-                    if (paths[i].toLowerCase() !== (nodePaths[ni].config as IStructFieldConfig).name.toLowerCase()) break
+                    if (paths[i].toLowerCase() !== nodePaths[ni].name.toLowerCase()) break
                     if (nodePaths[ni].schemaType === SchemaType.Array) {
                         // If the last is the array node
                         if (i === paths.length - 1) {
@@ -194,7 +194,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 // locate the rest path
                 let valNode: AnySchemaNode | undefined = nodePaths[ni - 1]
                 for (; i < paths.length; i++)
-                    valNode = valNode instanceof StructNode
+                    valNode = (valNode instanceof StructNode || valNode instanceof AppNode)
                         ? valNode.getField(paths[i])
                         : undefined
 
@@ -221,11 +221,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node.parent instanceof StructNode)
             {
                 handler = (res: any) => {
-                    if (!isNull(res) && res.toLowerCase() !== node.rule.type.toLowerCase())
+                    if (!isNull(res) && typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
                     {
                         getSchema(res).then(schema => {
                             // replace the node
-                            (node.parent as StructNode).rebuildField((node.config as IStructFieldConfig).name, schema.name)
+                            (node.parent as StructNode).rebuildField(node.name, schema.name)
                         })
                     }
                 }
@@ -241,10 +241,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.rule.invisible = res
                     node.notifyState()
 
-                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    if (node instanceof ArrayNode && node.enumNode)
                     {
-                        node.enumArrayNode.rule.invisible = res
-                        node.enumArrayNode.notifyState()
+                        node.enumNode.rule.invisible = res
+                        node.enumNode.notifyState()
                     }
                 }
             }
@@ -259,10 +259,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.rule.disable = res
                     node.notifyState()
 
-                    if (node instanceof ArrayNode && node.enumArrayNode)
+                    if (node instanceof ArrayNode && node.enumNode)
                     {
-                        node.enumArrayNode.rule.disable = res
-                        node.enumArrayNode.notifyState()
+                        node.enumNode.rule.disable = res
+                        node.enumNode.notifyState()
                     }
                 }
             }
@@ -308,11 +308,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             break
 
-        case RelationType.Uplimit:
+        case RelationType.UpLimit:
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
-                    if (node.isNumber && node.rule.useOriginForUplimit)
+                    if (node.isNumber && node.rule.useOriginForUpLimit)
                     {
                         const origin = node.original
                         if (isFinite(res) && isFinite(origin))
@@ -335,11 +335,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.root = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.root = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -352,11 +352,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -369,11 +369,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -386,11 +386,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.anyLevel = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.anyLevel = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -403,11 +403,11 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumArrayNode)
+            else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumArrayNode.rule.cascade = res
-                    node.enumArrayNode.validation().finally(() => node.enumArrayNode.notifyState())
+                    node.enumNode.rule.cascade = res
+                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
                 }
             }
             break
@@ -421,6 +421,26 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 }
             }
             break
+
+        case RelationType.Validation:
+            if (node instanceof EnumNode || node instanceof ScalarNode)
+            {
+                handler = (res: any) => {
+                    if (!res)
+                    {
+                        if (!node.rule.error)
+                        {
+                            node.rule.error = true
+                            node.validation().finally(() => node.notifyState())
+                        }
+                    }
+                    else if (node.rule.error)
+                    {
+                        node.rule.error = undefined
+                        node.validation().finally(() => node.notifyState())
+                    }
+                }
+            }
     }
 
     if (!handler) return
@@ -437,7 +457,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             let value = a.node.rawData
                             if (a.checkArrayNode) {
                                 let n = node
-                                while (n.parent && n.parent !== a.node)
+                                while (n.parent && !(n.parent instanceof ArrayNode))
                                     n = n.parent
 
                                 const arrayIndex = (n.parent as ArrayNode).indexof(n) as number
@@ -470,7 +490,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             a.node!.activeRule()
             if (a.node.parent instanceof StructNode)
             {
-                const name = (a.node.config as IStructFieldConfig).name
+                const name = a.node.name
                 if (a.node.parent.isFieldChangable(name))
                 {
                     let handler = a.node.subscribe(push)
