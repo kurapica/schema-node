@@ -24,6 +24,7 @@ export const NS_SYSTEM_FULLDATE = "system.fulldate"
 export const NS_SYSTEM_INT = "system.int"
 export const NS_SYSTEM_STRING = "system.string"
 export const NS_SYSTEM_YEAR = "system.year"
+export const NS_SYSTEM_GUID = "system.guid"
 export const NS_SYSTEM_YEARMONTH = "system.yearmonth"
 export const NS_SYSTEM_RANGEDATE = "system.rangedate"
 export const NS_SYSTEM_RANGEFULLDATE = "system.rangefulldate"
@@ -787,6 +788,9 @@ export function getScalarValueType(type: string):ScalarValueType {
             case NS_SYSTEM_INT:
                 valueType |= ScalarValueType.Integer
                 break;
+            case NS_SYSTEM_GUID:
+                valueType |= ScalarValueType.String
+                break;
         }
         typeName = (getCachedSchema(typeName))?.scalar?.base
     }
@@ -1482,12 +1486,15 @@ export enum ScalarValueType {
     None = 0,
     String = 1,
     Number = 2,
-    Integer = 4,
-    Boolean = 8,
-    Date = 16,
-    Year = 32,
-    FullDate = 64,
-    YearMonth = 128,
+    Single = 4,
+    Double = 8,
+    Integer = 16,
+    Boolean = 32,
+    Date = 64,
+    Year = 128,
+    FullDate = 256,
+    YearMonth = 512,
+    Guid = 1024,
 }
 
 const INDEX_VALUE_TYPE = ScalarValueType.Integer | 
@@ -1495,7 +1502,8 @@ const INDEX_VALUE_TYPE = ScalarValueType.Integer |
     ScalarValueType.Date |
     ScalarValueType.Year |
     ScalarValueType.FullDate |
-    ScalarValueType.YearMonth
+    ScalarValueType.YearMonth |
+    ScalarValueType.Guid
 
 interface Expression {
     /**
