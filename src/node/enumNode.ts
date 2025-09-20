@@ -222,10 +222,6 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
             case EnumValueType.Flags:
                 value = !isNull(value) ? parseInt(value) : null
                 return isFinite(value) ? value : null
-            case EnumValueType.Double:
-            case EnumValueType.Float:
-                value = !isNull(value) ? parseFloat(value) : null
-                return isFinite(value) ? value : null
             case EnumValueType.String:
                 return !isNull(value) ? `${value}` : null
         }

@@ -565,10 +565,6 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
             else if (tarSchemInfo.enum?.type === EnumValueType.Int || tarSchemInfo.enum?.type === EnumValueType.Flags) {
                 return await isSchemaCanBeUseAs(name, NS_SYSTEM_INT)
             }
-            // Number > enum
-            else {
-                return await isSchemaCanBeUseAs(name, NS_SYSTEM_NUMBER)
-            }
         }
         // Scalar > Scalar
         else if (tarSchemInfo.type === SchemaType.Scalar) {
