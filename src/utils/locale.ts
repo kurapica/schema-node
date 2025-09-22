@@ -115,11 +115,7 @@ export function _LS(key: string): ILocaleString
  */
 export const _L = new Proxy(function(key: string) { return currLocale[key] ?? key } as LocaleFunction, {
     get (target, prop) {
-        if (typeof(prop) === "string")
-        {
-            if (prop in currLocale) return currLocale[prop]
-            return prop
-        }
+        return typeof(prop) === "string" && prop in currLocale ? currLocale[prop] : prop
     },
     apply(target, thisArg, args) {
         const [key] = args
@@ -128,7 +124,6 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
         if (typeof(key) === "string")
         {
             if (key in currLocale) return currLocale[key]
-            return key
         }
         else if(typeof(key) === "object") 
         {
@@ -136,5 +131,6 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
             const tran = l.trans?.find(t => currLang.startsWith(t.lang) || t.lang.startsWith(currLang))
             return tran?.tran || currLocale[l.key] || l.key || ""
         }
+        return key
     }
 })

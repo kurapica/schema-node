@@ -1,10 +1,10 @@
-import { splitVendorChunkPlugin } from "vite"
 import { IScalarConfig } from "../config/scalarConfig"
-import { ISchemaConfig } from "../config/schemaConfig"
 import { ScalarNode } from "../node/scalarNode"
-import { regRuleSchema, RuleSchema } from "./ruleSchema"
+import { NODE_SELF, regRuleSchema, RuleSchema } from "./ruleSchema"
 import { INodeSchema } from "../schema/nodeSchema"
 import { SchemaType } from "../enum/schemaType"
+import { callSchemaFunction, getCachedSchema } from "../utils/schemaProvider"
+import { RelationType } from "../enum/relationType"
 
 @regRuleSchema(SchemaType.Scalar)
 export class ScalarRuleSchema extends RuleSchema
@@ -30,6 +30,11 @@ export class ScalarRuleSchema extends RuleSchema
     upLimit?: any
 
     /**
+     * The white list func used to init
+     */
+    whiteListFunc?: string
+
+    /**
      * The whilte list is only a suggest
      */
     asSuggest?: boolean
@@ -52,6 +57,17 @@ export class ScalarRuleSchema extends RuleSchema
         rule.upLimit = this.upLimit
         rule.asSuggest = this.asSuggest
         rule.useOriginForUpLimit = this.useOriginForUpLimit
+
+        // white list init
+        if (this.whiteListFunc)
+        {
+            callSchemaFunction(this.whiteListFunc, []).then(r => {
+                if (Array.isArray(r)) {
+                    rule.whiteList = r
+                    return node.notifyState()
+                }
+            })
+        }
     }
 
     /**
@@ -63,7 +79,7 @@ export class ScalarRuleSchema extends RuleSchema
         this.blackList = config.blackList ? [...config.blackList] as any : undefined
         this.lowLimit = config.lowLimit
         this.upLimit = config.upLimit
-        this.asSuggest = config.asSuggest
+        this.asSuggest = this.asSuggest || config.asSuggest
         this.useOriginForUpLimit = config.useOriginForUpLimit
     }
 
@@ -72,5 +88,24 @@ export class ScalarRuleSchema extends RuleSchema
         super(schema)
         this.lowLimit = schema.scalar?.lowLimit
         this.upLimit = schema.scalar?.upLimit
+        this.asSuggest = schema.scalar?.asSuggest
+
+        if (schema.scalar?.whiteList)
+        {
+            const funcInfo = getCachedSchema(schema.scalar.whiteList)
+            if (funcInfo?.func?.args?.length)
+            {
+                this.pushSchemas ||= []
+                this.pushSchemas.push({
+                    func: schema.scalar.whiteList,
+                    type: RelationType.WhiteList,
+                    args: [ { field: NODE_SELF } ]
+                })
+            }
+            else
+            {
+                this.whiteListFunc = schema.scalar.whiteList
+            }
+        }
     }
 }
