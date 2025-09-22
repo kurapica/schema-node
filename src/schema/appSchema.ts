@@ -25,6 +25,11 @@ export interface IAppSchema
     desc?: ILocaleString
 
     /**
+     * No app target, be used standalone
+     */
+    standalone?: boolean
+
+    /**
      * The main app used for distribution lock
      */
     main?: string
