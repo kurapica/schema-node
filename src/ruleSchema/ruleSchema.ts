@@ -17,6 +17,7 @@ import { debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
  */
 export const ARRAY_ITSELF = "$array"
 export const ARRAY_ELEMENT = "$ele"
+export const NODE_SELF = "$self"
 
 /**
  * The rule schema for schema node
@@ -144,7 +145,11 @@ export function getRuleSchema(schema: INodeSchema)
  */
 function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema) {
     const args: ISchemaNodePushArg[] = pushSchema.args.map(a => {
-        if (a.schema && a.field) {
+        if (a.field === NODE_SELF)
+        {
+            return { node }
+        }
+        else if (a.schema && a.field) {
             const nodePaths: AnySchemaNode[] = []
             let parent: AnySchemaNode | undefined = node
 

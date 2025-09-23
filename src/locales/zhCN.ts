@@ -27,6 +27,7 @@ export default {
     "system.string": "字符串",
     "system.year": "年份",
     "system.year.unit": "年",
+    "system.guid": "GUID",
     "system.yearmonth": "年月",
     "system.rangedate": "年月日时间范围",
     "system.rangedate.start": "起始时间",

@@ -14,16 +14,6 @@ export enum EnumValueType
     Int = "int",
 
     /**
-     * The enum value is a float.
-     */
-    Float = "float",
-
-    /**
-     * The enum value is a double.
-     */
-    Double = "double",
-
-    /**
      * The enum value is flags.
      */
     Flags = "flags",

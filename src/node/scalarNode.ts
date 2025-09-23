@@ -220,6 +220,11 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
     get isYearMonth(): boolean { return (this._valueType & ScalarValueType.YearMonth) > 0 }
 
     /**
+     * Is guid
+     */
+    get isGuid(): boolean { return (this._valueType & ScalarValueType.Guid) > 0 }
+
+    /**
      * Gets the uplimit
      */
     get upLimit(): any {

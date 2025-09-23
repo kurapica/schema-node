@@ -36,6 +36,16 @@ export interface IScalarSchema
   regex?: string
 
   /**
+   * The white list fetch function, it only accept 0-args func or 1-args which the argument is the scalar itself
+   */
+  whiteList?: string
+
+  /**
+   * The white list only used for suggest.
+   */
+  asSuggest?: boolean
+
+  /**
    * The function to validate the scalar value in frontend
   */
   preValid?: string

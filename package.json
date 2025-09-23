@@ -1,6 +1,6 @@
 {
   "name": "schema-node",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A TypeScript library for building data nodes from JSON-defined structures and relationships.",
   "main": "dist/index.js",
   "module": "dist/index.es.js",

@@ -27,6 +27,7 @@ export default {
     "system.string": "String",
     "system.year": "Year",
     "system.year.unit": "Year",
+    "system.guid": "GUID",
     "system.yearmonth": "Year-Month",
     "system.rangedate": "Date Range",
     "system.rangedate.start": "Start Time",
