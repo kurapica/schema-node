@@ -55,17 +55,17 @@ export const NS_SYSTEM_INTS = "system.ints"
 export interface ISchemaProvider {
     /**
      * Load the schema information
-     * @param schemaName The name of the schema
-     * @returns The schema information
+     * @param names The names of the schema
+     * @returns The schema informations
      */
-    loadSchema(schemaName: string): Promise<INodeSchema>
+    loadSchema(names: string[]): Promise<INodeSchema[]>
 
     /**
      * Load the application schema information
      * @param app the name of the application
      * @return the application schema
      */
-    loadAppSchema(app: string): Promise<IAppSchema>
+    loadAppSchema(app: string): Promise<IAppSchema | undefined>
 
     /**
      * Load the enum value sub list from the server
@@ -463,9 +463,9 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
-    schema = await schemaProvider.loadSchema(name)
-    registerSchema([schema], SchemaLoadState.Server)
-    return schema
+    const schemas = await schemaProvider.loadSchema([name])
+    registerSchema(schemas, SchemaLoadState.Server)
+    return schemas[0]
 }
 
 /**
