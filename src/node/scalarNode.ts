@@ -156,7 +156,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
 
         // frontend validation
-        if (this._valid && scalarInfo.preValid)
+        if (this._valid && scalarInfo?.preValid)
         {
             try
             {

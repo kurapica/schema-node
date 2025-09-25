@@ -296,6 +296,7 @@ const schemaChangeWatcher = new DataChangeWatcher()
 export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
+        schema.loadState = (schema.loadState || 0) | loadState
 
         // for root namespace without name
         if (isNull(name)) {
@@ -311,14 +312,15 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             if (exist.type !== schema.type) continue
 
             exist.display = schema.display || exist.display
+
             if (schema.type === SchemaType.Namespace)
             {
                 exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
             }
             else
             {
-                if ((exist.loadState || 0) > loadState) continue
-                exist.loadState = loadState
+                if ((exist.loadState || 0) > schema.loadState) continue
+                exist.loadState = schema.loadState
             }
 
             // remove refs
@@ -333,27 +335,34 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                 
                 case SchemaType.Enum:
                     // keep sublist
-                    for(let i = 0; i < schema.enum.values.length; i++)
-                    {
-                        const value = schema.enum.values[i]
-                        value.subList = value.subList || exist.enum.values.find(v => v.value === value.value)?.subList
+                    if (!schema.enum) continue
+                    if (schema.enum?.values){
+                        for(let i = 0; i < schema.enum.values.length; i++)
+                        {
+                            const value = schema.enum.values[i]
+                            value.subList = value.subList || exist.enum?.values?.find(v => v.value === value.value)?.subList
+                        }
                     }
                     exist.enum = schema.enum
                     break
 
                 case SchemaType.Scalar:
+                    if (!schema.scalar) continue
                     exist.scalar = schema.scalar
                     break
 
                 case SchemaType.Struct:
+                    if (!schema.struct) continue
                     exist.struct = schema.struct
                     break
 
                 case SchemaType.Array:
+                    if (!schema.array) continue
                     exist.array = schema.array
                     break
 
                 case SchemaType.Function:
+                    if (!schema.func) continue
                     exist.func = schema.func
                     break
             }
@@ -389,7 +398,11 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
 
         // append to the namespace
         addSchema(root, schema)
-        schema.loadState = (schema.loadState || 0) | loadState
+
+        // make system types already loaded
+        if ((loadState & SchemaLoadState.System) && schema.type !== SchemaType.Namespace)
+            schema.loaded = true
+
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
 
@@ -458,11 +471,10 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     }
 
     let schema = !name ? rootSchema : schemaCache[name]
-
-    if (schema && (((schema.loadState || 0) & SchemaLoadState.ServerLoaded) === SchemaLoadState.ServerLoaded || !schemaProvider))
+    if (schema?.loaded || !schemaProvider)
         return schema
 
-    if(schema) schema.loadState |= SchemaLoadState.ServerLoaded
+    if(schema) schema.loaded = true
     if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
@@ -1444,7 +1456,7 @@ function updateSchemaRefs(schema: INodeSchema, add: boolean)
     switch (schema.type)
     {
         case SchemaType.Scalar:
-            updateRef(schema.scalar.base, add)
+            updateRef(schema.scalar?.base, add)
             break
 
         case SchemaType.Struct:

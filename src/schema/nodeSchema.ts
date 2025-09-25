@@ -61,17 +61,17 @@ export interface INodeSchema
      * The schema info is loaded from server
      */
     loadState?: SchemaLoadState
+
+    /**
+     * Already loaded from the server
+     */
+    loaded?: boolean
 }
 
 /**
  * The schema load state
  */
 export enum SchemaLoadState {
-    /**
-     * Already loaded from server
-     */
-    ServerLoaded = 256,
-
     /**
      * From deep server
      */
