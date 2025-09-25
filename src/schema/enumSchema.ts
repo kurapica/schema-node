@@ -36,6 +36,11 @@ export interface IEnumValueInfo {
     name: ILocaleString
 
     /**
+     * The value color
+     */
+    color?: string
+
+    /**
      * Whether the enum value is disabled
     */
     disable?: boolean
