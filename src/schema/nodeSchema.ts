@@ -1,4 +1,4 @@
-import { SchemaTypeValue } from "../enum/schemaType"
+import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
@@ -68,6 +68,11 @@ export interface INodeSchema
  */
 export enum SchemaLoadState {
     /**
+     * Already loaded from server
+     */
+    ServerLoaded = 256,
+
+    /**
      * From deep server
      */
     Root = 16,
@@ -91,4 +96,27 @@ export enum SchemaLoadState {
      * Loaded from server
      */
     Server = 1,
+}
+
+const schemaLoadStateMap: Record<string, SchemaLoadState> = {
+  root: SchemaLoadState.Root,
+  system: SchemaLoadState.System,
+  frontend: SchemaLoadState.Frontend,
+  custom: SchemaLoadState.Custom,
+  server: SchemaLoadState.Server,
+};
+
+export function PrepareServerSchemas(schemas?: INodeSchema[])
+{
+    if (!schemas?.length) return
+    schemas.forEach(s => {
+        if (typeof(s.loadState) === "string")
+        {
+            s.loadState = schemaLoadStateMap[(s.loadState as string).toLowerCase()] || undefined
+        }
+        if (s.type === SchemaType.Namespace)
+        {
+            PrepareServerSchemas(s.schemas)
+        }
+    })
 }

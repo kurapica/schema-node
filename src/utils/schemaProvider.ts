@@ -4,7 +4,7 @@ import { SchemaType } from "../enum/schemaType"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
-import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
+import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
@@ -296,6 +296,13 @@ const schemaChangeWatcher = new DataChangeWatcher()
 export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
+
+        // for root namespace without name
+        if (isNull(name)) {
+            registerSchema(schema.schemas || [], loadState)
+            continue
+        }
+
         const exist = schemaCache[name]
 
         // combine
@@ -306,7 +313,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             exist.display = schema.display || exist.display
             if (schema.type === SchemaType.Namespace)
             {
-                exist.loadState = (exist.loadState || 0) | loadState
+                exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
             }
             else
             {
@@ -382,7 +389,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
 
         // append to the namespace
         addSchema(root, schema)
-        schema.loadState = loadState
+        schema.loadState = (schema.loadState || 0) | loadState
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
 
@@ -451,21 +458,18 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     }
 
     let schema = !name ? rootSchema : schemaCache[name]
-    if (schema?.type === SchemaType.Namespace)
-    {
-        if (((schema.loadState || 0) & SchemaLoadState.Server) === SchemaLoadState.Server || !schemaProvider)
-            return schema
-    }
-    else if(schema)
-    {
+
+    if (schema && (((schema.loadState || 0) & SchemaLoadState.ServerLoaded) === SchemaLoadState.ServerLoaded || !schemaProvider))
         return schema
-    }
+
+    if(schema) schema.loadState |= SchemaLoadState.ServerLoaded
     if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
-    const schemas = await schemaProvider.loadSchema([name])
+    const schemas = await schemaProvider.loadSchema([name]) || []
+    PrepareServerSchemas(schemas)
     registerSchema(schemas, SchemaLoadState.Server)
-    return schemas[0]
+    return schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
 }
 
 /**
@@ -889,7 +893,7 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
     if (search.length)
     {
         return search.map((s, i) => ({
-            name: schema.enum!.cascade?.length ? schema.enum?.cascade[i]! : "",
+            name: schema.enum!.cascade?.length ? schema.enum?.cascade[i]! : _LS(""),
             value: s.value,
             subList: (i == 0 ? schema.enum?.values : search[i - 1].subList) || []
         }))
@@ -1444,19 +1448,19 @@ function updateSchemaRefs(schema: INodeSchema, add: boolean)
             break
 
         case SchemaType.Struct:
-            schema.struct.fields.forEach(f => updateRef(f.type, add))
-            schema.struct.relations?.forEach(r => updateRef(r.func, add))
+            schema.struct?.fields?.forEach(f => updateRef(f.type, add))
+            schema.struct?.relations?.forEach(r => updateRef(r.func, add))
             break
 
         case SchemaType.Array:
-            updateRef(schema.array.element, add)
-            schema.array.relations?.forEach(r => updateRef(r.func, add))
+            updateRef(schema.array?.element, add)
+            schema.array?.relations?.forEach(r => updateRef(r.func, add))
             break
 
         case SchemaType.Function:
-            updateRef(schema.func.return, add)
-            schema.func.args.forEach(a => updateRef(a.type, add))
-            schema.func.exps.forEach(e => {
+            updateRef(schema.func?.return, add)
+            schema.func?.args?.forEach(a => updateRef(a.type, add))
+            schema.func?.exps?.forEach(e => {
                 updateRef(e.return, add)
                 updateRef(e.type, add)
                 updateRef(e.func, add)

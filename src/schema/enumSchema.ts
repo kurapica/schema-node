@@ -13,7 +13,7 @@ export interface IEnumSchema {
     /**
      * The cascades of the enum value
     */
-    cascade?: string[]
+    cascade?: ILocaleString[]
 
     /**
      * The enum values
@@ -58,7 +58,7 @@ export interface IEnumValueAccess {
     /**
      * The cascade name
     */
-    name: string
+    name: ILocaleString
 
     /**
      * The enum value of the cascade

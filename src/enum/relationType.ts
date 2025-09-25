@@ -11,6 +11,11 @@ export enum RelationType
   Invisible = "invisible",
 
   /**
+   * Visible
+   */
+  Visible = "visible",
+
+  /**
    * Disable
    */
   Disable = "disable",

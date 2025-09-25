@@ -254,6 +254,35 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 }
             }
             break
+
+        case RelationType.Visible:
+            type = NS_SYSTEM_BOOL
+
+            // default invisible
+            node.rule.invisible = true
+            node.notifyState()
+
+            if (node instanceof ArrayNode && node.enumNode)
+            {
+                node.enumNode.rule.invisible = true
+                node.enumNode.notifyState()
+            }
+
+            handler = (res: any) => {
+                res = !(res ? true : false)
+                if (res !== node.rule.invisible)
+                {
+                    node.rule.invisible = res
+                    node.notifyState()
+
+                    if (node instanceof ArrayNode && node.enumNode)
+                    {
+                        node.enumNode.rule.invisible = res
+                        node.enumNode.notifyState()
+                    }
+                }
+            }
+            break
         
         case RelationType.Disable:
             type = NS_SYSTEM_BOOL
