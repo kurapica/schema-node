@@ -2249,12 +2249,12 @@ registerSchema([
                                 {
                                     name: "includeMin",
                                     type: NS_SYSTEM_BOOL,
-                                    nullable: false
+                                    nullable: true
                                 },
                                 {
                                     name: "includeMax",
                                     type: NS_SYSTEM_BOOL,
-                                    nullable: false
+                                    nullable: true
                                 }
                             ],
                             exps: [],
