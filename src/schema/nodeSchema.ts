@@ -73,9 +73,9 @@ export interface INodeSchema
  */
 export enum SchemaLoadState {
     /**
-     * From deep server
+     * From remote server
      */
-    Root = 16,
+    Remote = 16,
 
     /**
      * system defined
@@ -99,7 +99,7 @@ export enum SchemaLoadState {
 }
 
 const schemaLoadStateMap: Record<string, SchemaLoadState> = {
-  root: SchemaLoadState.Root,
+  remote: SchemaLoadState.Remote,
   system: SchemaLoadState.System,
   frontend: SchemaLoadState.Frontend,
   custom: SchemaLoadState.Custom,
