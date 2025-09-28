@@ -66,7 +66,7 @@ export default {
     "system.math.floor": "Floor",
     "system.math.max": "Maximum",
     "system.math.min": "Minimum",
-    "system.math.percenttofloat": "Convert Percentage to Float",
+    "system.math.percenttonum": "Convert Percentage to Float",
     "system.math.round": "Round",
     "system.math.todecimal": "To Decimal",
     "system.math.todouble": "To Double",

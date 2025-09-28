@@ -391,7 +391,7 @@ registerSchema([
                                     nullable: false
                                 },
                                 {
-                                    name: "stop",
+                                    name: "end",
                                     type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
@@ -654,10 +654,19 @@ registerSchema([
                                     name: "y",
                                     type: "T",
                                     nullable: false
+                                },
+                                {
+                                    name: "decimals",
+                                    type: NS_SYSTEM_INT,
+                                    nullable: true
                                 }
                             ],
                             exps: [],
-                            func: (x: number, y: number) => new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
+                            func: (x: number, y: number, d?: number) => {
+                                const value = new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
+                                const remain = Math.pow(10, isNull(d) ? 2 : d)
+                                return remain > 0 ? Math.round(remain * value) / remain  : value
+                            }
                         },
                     },
                     {
@@ -787,9 +796,9 @@ registerSchema([
                         }
                     },
                     {
-                        name: "system.math.percenttofloat",
+                        name: "system.math.percenttonum",
                         type: SchemaType.Function,
-                        display: _LS("system.math.percenttofloat"),
+                        display: _LS("system.math.percenttonum"),
                         func: {
                             return: NS_SYSTEM_NUMBER,
                             args: [
@@ -846,11 +855,11 @@ registerSchema([
                                 {
                                     name: "decimals",
                                     type: NS_SYSTEM_INT,
-                                    nullable: false
+                                    nullable: true
                                 }
                             ],
                             exps: [],
-                            func: (x: number, d: number) => Math.round(x * 1.0 * Math.pow(10, d)) / Math.pow(10, d)
+                            func: (x: number, d?: number) => Math.round(x * 1.0 * Math.pow(10, d || 0)) / Math.pow(10, d || 0)
                         }
                     },
                     {

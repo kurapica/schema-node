@@ -66,7 +66,7 @@ export default {
     "system.math.floor": "向下取整",
     "system.math.max": "最大值",
     "system.math.min": "最小值",
-    "system.math.percenttofloat": "百分比转换为小数",
+    "system.math.percenttonum": "百分比转换为小数",
     "system.math.round": "四舍五入",
     "system.math.todecimal": "转换为数值",
     "system.math.todouble": "转换为双精度浮点数",
