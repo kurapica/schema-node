@@ -125,9 +125,7 @@ export default {
     "system.collection.delfield": "删除字段返回新结构体",
     "system.collection.getfields": "从数组各个元素获取字段构成新数组",
     "system.collection.sum": "对数组进行合计",
-    "system.collection.sumfields": "对数组各个元素的指定字段进行合计",
     "system.collection.average": "对数组求平均值",
-    "system.collection.averagefields": "对数组的各个元素的指定字段求平均值",
 
     // system.logic
     "system.logic": "逻辑操作",
