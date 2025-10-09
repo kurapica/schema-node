@@ -125,10 +125,8 @@ export default {
     "system.collection.delfield": "Delete Field and Return New Structure",
     "system.collection.getfields": "Extract Field from Each Element",
     "system.collection.sum": "Sum Array",
-    "system.collection.sumfields": "Sum Fields of Array Elements",
     "system.collection.average": "Average of Array",
-    "system.collection.averagefields": "Average Fields of Array Elements",
-
+    
     // system.logic
     "system.logic": "Logical Operations",
     "system.logic.andalso": "And Also",
