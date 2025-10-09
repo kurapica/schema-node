@@ -11,12 +11,12 @@ export interface IArrayConfig extends ISchemaConfig
     /**
      * The query count for a page
      */
-    count?: number
+    take?: number
 
     /**
      * The query offset
      */
-    offset?: number
+    skip?: number
 
     /**
      * The data total count
@@ -29,7 +29,7 @@ export interface IArrayConfig extends ISchemaConfig
     descend?: boolean
 
     /**
-     * The query keys
+     * The filter keys
      */
-    query?: { [key:string]: any }
+    filter?: { [key:string]: any }
 }

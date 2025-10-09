@@ -166,6 +166,16 @@ export interface IAppDataQuery {
     fields: string[]
 
     /**
+     * Only query input fields
+     */
+    onlyInput?: boolean
+
+    /**
+     * Only query output fields
+     */
+    onlyOutput?: boolean
+
+    /**
      * The query detail for array fields
      */
     querys?: { [key:string]: IAppDataFieldQuery }
@@ -173,7 +183,7 @@ export interface IAppDataQuery {
     /**
      * The default query count
      */
-    count?: number
+    take?: number
 
     /**
      * Use descend order as default
@@ -198,25 +208,42 @@ export interface IAppDataFieldQuery {
     /**
      * The key to be query, like
      * 
-     * query: { 'name': 'ann', class: 'math' }
-     * query: { 'name': ['ann', 'ben'] }
+     * filter: { 'name': 'ann', class: 'math' }
+     * filter: { 'name': ['ann', 'ben'] }
      */
-    query?: { [key:string]: any }
+    filter?: { [key:string]: any }
+
+    /**
+     * The order by
+     */
+    orderBy?: IAppDataQueryOrder[]
 
     /**
      * The query count
      */
-    count?: number
+    take?: number
 
     /**
      * The query data offset
      */
-    offset?: number
+    skip?: number
 
     /**
      * Use descend order
      */
     descend?: boolean
+}
+
+export interface IBatchQueryAppDataResult {
+    /**
+     * The query results
+     */
+    Results: IAppDataResult[]
+
+    /**
+     * The node schemas required
+     */
+    Schemas?: INodeSchema[]
 }
 
 /**
@@ -256,17 +283,22 @@ export interface IAppDataFieldInfo {
     /**
      * The key of the query, like
      */
-    query?: { [key:string]: any }
+    filter?: { [key:string]: any }
+
+    /**
+     * The order by
+     */
+    orderBy?: IAppDataQueryOrder[]
 
     /**
      * The query count
      */
-    count?: number
+    take?: number
 
     /**
      * The query offset
      */
-    offset?: number
+    skip?: number
 
     /**
      * The data total count
@@ -321,16 +353,6 @@ export interface IAppDataFieldPushQuery {
  */
 export interface IAppDataPushResult {
     /**
-     * The application name
-     */
-    app: string
-
-    /**
-     * The application target
-     */
-    target: string
-
-    /**
      * The push result
      */
     result: boolean
@@ -339,4 +361,12 @@ export interface IAppDataPushResult {
      * The error result
      */
     error?: any
+}
+
+/**
+ * The query order
+ */
+export interface IAppDataQueryOrder {
+    field: string
+    desc: boolean
 }

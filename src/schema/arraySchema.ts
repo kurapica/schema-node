@@ -29,7 +29,7 @@ export interface IArraySchema {
     /**
      * The data combine rule
      */
-    combine?: IDataCombine[]
+    combines?: IDataCombine[]
 
     /**
      * The realtions between the fields

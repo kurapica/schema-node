@@ -424,8 +424,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                     noSchema: true,
                     querys: {
                         [this.name]: {
-                            count: 1,
-                            query: query
+                            take: 1,
+                            filter: query
                         }
                     }
                 })
@@ -660,10 +660,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 fields: [this.name],
                 querys: {
                     [this.name]: {
-                        count,
-                        offset: page * count,
+                        take: count,
+                        skip: page * count,
                         descend,
-                        query: query || {}
+                        filter: query || {}
                     }
                 }
             })
@@ -724,9 +724,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
             // record query
             this._total = info?.total
-            this._count = info?.count
+            this._count = info?.take
             this._descend = info?.descend
-            this._query = info.query
+            this._query = info.filter
             this._page = page
             this.notify()
         }
@@ -776,10 +776,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             // record since we may change those in the view
             // offset must align with the page count, promise by the server
             this._total = this._config.total
-            this._count = this._config.count
+            this._count = this._config.take
             this._descend = this._config.descend
-            this._query = this._config.query ? { ...this._config.query } : undefined
-            this._page = this._count ? Math.floor((this._config.offset || 0) / this._count) : 0
+            this._query = this._config.filter ? { ...this._config.filter } : undefined
+            this._page = this._count ? Math.floor((this._config.skip || 0) / this._count) : 0
         }
 
         // element check

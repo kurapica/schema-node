@@ -1,6 +1,6 @@
-import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult } from "../schema/appSchema";
+import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
-import { getAppCachedSchema, ISchemaProvider, registerAppSchema, useSchemaProvider } from "./schemaProvider";
+import { getAppCachedSchema, ISchemaProvider, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
 import { debounce, deepClone, isNull } from "./toolset";
 
 let DEBOUNCE_BATCH_QUERY = 50
@@ -15,7 +15,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     /**
      * Batch query the application data from server
      */
-    batchQueryAppData(querys: IAppDataQuery[]): Promise<IAppDataResult[]>
+    batchQueryAppData(querys: IAppDataQuery[]): Promise<IBatchQueryAppDataResult>
 
     /**
      * push the application data to server
@@ -134,7 +134,7 @@ const processAppDataQueryQueue = debounce(() => {
             }
             
             // combine others
-            if (isNull(exist.count)) exist.count = q.query.count
+            if (isNull(exist.take)) exist.take = q.query.take
             if (isNull(exist.descend)) exist.descend = q.query.descend
             exist.schemaOnly = exist.schemaOnly && q.query.schemaOnly
             exist.noSchema = exist.noSchema && q.query.noSchema
@@ -160,13 +160,14 @@ const processAppDataQueryQueue = debounce(() => {
     schemaProvider.batchQueryAppData(combineQueries)
         .then(res => {
             // reg schema
-            registerAppSchema(res.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
+            if (res.Schemas?.length) registerSchema(res.Schemas, SchemaLoadState.Server)
+            registerAppSchema(res.Results.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
 
             // resolve
             queue.forEach(q => {
                 if (!isNull(q.query.target))
                 {
-                    const result = res.find(r => r.app === q.query.app && r.target === q.query.target)
+                    const result = res.Results.find(r => r.app === q.query.app && r.target === q.query.target)
                     if (result)
                     {
                         q.resolve(result)
@@ -178,7 +179,7 @@ const processAppDataQueryQueue = debounce(() => {
                 }
                 else
                 {
-                    const result = res.find(r => r.app === q.query.app && r.schema)
+                    const result = res.Results.find(r => r.app === q.query.app && r.schema)
                     if (result)
                     {
                         q.resolve({

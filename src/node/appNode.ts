@@ -504,7 +504,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 case SchemaType.Array:
                     const info = data?.infos[fconf.name]
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, count: info?.count, total: info?.total, offset: info?.offset, descend: info?.descend, query: info?.query } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, take: info?.take, total: info?.total, skip: info?.skip, descend: info?.descend, filter: info?.filter } as IStructArrayFieldConfig, d, this)
                     break
             }
             if (node) this._fields.push({ node, state })
@@ -557,14 +557,6 @@ async function combineResult(schema: INodeSchema | string, result: any[], combin
         case DataCombineType.Count:
             if (!isnumber) return null
             return result?.length
-
-        case DataCombineType.Min:
-            if (!isnumber) return null
-            return result?.length ? result.reduce((p, c) => Math.min(p, c)) : null
-
-        case DataCombineType.Max:
-            if (!isnumber) return null
-            return result?.length ? result.reduce((p, c) => Math.max(p, c)) : null
     }
 }
 
