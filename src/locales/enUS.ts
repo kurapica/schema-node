@@ -126,6 +126,12 @@ export default {
     "system.collection.getfields": "Extract Field from Each Element",
     "system.collection.sum": "Sum Array",
     "system.collection.average": "Average of Array",
+    "system.collection.contains": "Array contains specified value",
+    "system.collection.notcontains": "Array does not contain specified value",
+    "system.collection.containskey": "Object contains specified key",
+    "system.collection.notcontainskey": "Object does not contain specified key",
+    "system.collection.newarray": "Create Array",
+    "system.collection.push": "Push Element to Array and Return New Array",
     
     // system.logic
     "system.logic": "Logical Operations",

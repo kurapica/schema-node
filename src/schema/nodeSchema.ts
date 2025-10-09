@@ -58,6 +58,11 @@ export interface INodeSchema
     schemas?: INodeSchema[]
 
     /**
+     * Has sub schemas
+     */
+    hasSchemas?: boolean
+
+    /**
      * The schema info is loaded from server
      */
     loadState?: SchemaLoadState

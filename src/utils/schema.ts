@@ -1252,7 +1252,7 @@ registerSchema([
                             exps: [],
                             func: Math.pow
                         }
-                    },                    
+                    },
                     {
                         name: "system.math.bitand",
                         type: SchemaType.Function,
@@ -2103,6 +2103,131 @@ registerSchema([
                                     ]
                                 }
                             ],
+                        }
+                    },
+                    {
+                        name: "system.collection.containskey",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.containskey"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "object",
+                                    type: NS_SYSTEM_STRUCT,
+                                    nullable: false,
+                                },
+                                {
+                                    name: "field",
+                                    type: NS_SYSTEM_STRING,
+                                    nullable: false,
+                                }
+                            ],
+                            exps: [],
+                            func: (obj: {}, field: string) => {
+                                return !isNull(obj) && Object.prototype.hasOwnProperty.call(obj, field) && !isNull((obj as any)[field])
+                            }
+                        }
+                    },
+                    {
+                        name: "system.collection.notcontainskey",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.notcontainskey"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "object",
+                                    type: NS_SYSTEM_STRUCT,
+                                    nullable: false,
+                                },
+                                {
+                                    name: "field",
+                                    type: NS_SYSTEM_STRING,
+                                    nullable: false,
+                                }
+                            ],
+                            exps: [],
+                            func: (obj: {}, field: string) => {
+                                return isNull(obj) || !Object.prototype.hasOwnProperty.call(obj, field) || isNull((obj as any)[field])
+                            }
+                        }
+                    },
+                    {
+                        name: "system.collection.contains",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.contains"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                }
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => arr.includes(v)
+                        }
+                    },
+                    {
+                        name: "system.collection.notcontains",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.notcontains"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                }
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => arr.includes(v)
+                        }
+                    },
+                    {
+                        name: "system.collection.newarray",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.newarray"),
+                        func: {
+                            return: NS_SYSTEM_ARRAY,
+                            args: [],
+                            exps: [],
+                            func: () => { return [] }
+                        }
+                    },
+                    {
+                        name: "system.collection.push",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.push"),
+                        func: {
+                            return: NS_SYSTEM_ARRAY,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                },
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => { return [...arr, v] }
                         }
                     }
                 ]

@@ -30,11 +30,6 @@ export interface IAppSchema
     standalone?: boolean
 
     /**
-     * The main app used for distribution lock
-     */
-    main?: string
-
-    /**
      * Has sub applications, app can only have sub apps or fields
      */
     hasApps?: boolean
@@ -60,11 +55,6 @@ export interface IAppSchema
     relations?: IStructFieldRelation[]
 
     /**
-     * The schema info is loaded from server or else
-     */
-    loadState?: SchemaLoadState
-
-    /**
      * The types related to the application, loaded from server
      */
     types?: INodeSchema[]
@@ -73,6 +63,16 @@ export interface IAppSchema
      * The auto-gen node schema in frontend
      */
     nodeSchema?: INodeSchema
+    
+    /**
+     * The schema info is loaded from server or else
+     */
+    loadState?: SchemaLoadState
+
+    /**
+     * Already loaded from the server
+     */
+    loaded?: boolean
 }
 
 /**

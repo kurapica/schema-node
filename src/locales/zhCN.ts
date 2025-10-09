@@ -126,6 +126,12 @@ export default {
     "system.collection.getfields": "从数组各个元素获取字段构成新数组",
     "system.collection.sum": "对数组进行合计",
     "system.collection.average": "对数组求平均值",
+    "system.collection.contains": "数组包含指定值",
+    "system.collection.notcontains": "数组不包含指定值",
+    "system.collection.containskey": "结构体是否包含指定值",
+    "system.collection.notcontainskey": "结构体不包含指定值",
+    "system.collection.newarray": "新建数组",
+    "system.collection.push": "向数组追加元素返回新数组",
 
     // system.logic
     "system.logic": "逻辑操作",
