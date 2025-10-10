@@ -57,7 +57,7 @@ export interface IAppSchema
     /**
      * The types related to the application, loaded from server
      */
-    types?: INodeSchema[]
+    nodeSchemas?: INodeSchema[]
 
     /**
      * The auto-gen node schema in frontend
@@ -238,12 +238,12 @@ export interface IBatchQueryAppDataResult {
     /**
      * The query results
      */
-    Results: IAppDataResult[]
+    results: IAppDataResult[]
 
     /**
      * The node schemas required
      */
-    Schemas?: INodeSchema[]
+    schemas?: INodeSchema[]
 }
 
 /**
@@ -309,31 +309,6 @@ export interface IAppDataFieldInfo {
      * Use descend order
      */
     descend?: boolean
-}
-
-/**
- * The application field data push query
- */
-export interface IAppDataPushQuery {
-    /**
-     * The application name
-     */
-    app: string
-
-    /**
-     * The application target
-     */
-    target: string
-
-    /**
-     * The push data field
-     */
-    datas: { [key:string]: IAppDataFieldPushQuery }
-
-    /**
-     * Whether a full data push, incr-upate field will ignore this
-     */
-    full?: boolean
 }
 
 export interface IAppDataFieldPushQuery {

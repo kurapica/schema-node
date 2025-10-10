@@ -1,5 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
@@ -395,16 +395,10 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Submit all changes
      * @param nodes the submit node fields, default all
-     * @param full do a full data push
      */
-    async submit(nodes: AnySchemaNode[] | string[], full: boolean = false): Promise<IAppDataPushResult | undefined> {
+    async submit(nodes: AnySchemaNode[] | string[]): Promise<IAppDataPushResult | undefined> {
         if (!this.target) return undefined
-        const push: IAppDataPushQuery = {
-            app: this.name,
-            target: this.target,
-            datas: {},
-            full
-        }
+        const datas = {}
 
         const pushNodes: AnySchemaNode[] = []
         if (!nodes.length) nodes = this.loadedInputFields
@@ -420,17 +414,17 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             {
                 pushNodes.push(n)
 
-                push.datas[n.name] = { data: n.data }
+                datas[n.name] = { data: n.data }
                 
                 if (n instanceof ArrayNode)
                 {
                     const deletes = n.deletes
-                    if (deletes?.length) push.datas[n.name].deletes = deletes
+                    if (deletes?.length) datas[n.name].deletes = deletes
                 }
             }
         }
 
-        const result = await pushAppData(push)
+        const result = await pushAppData(this.name, this.target, datas)
 
         // clear changes
         pushNodes.forEach(n => n.resetChanges())

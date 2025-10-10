@@ -1,4 +1,4 @@
-import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
+import { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
 import { getAppCachedSchema, ISchemaProvider, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
 import { debounce, deepClone, isNull } from "./toolset";
@@ -20,7 +20,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     /**
      * push the application data to server
      */
-    pushAppData(pushes: IAppDataPushQuery): Promise<IAppDataPushResult>
+    pushAppData(app: string, target: string, datas: { [key:string]: IAppDataFieldPushQuery }): Promise<IAppDataPushResult>
 }
 
 let schemaProvider: IAppSchemaDataProvider | null = null
@@ -160,14 +160,14 @@ const processAppDataQueryQueue = debounce(() => {
     schemaProvider.batchQueryAppData(combineQueries)
         .then(res => {
             // reg schema
-            if (res.Schemas?.length) registerSchema(res.Schemas, SchemaLoadState.Server)
-            registerAppSchema(res.Results.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
+            if (res.schemas?.length) registerSchema(res.schemas, SchemaLoadState.Server)
+            registerAppSchema(res.results.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
 
             // resolve
             queue.forEach(q => {
                 if (!isNull(q.query.target))
                 {
-                    const result = res.Results.find(r => r.app === q.query.app && r.target === q.query.target)
+                    const result = res.results.find(r => r.app === q.query.app && r.target === q.query.target)
                     if (result)
                     {
                         q.resolve(result)
@@ -179,7 +179,7 @@ const processAppDataQueryQueue = debounce(() => {
                 }
                 else
                 {
-                    const result = res.Results.find(r => r.app === q.query.app && r.schema)
+                    const result = res.results.find(r => r.app === q.query.app && r.schema)
                     if (result)
                     {
                         q.resolve({
@@ -207,11 +207,11 @@ const processAppDataQueryQueue = debounce(() => {
 /**
  * Push the app data
  */
-export async function pushAppData(push: IAppDataPushQuery): Promise<IAppDataPushResult>
+export async function pushAppData(app: string, target: string, datas: { [key:string]: IAppDataFieldPushQuery }): Promise<IAppDataPushResult>
 {
-    if (isNull(push.target)) throw "Push target must be provided"
+    if (isNull(target)) throw "Push target must be provided"
     if (!schemaProvider) throw "No App data provider"
-    return await schemaProvider.pushAppData(push)
+    return await schemaProvider.pushAppData(app, target, datas)
 }
 
 //#endregion

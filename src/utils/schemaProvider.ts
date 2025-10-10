@@ -65,7 +65,7 @@ export interface ISchemaProvider {
      * @param app the name of the application
      * @return the application schema
      */
-    loadAppSchema(app: string): Promise<IAppSchema | undefined>
+    loadAppSchema(app: string, includeTypes?: boolean): Promise<IAppSchema | undefined>
 
     /**
      * Load the enum value sub list from the server
@@ -128,13 +128,20 @@ const appStructSchemaRoot = "__app_struct"
 export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
+        schema.loadState = (schema.loadState || 0) | loadState
+
+        // for root application without name
+        if (isNull(name)) {
+            registerAppSchema(schema.apps || [], loadState)
+            continue
+        }
+
         const exist = appSchemaCache[name]
 
         // combine
         if (exist)
         {
-            if ((exist.loadState || 0) > loadState) continue
-            exist.loadState = loadState
+            exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
 
             updateAppSchemaRefs(schema, false)
 
@@ -154,7 +161,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             updateAppSchemaRefs(schema, true)
 
             // register type schema
-            if (schema.types) registerSchema(schema.types, loadState)
+            if (schema.nodeSchemas) registerSchema(schema.nodeSchemas, loadState)
             continue
         }
         
@@ -178,7 +185,6 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             root = app
         }
         
-        schema.loadState = loadState
         schema.nodeSchema = undefined
         appSchemaCache[name] = schema
         root.apps ||= []
@@ -197,9 +203,9 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         }
 
         // register type schema
-        if (schema.types) {
-            registerSchema(schema.types, loadState)
-            schema.types = undefined
+        if (schema.nodeSchemas) {
+            registerSchema(schema.nodeSchemas, loadState)
+            schema.nodeSchemas = undefined
         }
     }
     appSchemaChangeWatcher.notify(schemas.map(s => s.name))
@@ -251,13 +257,17 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
     name = name.toLowerCase()
 
     let schema = !name ? rootAppSchema : appSchemaCache[name]
-    if(schema) return schema
-    if (!schemaProvider) return undefined
+    if (schema?.loaded || !schemaProvider) return schema
+    if (schema) schema.loaded = true
 
     // load schema from provider
-    schema = await schemaProvider.loadAppSchema(name)
-    if (schema) registerAppSchema([schema], SchemaLoadState.Server)
-    return schema
+    schema = await schemaProvider.loadAppSchema(name, true)
+    if (schema) {
+        schema.loaded = true
+        if (schema.nodeSchemas) PrepareServerSchemas(schema.nodeSchemas)
+        registerAppSchema([schema], SchemaLoadState.Server)
+    }
+    return !name ? rootAppSchema : appSchemaCache[name]
 }
 
 /**
@@ -362,7 +372,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
 
                 case SchemaType.Function:
-                    if (!schema.func) continue
+                    if (!schema.func || ((exist.loadState || 0) & SchemaLoadState.System)) continue
                     exist.func = schema.func
                     break
             }
@@ -1014,7 +1024,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     if (funcInfo.func && (!funcInfo.server || !schemaProvider)) {
         return await callFunc(funcInfo.func, args)
     }
-
+    
     // Schema provider check
     if (!schemaProvider) throw new Error("Schema provider not provided")
 

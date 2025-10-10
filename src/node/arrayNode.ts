@@ -303,6 +303,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (!this._schema.array?.primary?.length) return
         const primarys = this._eschema.struct?.fields.map(f => f.name).filter(n => this._schema.array?.primary?.includes(n))
         if (!primarys?.length) return
+
+        this._errfld?.setError("") // clear previous error
         for(let i = 1; i < this._elements.length; i++)
         {
             const ele = this._elements[i] as StructNode
@@ -319,6 +321,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 {
                     const errfld = ele.getField(primarys[primarys.length - 1])
                     errfld?.setError(sformat("ERR_ARRAY_PRIMARY_DUPLICATE", errfld.display))
+                    this._errfld = errfld
                     return
                 }
             }
@@ -753,6 +756,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _query: { [key:string]: any } | undefined
     private _descend: boolean | undefined
     private _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
+    private _errfld: AnySchemaNode | undefined
 
     //#endregion
 
