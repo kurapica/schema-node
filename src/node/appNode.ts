@@ -396,12 +396,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * Submit all changes
      * @param nodes the submit node fields, default all
      */
-    async submit(nodes: AnySchemaNode[] | string[]): Promise<IAppDataPushResult | undefined> {
+    async submit(nodes?: AnySchemaNode[] | string[]): Promise<IAppDataPushResult | undefined> {
         if (!this.target) return undefined
         const datas = {}
 
         const pushNodes: AnySchemaNode[] = []
-        if (!nodes.length) nodes = this.loadedInputFields
+        if (!nodes?.length) nodes = this.loadedInputFields
         for (let i = 0; i < nodes.length; i++)
         {
             let n = nodes[i]
@@ -414,7 +414,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             {
                 pushNodes.push(n)
 
-                datas[n.name] = { data: n.data }
+                datas[n.name] = { data: n.submitData }
                 
                 if (n instanceof ArrayNode)
                 {

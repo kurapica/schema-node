@@ -2,7 +2,7 @@ import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
-import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
+import { IEnumValueAccess, IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
@@ -314,6 +314,18 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             continue
         }
 
+        // prepare
+        switch(schema.type)
+        {
+            case SchemaType.Enum:
+                if (schema.enum?.values)
+                    prepareEnumValueInfos(schema.enum.type, schema.enum.values)
+                break;
+            case SchemaType.Scalar:
+                if (schema.scalar?.regex)
+                    schema.scalar.regex = schema.scalar.regex.replace(/\\\\/g, '\\')
+        }
+
         const exist = schemaCache[name]
 
         // combine
@@ -350,7 +362,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                         for(let i = 0; i < schema.enum.values.length; i++)
                         {
                             const value = schema.enum.values[i]
-                            value.subList = value.subList || exist.enum?.values?.find(v => v.value === value.value)?.subList
+                            value.subList = value.subList || exist.enum?.values?.find(v => v.value == value.value)?.subList
                         }
                     }
                     exist.enum = schema.enum
@@ -844,6 +856,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
 
         if (!schemaProvider) throw new Error("Schema provider not provided")
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        prepareEnumValueInfos(schema.enum.type, einfos)
         schema.enum.values = einfos
         return schema.enum!.values
     }
@@ -861,11 +874,13 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     if (einfo)
     {
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        prepareEnumValueInfos(schema.enum.type, einfos)
         einfo.subList = einfos
         return schema.enum!.values 
     }
     const access = await schemaProvider.loadEnumAccessList(name, value)
     if (!access?.length) return []
+    prepareEnumAccesses(schema.enum.type, access)
     
     // combine
     schema.enum.values ||= []
@@ -898,6 +913,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     // try reload
     einfo.subList = await schemaProvider.loadEnumSubList(name, value, deep)
     if (!einfo.subList.length) einfo.hasSubList = false
+    prepareEnumValueInfos(schema.enum.type, einfo.subList)
     return einfo.subList
 }
 
@@ -930,6 +946,7 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
 
     // combine
     if (!access?.length) return []
+    prepareEnumAccesses(schema.enum.type, access)
     
     // combine
     schema.enum.values ||= []

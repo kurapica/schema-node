@@ -9,7 +9,6 @@ import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
-import { IStructFieldConfig } from '../schema/structSchema'
 import { DataChangeWatcher } from '../utils/dataChangeWatcher'
 import { RelationType } from '../enum/relationType'
 

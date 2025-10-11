@@ -15,7 +15,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     /**
      * Batch query the application data from server
      */
-    batchQueryAppData(querys: IAppDataQuery[]): Promise<IBatchQueryAppDataResult>
+    batchQueryAppData(queries: IAppDataQuery[]): Promise<IBatchQueryAppDataResult>
 
     /**
      * push the application data to server
@@ -70,7 +70,6 @@ export function queryAppData(query: IAppDataQuery): Promise<IAppDataResult>
         query.schemaOnly = true
         query.noSchema = undefined
     }
-    console.log(query.app, query.target, cacheSchema)
     if (!schemaProvider) throw "No App data provider"
     if (isNull(query.noSchema) && cacheSchema) query.noSchema = true
 

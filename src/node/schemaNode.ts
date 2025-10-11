@@ -88,6 +88,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this.validation().then(this.notify)
    }
 
+   /**
+    * The submit data
+    */
+   get submitData(): any { return this.data }
+
     /**
      * The data is changed.
      */

@@ -1,4 +1,4 @@
-import { EnumValueTypeValue } from "../enum/enumValueType"
+import { EnumValueType, EnumValueTypeValue } from "../enum/enumValueType"
 import { ILocaleString } from "../utils/locale"
 
 /**
@@ -74,4 +74,34 @@ export interface IEnumValueAccess {
      * The sublist of the enum value
     */
     subList: IEnumValueInfo[]
+}
+
+export function prepareEnumValueInfos(type: EnumValueTypeValue, values: IEnumValueInfo[]) {
+    if (!values || !values.length) return
+    values.forEach(v => {
+        if (type === EnumValueType.String)
+        {
+            v.value = v.value?.toString()
+        }
+        else
+        {
+            v.value = parseInt(v.value)
+        }
+        if (v.subList && v.subList.length) prepareEnumValueInfos(type, v.subList)
+    })
+}
+
+export function prepareEnumAccesses(type: EnumValueTypeValue, enumSchema: IEnumValueAccess[]) {
+    if (!enumSchema || !enumSchema.length) return
+    enumSchema.forEach(e => {
+        if (type === EnumValueType.String)
+        {
+            e.value = e.value?.toString()
+        }
+        else
+        {
+            e.value = parseInt(e.value)
+        }
+        if (e.subList && e.subList.length) prepareEnumValueInfos(type, e.subList)
+    })
 }

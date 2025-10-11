@@ -29,7 +29,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get changed(): boolean {
         if (this._enode) return this._enode.changed
         if (this.asSingle) return !isEqual(this._data, this._original)
-        if (this._elements.find(e => e.changed)) return true
+        if (this._elements.find(e => e.changed) || this._original?.length) return true
         if (!this.incrUpdate) return false
         for (let key in this._tracker) {
             const track = this._tracker[key]
@@ -128,9 +128,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
-    get data()
-    {
-        if (this._enode) return this._enode.data
+    get data() {
+        if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
         if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
 
@@ -159,6 +158,40 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             return reqflds.length 
                 ? this._elements.map(e => e.data).filter(d => reqflds.findIndex(f => isNull(d[f])) < 0)
                 : this._elements.map(e => e.data)
+        }
+    }
+
+    get submitData()
+    {
+        if (this._enode) return this._enode.data
+        if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
+        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
+
+        if (this.incrUpdate)
+        {
+            const result: any = []
+            const keys = new Set<string>()
+            this._elements.filter(e => e.changed && !this.isRowDeleted(e)).forEach(e => {
+                const key = this.getPrimaryKey(e)
+                if (key) {
+                    keys.add(key)
+                    result.push(e.data)
+                }
+            })
+            for (let key in this._tracker)
+            {
+                if (keys.has(key) || !this._tracker[key].update) continue
+                result.push(this._tracker[key].update)
+            }
+            return result
+        }
+        else
+        {
+            const primary = this._schema.array?.primary || []
+            const reqflds = this._eschema.struct!.fields.filter(f => f.require || primary.includes(f.name)).map(f => f.name)
+            return reqflds.length 
+                ? this._elements.filter(e => e.changed).map(e => e.data).filter(d => reqflds.findIndex(f => isNull(d[f])) < 0)
+                : this._elements.filter(e => e.changed).map(e => e.data)
         }
     }
 
@@ -371,15 +404,15 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
     // get the unique key combine from primarys
     private getPrimaryKey(node: AnySchemaNode | any) {
-        const primarys = this._eschema.array?.primary
+        const primarys = this._schema.array?.primary
         if (!primarys?.length) return
         const keys: string[] = []
         const data = node instanceof StructNode ? node.rawData : node
         for(let i = 0; i < primarys.length; i++)
         {
             let k = primarys[i]
-            const v = node[k]
-            if (isNull(k)) return undefined
+            const v = data[k]
+            if (isNull(v)) return undefined
             keys.push(`${v}`)
         }
         return keys.join(".")
@@ -470,13 +503,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             const appNode = this.parent as AppNode
             if (!appNode?.target) return false
 
-            const res = await pushAppData({
-                app: appNode.name,
-                target: appNode.target,
-                datas: {
-                    [this.name]: {
-                        data: [ row.data ]
-                    }
+            const res = await pushAppData(appNode.name, appNode.target, {
+                [this.name]: {
+                    data: [ row.data ]
                 }
             })
 
