@@ -334,6 +334,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             if (exist.type !== schema.type) continue
 
             exist.display = schema.display || exist.display
+            exist.usedBy = schema.usedBy || exist.usedBy
+            exist.usedByApp = schema.usedByApp || exist.usedByApp
 
             if (schema.type === SchemaType.Namespace)
             {
@@ -1134,7 +1136,7 @@ export function isSchemaDeletable(name: string)
     if (schema.loadState & SchemaLoadState.System) return false
     if (schemaRefs[schema.name.toLowerCase()]) return false
     if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
-    return true
+    return !schema.used
 }
 
 /**

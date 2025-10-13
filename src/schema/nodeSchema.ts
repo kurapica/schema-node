@@ -71,6 +71,21 @@ export interface INodeSchema
      * Already loaded from the server
      */
     loaded?: boolean
+
+    /**
+     * The schema is used provided by the server
+     */
+    used?: boolean
+
+    /**
+     * The schema is used by other schemas
+     */
+    usedBy?: string[]
+
+    /**
+     * The schema is used by applications
+     */
+    usedByApp?: string[]
 }
 
 /**
