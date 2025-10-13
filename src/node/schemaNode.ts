@@ -96,7 +96,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The data is changed.
      */
-    get changed(): boolean { return !isEqual(this._original, this.data) }
+    get changed(): boolean { return !isEqual(this._original, this.data, this.schemaName) }
 
     /**
      * The data is valid.
