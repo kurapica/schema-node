@@ -217,6 +217,7 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
 
     // parse enum value    
     private parseEnumValue(value: any) {
+        if (!this._schema?.enum?.type) return null
         switch (this._schema.enum!.type) {
             case EnumValueType.Int:
             case EnumValueType.Flags:

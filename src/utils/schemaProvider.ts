@@ -860,7 +860,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
         prepareEnumValueInfos(schema.enum.type, einfos)
         schema.enum.values = einfos
-        return schema.enum!.values
+        return einfos
     }
     
     let search = searchEnumValue(schema.enum.values, value)
@@ -878,7 +878,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
         prepareEnumValueInfos(schema.enum.type, einfos)
         einfo.subList = einfos
-        return schema.enum!.values 
+        return einfos
     }
     const access = await schemaProvider.loadEnumAccessList(name, value)
     if (!access?.length) return []

@@ -25,11 +25,6 @@ export interface IAppSchema
     desc?: ILocaleString
 
     /**
-     * No app target, be used standalone
-     */
-    standalone?: boolean
-
-    /**
      * Has sub applications, app can only have sub apps or fields
      */
     hasApps?: boolean
@@ -109,6 +104,11 @@ export interface IAppFieldSchema
      * The source field
      */
     sourceField?: string
+
+    /**
+     * Track the push data to source field
+     */
+    trackPush?: boolean
 
     /**
      * The function used to generate data

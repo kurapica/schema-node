@@ -87,11 +87,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     //#region Properties
 
     /**
-     * Whether the app require no target
-     */
-    get standalone(): boolean { return this._appSchema.standalone || false }
-
-    /**
      * The app target
      */
     get target(): string { return this._target }
