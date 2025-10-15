@@ -29,6 +29,11 @@ export enum SchemaType
     Array = "array",
 
     /**
+     * The json node
+     */
+    Json = "json",
+
+    /**
      * The function node
      */
     Function = "func",
