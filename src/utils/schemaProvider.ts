@@ -34,6 +34,13 @@ export const NS_SYSTEM_STRINGS = "system.strings"
 export const NS_SYSTEM_NUMBERS = "system.numbers"
 export const NS_SYSTEM_INTS = "system.ints"
 
+export const NS_SYSTEM_LANGUAGE = "system.language";
+export const NS_SYSTEM_LOCALE_STRING = "system.localestring";
+export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
+export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
+export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
+export const NS_SYSTEM_ENTRY = "system.entry";
+export const NS_SYSTEM_ENTRIES = "system.entries";
 
 //#region Schema Provider
 
@@ -333,7 +340,6 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
-            exist.display = schema.display || exist.display
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -368,25 +374,32 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                         }
                     }
                     exist.enum = schema.enum
+
+                    if ((exist.loadState || 0) & SchemaLoadState.System) continue
+                    exist.display = schema.display || exist.display
                     break
 
                 case SchemaType.Scalar:
-                    if (!schema.scalar) continue
+                    if (!schema.scalar || ((exist.loadState || 0) & SchemaLoadState.System)) continue
+                    exist.display = schema.display || exist.display
                     exist.scalar = schema.scalar
                     break
 
                 case SchemaType.Struct:
-                    if (!schema.struct) continue
+                    if (!schema.struct || ((exist.loadState || 0) & SchemaLoadState.System)) continue
+                    exist.display = schema.display || exist.display
                     exist.struct = schema.struct
                     break
 
                 case SchemaType.Array:
-                    if (!schema.array) continue
+                    if (!schema.array || ((exist.loadState || 0) & SchemaLoadState.System)) continue
+                    exist.display = schema.display || exist.display
                     exist.array = schema.array
                     break
 
                 case SchemaType.Function:
                     if (!schema.func || ((exist.loadState || 0) & SchemaLoadState.System)) continue
+                    exist.display = schema.display || exist.display
                     exist.func = schema.func
                     break
             }
@@ -652,13 +665,16 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
         if (schema.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
 
         // Compare the field
+        let match = 0;
         for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
             const tarfield = tarSchemInfo.struct!.fields[i]
             const field = schema.struct!.fields.find(f => f.name === tarfield.name)
+
             if (!field && !tarfield.require) continue // pass require field
             if (!field || !await isSchemaCanBeUseAs(field.type, tarfield.type)) return false
+            match++;
         }
-        return true
+        return match > 1
     }
     else if (schema.type === SchemaType.Array) {
         if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schema.array!.element, target) : false
@@ -1267,10 +1283,12 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     let objFields: string[] = []
     if (funcInfo.return) {
         const retSchema = await getSchema(funcInfo.return, funcInfo.generic)
-        if (retSchema?.type === SchemaType.Struct && !isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name)) {
+        if (retSchema?.type === SchemaType.Struct && !(await isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name))) {
             objFields = retSchema.struct!.fields.map(f => f.name)
         }
     }
+
+    console.log("build function", funcInfo.args.map(a => a.name), "=>", funcInfo.return, objFields.length ? `{ ${objFields.join(", ")} }` : exps[exps.length - 1].return.name)
 
     // build the function
     const args = funcInfo.args.map(a => a.name)

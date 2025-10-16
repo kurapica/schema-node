@@ -1,10 +1,11 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID } from "./schemaProvider"
-import { _LS } from "./locale"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS } from "./schemaProvider"
+import { _LS, SCHEMA_LANGUAGES } from "./locale"
 import { isNull } from "./toolset"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaLoadState } from "../schema/nodeSchema"
+import { EnumValueType } from "../enum/enumValueType"
 
 /**
  * The default schemas
@@ -237,6 +238,86 @@ registerSchema([
                     ],
                 },
             },
+            {
+                name: "system.getlanguages",
+                type: SchemaType.Function,
+                display: _LS("system.getlanguages"),
+                func: {
+                    return: NS_SYSTEM_ENTRIES,
+                    args: [],
+                    exps: [],
+                    func: () => SCHEMA_LANGUAGES,
+                }
+            },
+            {
+                name: NS_SYSTEM_LANGUAGE,
+                type: SchemaType.Scalar,
+                display: _LS(NS_SYSTEM_LANGUAGE),
+                scalar: {
+                    base: NS_SYSTEM_STRING,
+                    whiteList: "system.getlanguages"
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_TRAN,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_LOCALE_TRAN),
+                struct: {
+                    fields: [
+                        {
+                            name: "lang",
+                            type: NS_SYSTEM_LANGUAGE,
+                            require: true,
+                            display: _LS("system.localetran.lang")
+                        },
+                        {
+                            name: "tran",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.localetran.tran")
+                        }
+                    ]
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_STRING,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_LOCALE_STRING),
+                struct: {
+                    fields: [
+                        {
+                            name: "key",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.localestring.default")
+                        },
+                        {
+                            name: "trans",
+                            type: NS_SYSTEM_LOCALE_TRANS,
+                            display: _LS("system.localestring.trans")
+                        }
+                    ]
+                }
+            },
+            {
+                name: NS_SYSTEM_ENTRY,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_ENTRY),
+                struct: {
+                    fields: [
+                        {
+                            name: "value",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.entry.value"),
+                            require: true,
+                        },
+                        {
+                            name: "label",
+                            type: NS_SYSTEM_LOCALE_STRING,
+                            display: _LS("system.entry.label"),
+                            require: true,
+                        }
+                    ]
+                }
+            },
             //#endregion
 
             //#region array
@@ -264,6 +345,33 @@ registerSchema([
                 array: {
                     element: NS_SYSTEM_INT
                 },
+            },
+            {
+                name: NS_SYSTEM_LOCALE_TRANS,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_LOCALE_TRANS),
+                array: {
+                    element: NS_SYSTEM_LOCALE_TRAN,
+                    primary: [ "lang" ]
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_STRINGS,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_LOCALE_STRINGS),
+                array: {
+                    element: NS_SYSTEM_LOCALE_STRING,
+                    primary: ["key"]
+                }
+            },
+            {
+                name: NS_SYSTEM_ENTRIES,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_ENTRIES),
+                array: {
+                    element: NS_SYSTEM_ENTRY,
+                    primary: ["value"]
+                }
             },
             //#endregion
         
@@ -421,6 +529,23 @@ registerSchema([
                             exps: [],
                             func: (a: string, b: string) => a.split(b)
                         },
+                    },
+                    {
+                        name: "system.str.tolocale",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.tolocale"),
+                        func: {
+                            return: NS_SYSTEM_LOCALE_STRING,
+                            args: [
+                                {
+                                    name: "str",
+                                    type: NS_SYSTEM_STRING,
+                                    nullable: true
+                                }
+                            ],
+                            exps: [],
+                            func: (a?: string) => _LS(a || "")
+                        }
                     },
                 ]
             },

@@ -43,6 +43,24 @@ export default {
     "system.numbers": "数值用数组",
     "system.ints": "整型数组",
 
+    "system.language": "语言",
+    "system.localetran": "翻译条目",
+    "system.localetran.lang": "语言",
+    "system.localetran.tran": "翻译",
+    "system.localetrans": "翻译条目列表",
+
+    "system.localestring": "可本地化字符串",
+    "system.localestring.default": "默认文本",
+    "system.localestring.trans": "翻译条目",
+    "system.localestrings": "可本地化字符串列表",
+
+    "system.entry": "字典项",
+    "system.entry.value": "值",
+    "system.entry.label": "标签",
+    "system.entries": "字典项列表",
+
+    "system.str.tolocale": "本地化字符串",
+
     // system.conv
     "system.conv": "数值转换",
     "system.conv.default": "缺省",

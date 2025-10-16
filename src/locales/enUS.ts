@@ -43,6 +43,24 @@ export default {
     "system.numbers": "Number Array",
     "system.ints": "Integer Array",
 
+    "system.language": "Language",
+    "system.localetran": "Translate",
+    "system.localetran.lang": "Language",
+    "system.localetran.tran": "Translate",
+    "system.localetrans": "Translate List",
+
+    "system.localestring": "Locale string",
+    "system.localestring.default": "Default",
+    "system.localestring.trans": "Translate",
+    "system.localestrings": "Locale strings",
+
+    "system.entry": "Entry",
+    "system.entry.value": "Value",
+    "system.entry.label": "Label",
+    "system.entries": "Entry List",
+
+    "system.str.tolocale": "本地化字符串",
+    
     // system.conv
     "system.conv": "Number Conversion",
     "system.conv.default": "Default",
