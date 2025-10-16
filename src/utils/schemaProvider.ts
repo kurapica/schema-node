@@ -849,6 +849,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     const schema = await getSchema(name)
     if (!schema?.enum || schema?.type !== SchemaType.Enum) return []
 
+    // root list
     if (isNull(value))
     {
         if (schema.enum.values && schema.enum.values.length) return schema.enum.values
@@ -866,49 +867,56 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined
     if (einfo) {
-        if (einfo.subList && einfo.subList.length) return einfo.subList
+        if (einfo.hasSubList === false || einfo.subList && einfo.subList.length) return einfo.subList || []
     }
     
     // check load state
     if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
     if (!schemaProvider) throw new Error("Schema provider not provided")
+    
+    // only require sub list
     if (einfo)
     {
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
         prepareEnumValueInfos(schema.enum.type, einfos)
         einfo.subList = einfos
+        einfo.hasSubList = einfos.length > 0
         return einfos
     }
-    const access = await schemaProvider.loadEnumAccessList(name, value)
+
+    // need full access
+    const access = await schemaProvider.loadEnumAccessList(name, value, false, true)
     if (!access?.length) return []
     prepareEnumAccesses(schema.enum.type, access)
     
     // combine
     schema.enum.values ||= []
     let root = schema.enum.values
-    for(let i = 0; i < access.length - 1; i++)
+    for(let i = 0; i < access.length; i++)
     {
         if (!root.length)
-        {
             root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        const match = root.find(r => r.value == access[i].value)
-        if (!match) {
-            // rebuild all
-            root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        if (match.hasSubList)
-        {
-            match.subList ||= []
-            root = match.subList
+
+        if (access[i].value){
+            let match = root.find(r => r.value == access[i].value)
+            if (!match) {
+                // rebuild all
+                root.splice(0, 0, ...access[i].subList)
+                match = root.find(r => r.value == access[i].value)
+            }
+            
+            if (i < access.length - 1) {
+                match.hasSubList = true
+                match.subList ||= []
+                root = match.subList
+            }
         }
     }
     
     // check
-    einfo = root.find(r => r.value === value)
+    search = searchEnumValue(schema.enum.values, value)
+     einfo = search.length ? search[search.length - 1] : undefined
     if (!einfo || !einfo.hasSubList) return []
     if (einfo.subList?.length) return einfo.subList
 
@@ -953,23 +961,24 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
     // combine
     schema.enum.values ||= []
     let root = schema.enum.values
-    for(let i = 0; i < access.length - 1; i++)
+    for(let i = 0; i < access.length; i++)
     {
         if (!root.length)
-        {
             root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        const match = root.find(r => r.value == access[i].value)
-        if (!match) {
-            // rebuild all
-            root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        if (match.hasSubList)
-        {
-            match.subList ||= []
-            root = match.subList
+
+        if (access[i].value){
+            let match = root.find(r => r.value == access[i].value)
+            if (!match) {
+                // rebuild all
+                root.splice(0, 0, ...access[i].subList)
+                match = root.find(r => r.value == access[i].value)
+            }
+            
+            if (i < access.length - 1) {
+                match.hasSubList = true
+                match.subList ||= []
+                root = match.subList
+            }
         }
     }
 

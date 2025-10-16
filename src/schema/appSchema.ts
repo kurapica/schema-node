@@ -136,6 +136,11 @@ export interface IAppFieldSchema
     disable?: boolean
 
     /**
+     * The field is readonly
+     */
+    readonly?: boolean
+
+    /**
      * The combine rule if field type is scalar or enum
      */
     combine?: DataCombineTypeValue

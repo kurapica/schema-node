@@ -21,6 +21,16 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
      * push the application data to server
      */
     pushAppData(app: string, target: string, datas: { [key:string]: IAppDataFieldPushQuery }): Promise<IAppDataPushResult>
+
+    /**
+     * Set the source app and target for an app target
+     */
+    setSourceTarget(app: string, target: string, sourceApp: string, sourceTarget?: string): Promise<boolean>
+
+    /**
+     * Get the source app and target for an app target
+     */
+    getSourceTarget(app: string, target: string, sourceApp: string): Promise<string | undefined>
 }
 
 let schemaProvider: IAppSchemaDataProvider | null = null

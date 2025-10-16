@@ -26,6 +26,7 @@ enum AppFieldNodeState
     Push    = 1 << 1,
     Ref     = 1 << 2,
     FrontEnd= 1 << 3,
+    Readonly= 1 << 4
 }
 
 //#endregion
@@ -99,7 +100,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Gets all input fields
      */
-    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref))).map(f => f.node) }
+    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly))).map(f => f.node) }
 
     /**
      * Gets all the front-end fields
@@ -125,6 +126,18 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * Gets all loaded input fields
      */
     get loadedInputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref)) && (f.state & AppFieldNodeState.Loaded)).map(f => f.node) }
+
+    /**
+     * Gets all source apps
+     */
+    get sourceApps(): string[] {
+        const sourceApps: string[] = []
+        this._appSchema.fields.forEach(f => {
+            if (f.sourceApp && !sourceApps.includes(f.sourceApp))
+                sourceApps.push(f.sourceApp)
+        })
+        return sourceApps
+    }
 
     //#endregion
 
@@ -470,6 +483,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             if (!isNull(d) || data?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
             if (fconf.func) state |= AppFieldNodeState.Push
             if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+            if (fconf.readonly) state |= AppFieldNodeState.Readonly | AppFieldNodeState.Push
             if (fconf.frontend) {
                 // front-end field always consider loaded
                 state |= AppFieldNodeState.FrontEnd
@@ -477,7 +491,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             }
 
             // ref | push field is readonly
-            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push))) ? true : false
+            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly))) ? true : false
 
             switch (fschema?.type)
             {
