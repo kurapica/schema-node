@@ -62,6 +62,7 @@ export default {
     "system.str.toentry": "转为字典项",
     "system.str.toentrys": "转为字典项列表",
     "system.str.tolocale": "本地化字符串",
+    "system.str.getlanguages": "获取语言列表",
 
     // system.conv
     "system.conv": "数值转换",
@@ -152,6 +153,7 @@ export default {
     "system.collection.notcontainskey": "结构体不包含指定值",
     "system.collection.newarray": "新建数组",
     "system.collection.push": "向数组追加元素返回新数组",
+    "system.collection.fieldequal": "字段等于指定值",
 
     // system.logic
     "system.logic": "逻辑操作",

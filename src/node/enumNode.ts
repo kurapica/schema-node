@@ -158,12 +158,12 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Gets the enum white list
      */
-    get whiteList(): string[] | number[]  { return this.rule.whiteList || this._config.whiteList }
+    get whiteList(): string[] | number[]  { return this.rule.whiteList?.length ? this.rule.whiteList : this._config.whiteList }
 
     /**
      * Gets the black list
      */
-    get blackList(): string[] | number[] { return this.rule.blackList || this._config.blackList }
+    get blackList(): string[] | number[] { return this.rule.blackList?.length ? this.rule.blackList : this._config.blackList }
 
     /**
      * Allow use enum value in any level

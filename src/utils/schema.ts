@@ -2,10 +2,11 @@ import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
 import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
-import { isNull } from "./toolset"
+import { deepClone, isNull } from "./toolset"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaLoadState } from "../schema/nodeSchema"
 import { EnumValueType } from "../enum/enumValueType"
+import { IStructScalarFieldConfig } from "../schema/structSchema"
 
 /**
  * The default schemas
@@ -239,9 +240,9 @@ registerSchema([
                 },
             },
             {
-                name: "system.getlanguages",
+                name: "system.str.getlanguages",
                 type: SchemaType.Function,
-                display: _LS("system.getlanguages"),
+                display: _LS("system.str.getlanguages"),
                 func: {
                     return: NS_SYSTEM_ENTRIES,
                     args: [],
@@ -255,7 +256,7 @@ registerSchema([
                 display: _LS(NS_SYSTEM_LANGUAGE),
                 scalar: {
                     base: NS_SYSTEM_STRING,
-                    whiteList: "system.getlanguages"
+                    whiteList: "system.str.getlanguages"
                 }
             },
             {
@@ -268,8 +269,9 @@ registerSchema([
                             name: "lang",
                             type: NS_SYSTEM_LANGUAGE,
                             require: true,
+                            upLimit: 8,
                             display: _LS("system.localetran.lang")
-                        },
+                        } as IStructScalarFieldConfig,
                         {
                             name: "tran",
                             type: NS_SYSTEM_STRING,
@@ -287,7 +289,8 @@ registerSchema([
                         {
                             name: "key",
                             type: NS_SYSTEM_STRING,
-                            display: _LS("system.localestring.default")
+                            display: _LS("system.localestring.default"),
+                            upLimit: 128
                         },
                         {
                             name: "trans",
@@ -308,6 +311,7 @@ registerSchema([
                             type: NS_SYSTEM_STRING,
                             display: _LS("system.entry.value"),
                             require: true,
+                            upLimit: 128,
                         },
                         {
                             name: "label",
@@ -397,7 +401,7 @@ registerSchema([
                                 }
                             ],
                             exps: [],
-                            func: (a: any) => a
+                            func: deepClone
                         }
                     },
                     {

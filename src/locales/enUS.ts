@@ -61,8 +61,8 @@ export default {
 
     "system.str.toentry": "To Entry",
     "system.str.toentrys": "To Entry List",
-
     "system.str.tolocale": "To Locale String",
+    "system.str.getlanguages": "Get Language List",
     
     // system.conv
     "system.conv": "Number Conversion",
@@ -153,6 +153,7 @@ export default {
     "system.collection.notcontainskey": "Object does not contain specified key",
     "system.collection.newarray": "Create Array",
     "system.collection.push": "Push Element to Array and Return New Array",
+    "system.collection.fieldequal": "Field Equals Specified Value",
     
     // system.logic
     "system.logic": "Logical Operations",

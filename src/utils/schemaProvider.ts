@@ -40,7 +40,7 @@ export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
 export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
 export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
 export const NS_SYSTEM_ENTRY = "system.entry";
-export const NS_SYSTEM_ENTRIES = "system.entries";
+export const NS_SYSTEM_ENTRIES = "system.entrys";
 
 //#region Schema Provider
 
@@ -341,7 +341,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
-            exist.display = isNullLocalString(exist.display) ? schema.display : exist.display
+            exist.display = (exist.loadState & SchemaLoadState.System) && !isNullLocalString(exist.display) ? exist.display : schema.display
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
