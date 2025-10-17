@@ -180,8 +180,9 @@ export type LocaleFunction = {
 /**
  * Gets a dynamic locale string entity
  */
-export function _LS(key: string): ILocaleString
+export function _LS(key: string | ILocaleString): ILocaleString
 {
+    if (typeof(key) === "object") return key
     return { key }
 }
 
@@ -209,3 +210,13 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
         return key
     }
 })
+
+/**
+ * Check if a local string is null or empty
+ */
+export function isNullLocalString(value: string | ILocaleString | null | undefined) {
+    if (isNull(value)) return true
+    if (typeof(value) === "string") return isNull(value)
+    if (typeof(value) === "object") return isNull(value.key)
+    return false
+}

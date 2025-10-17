@@ -481,6 +481,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
     // build the function
     const push = debounce(async function() {
+        let root = node
+        while (root.parent) root = root.parent
+        let target: string | undefined = undefined
+
+        // find the app node
+        if (root instanceof AppNode) {
+            target = root.target
+        }
+
         for (let retry = 0; retry < 5; retry++) {
             try {
                 // call data func
@@ -506,7 +515,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             return a.value
                         }
                     }),
-                    type,
+                    [type],
+                    target
                 ))
             }
             catch (ex) {

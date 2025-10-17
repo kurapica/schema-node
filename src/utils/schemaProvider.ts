@@ -8,7 +8,7 @@ import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/no
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
-import { _LS } from "./locale"
+import { _LS, isNullLocalString } from "./locale"
 
 export const NS_SYSTEM = "system"
 
@@ -98,9 +98,10 @@ export interface ISchemaProvider {
      * @param schemaName the name of the function schema
      * @param args the arguments of the function
      * @param generic the generic type of the function
+     * @param target the application target
      * @returns the result
      */
-    callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
+    callFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any>
 }
 
 let schemaProvider: ISchemaProvider | null = null
@@ -340,6 +341,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
+            exist.display = isNullLocalString(exist.display) ? schema.display : exist.display
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -376,30 +378,25 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     exist.enum = schema.enum
 
                     if ((exist.loadState || 0) & SchemaLoadState.System) continue
-                    exist.display = schema.display || exist.display
                     break
 
                 case SchemaType.Scalar:
                     if (!schema.scalar || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.display = schema.display || exist.display
                     exist.scalar = schema.scalar
                     break
 
                 case SchemaType.Struct:
                     if (!schema.struct || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.display = schema.display || exist.display
                     exist.struct = schema.struct
                     break
 
                 case SchemaType.Array:
                     if (!schema.array || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.display = schema.display || exist.display
                     exist.array = schema.array
                     break
 
                 case SchemaType.Function:
                     if (!schema.func || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.display = schema.display || exist.display
                     exist.func = schema.func
                     break
             }
@@ -1040,7 +1037,7 @@ const pendingCall: {
 } = {}
 const pendingComplexCall: any = {}
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[]) => schemaProvider!.callFunction(schemaName, args, generic))
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => schemaProvider!.callFunction(schemaName, args, generic, target))
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
@@ -1049,7 +1046,7 @@ const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], 
  * @param generic The generic type of the function
  * @returns The schema information
  */
-export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any> {
+export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any> {
     const schema = await getSchema(schemaName)
     if (!schema || schema.type !== SchemaType.Function) throw Error(`${schemaName} is not a function schema`)
     const funcInfo = schema.func!
@@ -1073,12 +1070,14 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     if (!schemaProvider) throw new Error("Schema provider not provided")
 
     // Combine and queue
-    const token = (!args || !args.length) 
+    let token = (!args || !args.length) 
         ? schema.name
         : args.findIndex(a => a && typeof a === "object") < 0
             ? `${schema.name}:${JSON.stringify(args)}` 
             : null
     if (token) {
+        if (target) token = `${token}->${target}`
+
         const result = shareFuncCallResult[token]
         if (result !== undefined) return result
 
@@ -1119,6 +1118,15 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
             if (!next) {
                 next = new Map()
                 root.set(a, next)
+            }
+            root = next
+        }
+
+        if (target) {
+            let next = root.get(target)
+            if (!next) {
+                next = new Map()
+                root.set(target, next)
             }
             root = next
         }
@@ -1287,9 +1295,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
             objFields = retSchema.struct!.fields.map(f => f.name)
         }
     }
-
-    console.log("build function", funcInfo.args.map(a => a.name), "=>", funcInfo.return, objFields.length ? `{ ${objFields.join(", ")} }` : exps[exps.length - 1].return.name)
-
+    
     // build the function
     const args = funcInfo.args.map(a => a.name)
     funcInfo.func = async function () {

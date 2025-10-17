@@ -57,9 +57,12 @@ export default {
     "system.entry": "Entry",
     "system.entry.value": "Value",
     "system.entry.label": "Label",
-    "system.entries": "Entry List",
+    "system.entrys": "Entry List",
 
-    "system.str.tolocale": "本地化字符串",
+    "system.str.toentry": "To Entry",
+    "system.str.toentrys": "To Entry List",
+
+    "system.str.tolocale": "To Locale String",
     
     // system.conv
     "system.conv": "Number Conversion",

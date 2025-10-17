@@ -409,15 +409,13 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         const datas = {}
 
         const pushNodes: AnySchemaNode[] = []
-        if (!nodes?.length) nodes = this.loadedInputFields
+        if (!nodes?.length) nodes = this.inputFields
         for (let i = 0; i < nodes.length; i++)
         {
             let n = nodes[i]
             if (typeof(n) === "string") n = this.getField(n)
             const state = this._fields.find(f => f.node === n)?.state
-            if (state 
-                && (state & AppFieldNodeState.Loaded) 
-                && !(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
+            if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
                 && n.changed)
             {
                 pushNodes.push(n)

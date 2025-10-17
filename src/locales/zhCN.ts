@@ -57,8 +57,10 @@ export default {
     "system.entry": "字典项",
     "system.entry.value": "值",
     "system.entry.label": "标签",
-    "system.entries": "字典项列表",
+    "system.entrys": "字典项列表",
 
+    "system.str.toentry": "转为字典项",
+    "system.str.toentrys": "转为字典项列表",
     "system.str.tolocale": "本地化字符串",
 
     // system.conv

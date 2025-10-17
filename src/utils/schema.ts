@@ -547,6 +547,71 @@ registerSchema([
                             func: (a?: string) => _LS(a || "")
                         }
                     },
+                    {
+                        name: "system.str.toentry",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.toentry"),
+                        func: {
+                            return: NS_SYSTEM_ENTRY,
+                            args: [
+                                {
+                                    name: "obj",
+                                    type: NS_SYSTEM_STRUCT,
+                                },
+                                {
+                                    name: "valueField",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "labelField",
+                                    type: NS_SYSTEM_STRING,
+                                }
+                            ],
+                            exps: [],
+                            func: (obj: any, valueField: string, labelField: string) => {
+                                let value = obj ? obj[valueField] : null
+                                value = isNull(value) ? "" : `${value}`
+                                return {
+                                    value: obj ? value : "",
+                                    label: _LS(obj[labelField] || value)
+                                }
+                            }
+                        },
+                    },
+                    {
+                        name: "system.str.toentrys",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.toentrys"),
+                        func: {
+                            return: NS_SYSTEM_ENTRIES,
+                            args: [
+                                {
+                                    name: "objs",
+                                    type: NS_SYSTEM_ARRAY,
+                                },
+                                {
+                                    name: "valueField",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "labelField",
+                                    type: NS_SYSTEM_STRING,
+                                }
+                            ],
+                            exps: [],
+                            func: (objs: any[], valueField: string, labelField: string) => {
+                                if (!objs || objs.length === 0) return []
+                                return objs.map(o => {
+                                    let value = o ? o[valueField] : null
+                                    value = isNull(value) ? "" : `${value}`
+                                    return {
+                                        value: o ? value : "",
+                                        label: _LS(o[labelField] || value)
+                                    }
+                                })
+                            }
+                        }
+                    }
                 ]
             },
 
@@ -2353,6 +2418,30 @@ registerSchema([
                             ],
                             exps: [],
                             func: (arr: any[], v:any) => { return [...arr, v] }
+                        }
+                    },
+                    {
+                        name: "system.collection.fieldequal",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.fieldequal"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "struct",
+                                    type: NS_SYSTEM_STRUCT,
+                                },
+                                {
+                                    name: "field",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                }
+                            ],
+                            exps: [],
+                            func: (s: {}, f: string, v: any) => !isNull(s) && (s as any)[f] == v
                         }
                     }
                 ]
