@@ -615,6 +615,17 @@ registerSchema([
                                 })
                             }
                         }
+                    },
+                    {
+                        name: "system.str.newguid",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.newguid"),
+                        func: {
+                            return: NS_SYSTEM_GUID,
+                            args: [],
+                            exps: [],
+                            func: crypto.randomUUID
+                        }
                     }
                 ]
             },

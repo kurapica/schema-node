@@ -8,7 +8,7 @@ import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/no
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
-import { _LS, isNullLocalString } from "./locale"
+import { _LS, combineLocaleString, isNullLocalString } from "./locale"
 
 export const NS_SYSTEM = "system"
 
@@ -341,7 +341,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
-            exist.display = (exist.loadState & SchemaLoadState.System) && !isNullLocalString(exist.display) ? exist.display : schema.display
+            exist.display = combineLocaleString(exist.display, schema.display)
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -381,23 +381,19 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
 
                 case SchemaType.Scalar:
-                    if (!schema.scalar || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.scalar = schema.scalar
+                    exist.scalar = schema.scalar || exist.scalar
                     break
 
                 case SchemaType.Struct:
-                    if (!schema.struct || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.struct = schema.struct
+                    exist.struct = schema.struct || exist.struct
                     break
 
                 case SchemaType.Array:
-                    if (!schema.array || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.array = schema.array
+                    exist.array = schema.array || exist.array
                     break
 
                 case SchemaType.Function:
-                    if (!schema.func || ((exist.loadState || 0) & SchemaLoadState.System)) continue
-                    exist.func = schema.func
+                    exist.func = schema.func || exist.func
                     break
             }
 

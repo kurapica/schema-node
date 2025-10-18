@@ -63,6 +63,7 @@ export default {
     "system.str.toentrys": "To Entry List",
     "system.str.tolocale": "To Locale String",
     "system.str.getlanguages": "Get Language List",
+    "system.str.newguid": "Generate New GUID",
     
     // system.conv
     "system.conv": "Number Conversion",

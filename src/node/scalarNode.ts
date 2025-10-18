@@ -82,7 +82,11 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
 
         // string
         if (this.isString) {
-            if (value !== null && (value.startsWith("{") || value.endsWith("}") || value.startsWith("[") || value.endsWith("]"))) {
+            if (isNull(value))
+            {
+                // pass
+            }
+            else if (value.startsWith("{") || value.endsWith("}") || value.startsWith("[") || value.endsWith("]")) {
                 this._valid = false
                 this._error = sformat("ERR_REGEX_NOT_MATCH", config.display, uplimit)
             }

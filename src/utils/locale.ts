@@ -220,3 +220,8 @@ export function isNullLocalString(value: string | ILocaleString | null | undefin
     if (typeof(value) === "object") return isNull(value.key)
     return false
 }
+
+export function combineLocaleString(locale: string | ILocaleString | null | undefined, other)
+{
+    return _LS(isNullLocalString(locale) ? other : locale)
+}

@@ -63,6 +63,7 @@ export default {
     "system.str.toentrys": "转为字典项列表",
     "system.str.tolocale": "本地化字符串",
     "system.str.getlanguages": "获取语言列表",
+    "system.str.newguid": "生成新的GUID",
 
     // system.conv
     "system.conv": "数值转换",

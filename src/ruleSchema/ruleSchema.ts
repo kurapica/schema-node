@@ -133,7 +133,8 @@ export function regRuleSchema(type: SchemaType) {
 export function getRuleSchema(schema: INodeSchema)
 {
     // rebuild
-    return new (ruleSchemaMap[schema.type])(schema)
+    const ctor = ruleSchemaMap[schema.type] || RuleSchema
+    return new ctor(schema)
 }
 
 //#endregion
