@@ -96,6 +96,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     override dispose(): void {
         this._fields.forEach(f => f.dispose() )
         this._fields = []
+        this.refreshRawData.cancel()
         super.dispose()
     }
 
@@ -115,7 +116,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     private refreshRawData = debounce(() => {
         this._fields.forEach(f => this._data[f.name] = f.rawData)
         this.notify()
-    }, 20)
+    }, 50)
 
     /**
      * Gets the struct field by name

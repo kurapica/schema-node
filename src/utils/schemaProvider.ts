@@ -393,7 +393,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
 
                 case SchemaType.Function:
-                    exist.func = schema.func || exist.func
+                    if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
+                        exist.func = schema.func || exist.func
                     break
             }
 

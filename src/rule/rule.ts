@@ -28,4 +28,6 @@ export abstract class Rule {
      * Already actived
      */
     _actived?: boolean
+
+    _activePushes?: (() => void)[]
 }

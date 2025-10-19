@@ -624,7 +624,7 @@ registerSchema([
                             return: NS_SYSTEM_GUID,
                             args: [],
                             exps: [],
-                            func: crypto.randomUUID
+                            func: () => crypto.randomUUID()
                         }
                     }
                 ]

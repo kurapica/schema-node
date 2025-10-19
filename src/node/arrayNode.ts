@@ -324,6 +324,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this._enode?.dispose()
         this._elements.forEach(e => e.dispose())
         this._elements = []
+        this.refreshRawData.cancel()
         super.dispose()
     }
 
@@ -371,7 +372,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         // primary check
         this.primaryCheck()
         this.notify()
-    }, 20)
+    }, 100)
 
     // create new element
     private newElement(data?: any) {

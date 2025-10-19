@@ -257,12 +257,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Notify the data changes
      */
-    notify = debounce((...args: any[]) => this._watcher.notify(...args), 10)
+    notify = debounce((...args: any[]) => this._watcher.notify(...args), 50)
 
     /**
      * Notify the state changes like valid, error, invisible and etc
      */
-    notifyState = debounce((...args: any[]) => this._swatcher.notify(...args), 10)
+    notifyState = debounce((...args: any[]) => this._swatcher.notify(...args), 50)
 
     /**
      * Swap the watcher, useful when field type changes
@@ -290,9 +290,13 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Dispose the node and children.
      */
     dispose(): void {
+        this.deactiveRule()
         this._watches.forEach(w => w())
+        this._watches.length = 0
         this._swatcher.dispose()
         this._watcher.dispose()
+        this.notify.cancel()
+        this.notifyState.cancel()
     }
 
     //#endregion
