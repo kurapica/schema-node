@@ -16,6 +16,7 @@ export * from './utils/toolset'
 export * from './utils/locale'
 export * from './utils/dataChangeWatcher'
 export * from './utils/schemaProvider'
+export * from './utils/appDataProvider'
 export * from './utils/schema'
 
 export * from './config/schemaConfig'

@@ -25,6 +25,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
         else if (this.isString) {
             value = `${value instanceof Date ? value.toISOString() : typeof (value) === "object" ? JSON.stringify(value) : value}`
+            if (value.startsWith("{") || value.startsWith("[") || value.endsWith("}") || value.endsWith("]")) value = null
         }
         else if (this.isNumber) {
             if (typeof value === "string")
@@ -81,7 +82,15 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
 
         // string
         if (this.isString) {
-            if (uplimit && value.length > uplimit) {
+            if (isNull(value))
+            {
+                // pass
+            }
+            else if (value.startsWith("{") || value.endsWith("}") || value.startsWith("[") || value.endsWith("]")) {
+                this._valid = false
+                this._error = sformat("ERR_REGEX_NOT_MATCH", config.display, uplimit)
+            }
+            else if (uplimit && value.length > uplimit) {
                 this._valid = false
                 this._error = sformat("ERR_LEN_CANT_BE_GREATTHAN", config.display, uplimit)
             }
@@ -156,7 +165,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
 
         // frontend validation
-        if (this._valid && scalarInfo.preValid)
+        if (this._valid && scalarInfo?.preValid)
         {
             try
             {

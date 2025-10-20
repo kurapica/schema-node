@@ -1,5 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
@@ -26,6 +26,7 @@ enum AppFieldNodeState
     Push    = 1 << 1,
     Ref     = 1 << 2,
     FrontEnd= 1 << 3,
+    Readonly= 1 << 4
 }
 
 //#endregion
@@ -87,11 +88,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     //#region Properties
 
     /**
-     * Whether the app require no target
-     */
-    get standalone(): boolean { return this._appSchema.standalone || false }
-
-    /**
      * The app target
      */
     get target(): string { return this._target }
@@ -104,7 +100,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Gets all input fields
      */
-    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref))).map(f => f.node) }
+    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly))).map(f => f.node) }
 
     /**
      * Gets all the front-end fields
@@ -130,6 +126,18 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * Gets all loaded input fields
      */
     get loadedInputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref)) && (f.state & AppFieldNodeState.Loaded)).map(f => f.node) }
+
+    /**
+     * Gets all source apps
+     */
+    get sourceApps(): string[] {
+        const sourceApps: string[] = []
+        this._appSchema.fields.forEach(f => {
+            if (f.sourceApp && !sourceApps.includes(f.sourceApp))
+                sourceApps.push(f.sourceApp)
+        })
+        return sourceApps
+    }
 
     //#endregion
 
@@ -395,42 +403,34 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Submit all changes
      * @param nodes the submit node fields, default all
-     * @param full do a full data push
      */
-    async submit(nodes: AnySchemaNode[] | string[], full: boolean = false): Promise<IAppDataPushResult | undefined> {
+    async submit(nodes?: AnySchemaNode[] | string[]): Promise<IAppDataPushResult | undefined> {
         if (!this.target) return undefined
-        const push: IAppDataPushQuery = {
-            app: this.name,
-            target: this.target,
-            datas: {},
-            full
-        }
+        const datas = {}
 
         const pushNodes: AnySchemaNode[] = []
-        if (!nodes.length) nodes = this.loadedInputFields
+        if (!nodes?.length) nodes = this.inputFields
         for (let i = 0; i < nodes.length; i++)
         {
             let n = nodes[i]
             if (typeof(n) === "string") n = this.getField(n)
             const state = this._fields.find(f => f.node === n)?.state
-            if (state 
-                && (state & AppFieldNodeState.Loaded) 
-                && !(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
+            if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
                 && n.changed)
             {
                 pushNodes.push(n)
 
-                push.datas[n.name] = { data: n.data }
+                datas[n.name] = { data: n.submitData }
                 
                 if (n instanceof ArrayNode)
                 {
                     const deletes = n.deletes
-                    if (deletes?.length) push.datas[n.name].deletes = deletes
+                    if (deletes?.length) datas[n.name].deletes = deletes
                 }
             }
         }
 
-        const result = await pushAppData(push)
+        const result = await pushAppData(this.name, this.target, datas)
 
         // clear changes
         pushNodes.forEach(n => n.resetChanges())
@@ -481,6 +481,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             if (!isNull(d) || data?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
             if (fconf.func) state |= AppFieldNodeState.Push
             if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+            if (fconf.readonly) state |= AppFieldNodeState.Readonly | AppFieldNodeState.Push
             if (fconf.frontend) {
                 // front-end field always consider loaded
                 state |= AppFieldNodeState.FrontEnd
@@ -488,7 +489,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             }
 
             // ref | push field is readonly
-            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push))) ? true : false
+            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly))) ? true : false
 
             switch (fschema?.type)
             {
@@ -504,7 +505,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 case SchemaType.Array:
                     const info = data?.infos[fconf.name]
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, count: info?.count, total: info?.total, offset: info?.offset, descend: info?.descend, query: info?.query } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, take: info?.take, total: info?.total, skip: info?.skip, descend: info?.descend, filter: info?.filter } as IStructArrayFieldConfig, d, this)
                     break
             }
             if (node) this._fields.push({ node, state })
@@ -557,14 +558,6 @@ async function combineResult(schema: INodeSchema | string, result: any[], combin
         case DataCombineType.Count:
             if (!isnumber) return null
             return result?.length
-
-        case DataCombineType.Min:
-            if (!isnumber) return null
-            return result?.length ? result.reduce((p, c) => Math.min(p, c)) : null
-
-        case DataCombineType.Max:
-            if (!isnumber) return null
-            return result?.length ? result.reduce((p, c) => Math.max(p, c)) : null
     }
 }
 

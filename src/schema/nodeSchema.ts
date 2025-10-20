@@ -58,9 +58,34 @@ export interface INodeSchema
     schemas?: INodeSchema[]
 
     /**
+     * Has sub schemas
+     */
+    hasSchemas?: boolean
+
+    /**
      * The schema info is loaded from server
      */
     loadState?: SchemaLoadState
+
+    /**
+     * Already loaded from the server
+     */
+    loaded?: boolean
+
+    /**
+     * The schema is used provided by the server
+     */
+    used?: boolean
+
+    /**
+     * The schema is used by other schemas
+     */
+    usedBy?: string[]
+
+    /**
+     * The schema is used by applications
+     */
+    usedByApp?: string[]
 }
 
 /**
@@ -68,14 +93,9 @@ export interface INodeSchema
  */
 export enum SchemaLoadState {
     /**
-     * Already loaded from server
+     * From remote server
      */
-    ServerLoaded = 256,
-
-    /**
-     * From deep server
-     */
-    Root = 16,
+    Remote = 16,
 
     /**
      * system defined
@@ -99,7 +119,7 @@ export enum SchemaLoadState {
 }
 
 const schemaLoadStateMap: Record<string, SchemaLoadState> = {
-  root: SchemaLoadState.Root,
+  remote: SchemaLoadState.Remote,
   system: SchemaLoadState.System,
   frontend: SchemaLoadState.Frontend,
   custom: SchemaLoadState.Custom,

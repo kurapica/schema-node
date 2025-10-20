@@ -2,11 +2,12 @@ import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
-import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../utils/toolset"
+import { deepClone, isEqual, isNull, debounce, generateGuid, sformat, clearDebounce } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { getRuleSchema } from "../ruleSchema/ruleSchema"
+import { c } from "vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf"
 
 /**
  * The abstract schema node.
@@ -88,10 +89,20 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this.validation().then(this.notify)
    }
 
+   /**
+    * The submit data
+    */
+   get submitData(): any { return this.data }
+
+   /**
+    * Whether the node is empty
+    */
+   get isEmpty(): boolean { return isNull(this._data) }
+
     /**
      * The data is changed.
      */
-    get changed(): boolean { return !isEqual(this._original, this.data) }
+    get changed(): boolean { return !isEqual(this._original, this.data, this.schemaName) }
 
     /**
      * The data is valid.
@@ -252,12 +263,12 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Notify the data changes
      */
-    notify = debounce((...args: any[]) => this._watcher.notify(...args), 10)
+    notify = debounce((...args: any[]) => this._watcher.notify(...args), 50)
 
     /**
      * Notify the state changes like valid, error, invisible and etc
      */
-    notifyState = debounce((...args: any[]) => this._swatcher.notify(...args), 10)
+    notifyState = debounce((...args: any[]) => this._swatcher.notify(...args), 50)
 
     /**
      * Swap the watcher, useful when field type changes
@@ -274,7 +285,8 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     setError (err: string) {
         if (this._valid || this._error !== err)
         {
-            this._valid = false
+            if (!isNull(err))
+                this._valid = false
             this._error = err
             this.notifyState()
         }
@@ -284,9 +296,13 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
      * Dispose the node and children.
      */
     dispose(): void {
+        this.deactiveRule()
         this._watches.forEach(w => w())
+        this._watches.length = 0
         this._swatcher.dispose()
         this._watcher.dispose()
+        clearDebounce(this.notify)
+        clearDebounce(this.notifyState)
     }
 
     //#endregion

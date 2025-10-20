@@ -10,7 +10,7 @@ import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
-import { debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
+import { clearDebounce, debounce, deepClone, generateGuid, isEqual, isNull } from "../utils/toolset"
 
 /**
  * The field that point to array itself
@@ -77,6 +77,8 @@ export class RuleSchema {
     deactive(node: AnySchemaNode) {
         node.clearWatch()
         node.rule._actived = false
+        node.rule._activePushes?.forEach(clearDebounce)
+        node.rule._activePushes = undefined
     }
 
     /**
@@ -133,7 +135,8 @@ export function regRuleSchema(type: SchemaType) {
 export function getRuleSchema(schema: INodeSchema)
 {
     // rebuild
-    return new (ruleSchemaMap[schema.type])(schema)
+    const ctor = ruleSchemaMap[schema.type] || RuleSchema
+    return new ctor(schema)
 }
 
 //#endregion
@@ -310,14 +313,24 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         node.data = res
                 }
             }
-            else 
+            else if (node instanceof StructNode)
+            {
+                handler = (res: any) => {
+                    const prev = node.rule.default
+                    node.rule.default = deepClone(res)
+                    if (!isNull(res) && (node.isEmpty || isEqual(node.data, prev)))
+                        node.data = res
+                    node.notifyState()
+                }
+            }
+            else
             {
                 let dftval: any = node.ruleSchema.default
                 handler = (res: any) => {
                     if (isNull(res)) res = dftval
                     const prev = node.rule.default
                     node.rule.default = res
-                    if (!isNull(res) && (isNull(node.data) || isEqual(node.data, prev)))
+                    if (!isNull(res) && (node.isEmpty || isEqual(node.data, prev)))
                         node.data = res
                     node.notifyState()
                 }
@@ -481,6 +494,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
     // build the function
     const push = debounce(async function() {
+        let root = node
+        while (root.parent) root = root.parent
+        let target: string | undefined = undefined
+
+        // find the app node
+        if (root instanceof AppNode) {
+            target = root.target
+        }
+
         for (let retry = 0; retry < 5; retry++) {
             try {
                 // call data func
@@ -506,7 +528,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             return a.value
                         }
                     }),
-                    type,
+                    [type],
+                    target
                 ))
             }
             catch (ex) {
@@ -515,7 +538,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                 await new Promise(r => setTimeout(r, 200))
             }
         }
-    }, 20)
+    }, 500)
+
+    node.rule._activePushes = node.rule._activePushes || []
+    node.rule._activePushes.push(push)
 
     // subscribe
     if (pushSchema.type !== RelationType.InitOnly)

@@ -50,7 +50,7 @@ export class ArrayRuleSchema extends RuleSchema
         super.loadConfig(config)
 
         // element share the config
-        this.element.loadConfig(config)
+        this.element?.loadConfig(config)
     }
 
     /**
@@ -66,7 +66,10 @@ export class ArrayRuleSchema extends RuleSchema
      */
     constructor(schema: INodeSchema){
         super(schema)
-        if (!schema.array.element) return
+        if (!schema.array?.element) {
+            console.log("miss array ele", schema)
+            return
+        }
 
         // The array and element share the rule schema
         const elementInfo = getCachedSchema(schema.array!.element)!

@@ -1,10 +1,12 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID } from "./schemaProvider"
-import { _LS } from "./locale"
-import { isNull } from "./toolset"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS } from "./schemaProvider"
+import { _LS, SCHEMA_LANGUAGES } from "./locale"
+import { deepClone, isNull } from "./toolset"
 import { ExpressionType } from "../enum/expressionType"
 import { SchemaLoadState } from "../schema/nodeSchema"
+import { EnumValueType } from "../enum/enumValueType"
+import { IStructScalarFieldConfig } from "../schema/structSchema"
 
 /**
  * The default schemas
@@ -237,6 +239,89 @@ registerSchema([
                     ],
                 },
             },
+            {
+                name: "system.str.getlanguages",
+                type: SchemaType.Function,
+                display: _LS("system.str.getlanguages"),
+                func: {
+                    return: NS_SYSTEM_ENTRIES,
+                    args: [],
+                    exps: [],
+                    func: () => SCHEMA_LANGUAGES,
+                }
+            },
+            {
+                name: NS_SYSTEM_LANGUAGE,
+                type: SchemaType.Scalar,
+                display: _LS(NS_SYSTEM_LANGUAGE),
+                scalar: {
+                    base: NS_SYSTEM_STRING,
+                    whiteList: "system.str.getlanguages"
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_TRAN,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_LOCALE_TRAN),
+                struct: {
+                    fields: [
+                        {
+                            name: "lang",
+                            type: NS_SYSTEM_LANGUAGE,
+                            require: true,
+                            upLimit: 8,
+                            display: _LS("system.localetran.lang")
+                        } as IStructScalarFieldConfig,
+                        {
+                            name: "tran",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.localetran.tran")
+                        }
+                    ]
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_STRING,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_LOCALE_STRING),
+                struct: {
+                    fields: [
+                        {
+                            name: "key",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.localestring.default"),
+                            upLimit: 128
+                        },
+                        {
+                            name: "trans",
+                            type: NS_SYSTEM_LOCALE_TRANS,
+                            display: _LS("system.localestring.trans")
+                        }
+                    ]
+                }
+            },
+            {
+                name: NS_SYSTEM_ENTRY,
+                type: SchemaType.Struct,
+                display: _LS(NS_SYSTEM_ENTRY),
+                struct: {
+                    fields: [
+                        {
+                            name: "value",
+                            type: NS_SYSTEM_STRING,
+                            display: _LS("system.entry.value"),
+                            require: true,
+                            upLimit: 128,
+                        },
+                        {
+                            name: "label",
+                            type: NS_SYSTEM_LOCALE_STRING,
+                            display: _LS("system.entry.label"),
+                            require: true,
+                        }
+                    ]
+                }
+            },
             //#endregion
 
             //#region array
@@ -265,6 +350,33 @@ registerSchema([
                     element: NS_SYSTEM_INT
                 },
             },
+            {
+                name: NS_SYSTEM_LOCALE_TRANS,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_LOCALE_TRANS),
+                array: {
+                    element: NS_SYSTEM_LOCALE_TRAN,
+                    primary: [ "lang" ]
+                }
+            },
+            {
+                name: NS_SYSTEM_LOCALE_STRINGS,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_LOCALE_STRINGS),
+                array: {
+                    element: NS_SYSTEM_LOCALE_STRING,
+                    primary: ["key"]
+                }
+            },
+            {
+                name: NS_SYSTEM_ENTRIES,
+                type: SchemaType.Array,
+                display: _LS(NS_SYSTEM_ENTRIES),
+                array: {
+                    element: NS_SYSTEM_ENTRY,
+                    primary: ["value"]
+                }
+            },
             //#endregion
         
             //#region function
@@ -289,7 +401,7 @@ registerSchema([
                                 }
                             ],
                             exps: [],
-                            func: (a: any) => a
+                            func: deepClone
                         }
                     },
                     {
@@ -391,7 +503,7 @@ registerSchema([
                                     nullable: false
                                 },
                                 {
-                                    name: "stop",
+                                    name: "end",
                                     type: NS_SYSTEM_INT,
                                     nullable: false
                                 }
@@ -422,6 +534,99 @@ registerSchema([
                             func: (a: string, b: string) => a.split(b)
                         },
                     },
+                    {
+                        name: "system.str.tolocale",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.tolocale"),
+                        func: {
+                            return: NS_SYSTEM_LOCALE_STRING,
+                            args: [
+                                {
+                                    name: "str",
+                                    type: NS_SYSTEM_STRING,
+                                    nullable: true
+                                }
+                            ],
+                            exps: [],
+                            func: (a?: string) => _LS(a || "")
+                        }
+                    },
+                    {
+                        name: "system.str.toentry",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.toentry"),
+                        func: {
+                            return: NS_SYSTEM_ENTRY,
+                            args: [
+                                {
+                                    name: "obj",
+                                    type: NS_SYSTEM_STRUCT,
+                                },
+                                {
+                                    name: "valueField",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "labelField",
+                                    type: NS_SYSTEM_STRING,
+                                }
+                            ],
+                            exps: [],
+                            func: (obj: any, valueField: string, labelField: string) => {
+                                let value = obj ? obj[valueField] : null
+                                value = isNull(value) ? "" : `${value}`
+                                return {
+                                    value: obj ? value : "",
+                                    label: _LS(obj[labelField] || value)
+                                }
+                            }
+                        },
+                    },
+                    {
+                        name: "system.str.toentrys",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.toentrys"),
+                        func: {
+                            return: NS_SYSTEM_ENTRIES,
+                            args: [
+                                {
+                                    name: "objs",
+                                    type: NS_SYSTEM_ARRAY,
+                                },
+                                {
+                                    name: "valueField",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "labelField",
+                                    type: NS_SYSTEM_STRING,
+                                }
+                            ],
+                            exps: [],
+                            func: (objs: any[], valueField: string, labelField: string) => {
+                                if (!objs || objs.length === 0) return []
+                                return objs.map(o => {
+                                    let value = o ? o[valueField] : null
+                                    value = isNull(value) ? "" : `${value}`
+                                    return {
+                                        value: o ? value : "",
+                                        label: _LS(o[labelField] || value)
+                                    }
+                                })
+                            }
+                        }
+                    },
+                    {
+                        name: "system.str.newguid",
+                        type: SchemaType.Function,
+                        display: _LS("system.str.newguid"),
+                        func: {
+                            return: NS_SYSTEM_GUID,
+                            args: [],
+                            exps: [],
+                            func: () => crypto.randomUUID()
+                        }
+                    }
                 ]
             },
 
@@ -654,10 +859,19 @@ registerSchema([
                                     name: "y",
                                     type: "T",
                                     nullable: false
+                                },
+                                {
+                                    name: "decimals",
+                                    type: NS_SYSTEM_INT,
+                                    nullable: true
                                 }
                             ],
                             exps: [],
-                            func: (x: number, y: number) => new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
+                            func: (x: number, y: number, d?: number) => {
+                                const value = new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
+                                const remain = Math.pow(10, isNull(d) ? 2 : d)
+                                return remain > 0 ? Math.round(remain * value) / remain  : value
+                            }
                         },
                     },
                     {
@@ -787,9 +1001,9 @@ registerSchema([
                         }
                     },
                     {
-                        name: "system.math.percenttofloat",
+                        name: "system.math.percenttonum",
                         type: SchemaType.Function,
-                        display: _LS("system.math.percenttofloat"),
+                        display: _LS("system.math.percenttonum"),
                         func: {
                             return: NS_SYSTEM_NUMBER,
                             args: [
@@ -846,11 +1060,11 @@ registerSchema([
                                 {
                                     name: "decimals",
                                     type: NS_SYSTEM_INT,
-                                    nullable: false
+                                    nullable: true
                                 }
                             ],
                             exps: [],
-                            func: (x: number, d: number) => Math.round(x * 1.0 * Math.pow(10, d)) / Math.pow(10, d)
+                            func: (x: number, d?: number) => Math.round(x * 1.0 * Math.pow(10, d || 0)) / Math.pow(10, d || 0)
                         }
                     },
                     {
@@ -1243,7 +1457,7 @@ registerSchema([
                             exps: [],
                             func: Math.pow
                         }
-                    },                    
+                    },
                     {
                         name: "system.math.bitand",
                         type: SchemaType.Function,
@@ -2097,16 +2311,15 @@ registerSchema([
                         }
                     },
                     {
-                        name: "system.collection.sumfields",
+                        name: "system.collection.containskey",
                         type: SchemaType.Function,
-                        display: _LS("system.collection.sumfields"),
+                        display: _LS("system.collection.containskey"),
                         func: {
-                            generic: [NS_SYSTEM_ARRAY, NS_SYSTEM_NUMBER],
-                            return: "T2",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
-                                    name: "array",
-                                    type: "T1",
+                                    name: "object",
+                                    type: NS_SYSTEM_STRUCT,
                                     nullable: false,
                                 },
                                 {
@@ -2115,46 +2328,22 @@ registerSchema([
                                     nullable: false,
                                 }
                             ],
-                            exps: [
-                                {
-                                    name: "numbers",
-                                    type: ExpressionType.Call,
-                                    func: "system.collection.getfields",
-                                    return: NS_SYSTEM_NUMBERS,
-                                    args: [
-                                        {
-                                            name: "array",
-                                        },
-                                        {
-                                            name: "field",
-                                        }
-                                    ]
-                                },
-                                {
-                                    name: "result",
-                                    type: ExpressionType.Call,
-                                    func: "system.collection.sum",
-                                    return: "T2",
-                                    args: [
-                                        {
-                                            name: "numbers",
-                                        }
-                                    ]
-                                }
-                            ],
+                            exps: [],
+                            func: (obj: {}, field: string) => {
+                                return !isNull(obj) && Object.prototype.hasOwnProperty.call(obj, field) && !isNull((obj as any)[field])
+                            }
                         }
                     },
                     {
-                        name: "system.collection.averagefields",
+                        name: "system.collection.notcontainskey",
                         type: SchemaType.Function,
-                        display: _LS("system.collection.averagefields"),
+                        display: _LS("system.collection.notcontainskey"),
                         func: {
-                            generic: [NS_SYSTEM_ARRAY, NS_SYSTEM_NUMBER],
-                            return: "T2",
+                            return: NS_SYSTEM_BOOL,
                             args: [
                                 {
-                                    name: "array",
-                                    type: "T1",
+                                    name: "object",
+                                    type: NS_SYSTEM_STRUCT,
                                     nullable: false,
                                 },
                                 {
@@ -2163,35 +2352,113 @@ registerSchema([
                                     nullable: false,
                                 }
                             ],
-                            exps: [
-                                {
-                                    name: "numbers",
-                                    type: ExpressionType.Call,
-                                    func: "system.collection.getfields",
-                                    return: NS_SYSTEM_NUMBERS,
-                                    args: [
-                                        {
-                                            name: "array",
-                                        },
-                                        {
-                                            name: "field",
-                                        }
-                                    ]
-                                },
-                                {
-                                    name: "result",
-                                    type: ExpressionType.Call,
-                                    func: "system.collection.average",
-                                    return: "T2",
-                                    args: [
-                                        {
-                                            name: "numbers",
-                                        }
-                                    ]
-                                }
-                            ],
+                            exps: [],
+                            func: (obj: {}, field: string) => {
+                                return isNull(obj) || !Object.prototype.hasOwnProperty.call(obj, field) || isNull((obj as any)[field])
+                            }
                         }
                     },
+                    {
+                        name: "system.collection.contains",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.contains"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                }
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => arr.includes(v)
+                        }
+                    },
+                    {
+                        name: "system.collection.notcontains",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.notcontains"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                }
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => arr.includes(v)
+                        }
+                    },
+                    {
+                        name: "system.collection.newarray",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.newarray"),
+                        func: {
+                            return: NS_SYSTEM_ARRAY,
+                            args: [],
+                            exps: [],
+                            func: () => { return [] }
+                        }
+                    },
+                    {
+                        name: "system.collection.push",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.push"),
+                        func: {
+                            return: NS_SYSTEM_ARRAY,
+                            args: [
+                                {
+                                    name: "array",
+                                    type: NS_SYSTEM_ARRAY,
+                                    nullable: false
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                    nullable: false
+                                },
+                            ],
+                            exps: [],
+                            func: (arr: any[], v:any) => { return [...arr, v] }
+                        }
+                    },
+                    {
+                        name: "system.collection.fieldequal",
+                        type: SchemaType.Function,
+                        display: _LS("system.collection.fieldequal"),
+                        func: {
+                            return: NS_SYSTEM_BOOL,
+                            args: [
+                                {
+                                    name: "struct",
+                                    type: NS_SYSTEM_STRUCT,
+                                },
+                                {
+                                    name: "field",
+                                    type: NS_SYSTEM_STRING,
+                                },
+                                {
+                                    name: "value",
+                                    type: "T",
+                                }
+                            ],
+                            exps: [],
+                            func: (s: {}, f: string, v: any) => !isNull(s) && (s as any)[f] == v
+                        }
+                    }
                 ]
             },
 
@@ -2249,12 +2516,12 @@ registerSchema([
                                 {
                                     name: "includeMin",
                                     type: NS_SYSTEM_BOOL,
-                                    nullable: false
+                                    nullable: true
                                 },
                                 {
                                     name: "includeMax",
                                     type: NS_SYSTEM_BOOL,
-                                    nullable: false
+                                    nullable: true
                                 }
                             ],
                             exps: [],

@@ -10,6 +10,81 @@ const locales: {[key:string]: {[key:string]: string}} = {
     'zh': zhCN,
 }
 
+export const SCHEMA_LANGUAGES =  [
+    { value: "afZA", label: "Afrikaans" },
+    { value: "arSA", label: "العربية" },
+    { value: "azAZ", label: "Azərbaycanca" },
+    { value: "beBY", label: "Беларуская" },
+    { value: "bgBG", label: "Български" },
+    { value: "bnBD", label: "বাংলা" },
+    { value: "caES", label: "Català" },
+    { value: "csCZ", label: "Čeština" },
+    { value: "daDK", label: "Dansk" },
+    { value: "deDE", label: "Deutsch" },
+    { value: "elGR", label: "Ελληνικά" },
+    { value: "enUS", label: "English (US)" },
+    { value: "enGB", label: "English (UK)" },
+    { value: "esES", label: "Español (España)" },
+    { value: "esMX", label: "Español (México)" },
+    { value: "etEE", label: "Eesti" },
+    { value: "euES", label: "Euskara" },
+    { value: "faIR", label: "فارسی" },
+    { value: "fiFI", label: "Suomi" },
+    { value: "frFR", label: "Français" },
+    { value: "glES", label: "Galego" },
+    { value: "guIN", label: "ગુજરાતી" },
+    { value: "heIL", label: "עברית" },
+    { value: "hiIN", label: "हिन्दी" },
+    { value: "hrHR", label: "Hrvatski" },
+    { value: "huHU", label: "Magyar" },
+    { value: "hyAM", label: "Հայերեն" },
+    { value: "idID", label: "Bahasa Indonesia" },
+    { value: "isIS", label: "Íslenska" },
+    { value: "itIT", label: "Italiano" },
+    { value: "jaJP", label: "日本語" },
+    { value: "kaGE", label: "ქართული" },
+    { value: "kkKZ", label: "Қазақша" },
+    { value: "kmKH", label: "ភាសាខ្មែរ" },
+    { value: "knIN", label: "ಕನ್ನಡ" },
+    { value: "koKR", label: "한국어" },
+    { value: "loLA", label: "ລາວ" },
+    { value: "ltLT", label: "Lietuvių" },
+    { value: "lvLV", label: "Latviešu" },
+    { value: "mkMK", label: "Македонски" },
+    { value: "mlIN", label: "മലയാളം" },
+    { value: "mnMN", label: "Монгол" },
+    { value: "mrIN", label: "मराठी" },
+    { value: "msMY", label: "Bahasa Melayu" },
+    { value: "myMM", label: "မြန်မာစာ" },
+    { value: "neNP", label: "नेपाली" },
+    { value: "nlNL", label: "Nederlands" },
+    { value: "noNO", label: "Norsk" },
+    { value: "paIN", label: "ਪੰਜਾਬੀ" },
+    { value: "plPL", label: "Polski" },
+    { value: "ptPT", label: "Português (Portugal)" },
+    { value: "ptBR", label: "Português (Brasil)" },
+    { value: "roRO", label: "Română" },
+    { value: "ruRU", label: "Русский" },
+    { value: "siLK", label: "සිංහල" },
+    { value: "skSK", label: "Slovenčina" },
+    { value: "slSI", label: "Slovenščina" },
+    { value: "sqAL", label: "Shqip" },
+    { value: "srRS", label: "Српски" },
+    { value: "svSE", label: "Svenska" },
+    { value: "swKE", label: "Kiswahili" },
+    { value: "taIN", label: "தமிழ்" },
+    { value: "teIN", label: "తెలుగు" },
+    { value: "thTH", label: "ไทย" },
+    { value: "trTR", label: "Türkçe" },
+    { value: "ukUA", label: "Українська" },
+    { value: "urPK", label: "اردو" },
+    { value: "uzUZ", label: "Oʻzbekcha" },
+    { value: "viVN", label: "Tiếng Việt" },
+    { value: "zhCN", label: "简体中文" },
+    { value: "zhTW", label: "繁體中文" },
+    { value: "zuZA", label: "isiZulu" }
+]
+
 // language
 const langWatches = new DataChangeWatcher()
 let currLang = navigator.languages.map(l => l.replace("-", "")).find(l => locales[l]) || 'en'
@@ -105,8 +180,9 @@ export type LocaleFunction = {
 /**
  * Gets a dynamic locale string entity
  */
-export function _LS(key: string): ILocaleString
+export function _LS(key: string | ILocaleString): ILocaleString
 {
+    if (typeof(key) === "object") return key
     return { key }
 }
 
@@ -134,3 +210,18 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
         return key
     }
 })
+
+/**
+ * Check if a local string is null or empty
+ */
+export function isNullLocalString(value: string | ILocaleString | null | undefined) {
+    if (isNull(value)) return true
+    if (typeof(value) === "string") return isNull(value)
+    if (typeof(value) === "object") return isNull(value.key)
+    return false
+}
+
+export function combineLocaleString(locale: string | ILocaleString | null | undefined, other)
+{
+    return _LS(isNullLocalString(locale) ? other : locale)
+}

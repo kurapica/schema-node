@@ -43,6 +43,28 @@ export default {
     "system.numbers": "数值用数组",
     "system.ints": "整型数组",
 
+    "system.language": "语言",
+    "system.localetran": "翻译条目",
+    "system.localetran.lang": "语言",
+    "system.localetran.tran": "翻译",
+    "system.localetrans": "翻译条目列表",
+
+    "system.localestring": "可本地化字符串",
+    "system.localestring.default": "默认文本",
+    "system.localestring.trans": "翻译条目",
+    "system.localestrings": "可本地化字符串列表",
+
+    "system.entry": "字典项",
+    "system.entry.value": "值",
+    "system.entry.label": "标签",
+    "system.entrys": "字典项列表",
+
+    "system.str.toentry": "转为字典项",
+    "system.str.toentrys": "转为字典项列表",
+    "system.str.tolocale": "本地化字符串",
+    "system.str.getlanguages": "获取语言列表",
+    "system.str.newguid": "生成新的GUID",
+
     // system.conv
     "system.conv": "数值转换",
     "system.conv.default": "缺省",
@@ -66,7 +88,7 @@ export default {
     "system.math.floor": "向下取整",
     "system.math.max": "最大值",
     "system.math.min": "最小值",
-    "system.math.percenttofloat": "百分比转换为小数",
+    "system.math.percenttonum": "百分比转换为小数",
     "system.math.round": "四舍五入",
     "system.math.todecimal": "转换为数值",
     "system.math.todouble": "转换为双精度浮点数",
@@ -125,9 +147,14 @@ export default {
     "system.collection.delfield": "删除字段返回新结构体",
     "system.collection.getfields": "从数组各个元素获取字段构成新数组",
     "system.collection.sum": "对数组进行合计",
-    "system.collection.sumfields": "对数组各个元素的指定字段进行合计",
     "system.collection.average": "对数组求平均值",
-    "system.collection.averagefields": "对数组的各个元素的指定字段求平均值",
+    "system.collection.contains": "数组包含指定值",
+    "system.collection.notcontains": "数组不包含指定值",
+    "system.collection.containskey": "结构体是否包含指定值",
+    "system.collection.notcontainskey": "结构体不包含指定值",
+    "system.collection.newarray": "新建数组",
+    "system.collection.push": "向数组追加元素返回新数组",
+    "system.collection.fieldequal": "字段等于指定值",
 
     // system.logic
     "system.logic": "逻辑操作",

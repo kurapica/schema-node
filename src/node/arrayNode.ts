@@ -9,7 +9,7 @@ import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
-import { debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
+import { clearDebounce, debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
 import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
@@ -29,7 +29,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get changed(): boolean {
         if (this._enode) return this._enode.changed
         if (this.asSingle) return !isEqual(this._data, this._original)
-        if (this._elements.find(e => e.changed)) return true
+        if (this._elements.find(e => e.changed) || this._original?.length) return true
         if (!this.incrUpdate) return false
         for (let key in this._tracker) {
             const track = this._tracker[key]
@@ -39,7 +39,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     }
     get rawData() { return this._enode ? this._enode.rawData : this._data }
     get original() { return this._enode ? this._enode.original : deepClone(this._original) }
-    
+    get isEmpty() { return this._enode ? this._enode.isEmpty : Array.isArray(this._data) ? this._data.length === 0 : true }
+
     /**
      * Gets the schema info of the array element
      */
@@ -128,9 +129,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
-    get data()
-    {
-        if (this._enode) return this._enode.data
+    get data() {
+        if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
         if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
 
@@ -159,6 +159,40 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             return reqflds.length 
                 ? this._elements.map(e => e.data).filter(d => reqflds.findIndex(f => isNull(d[f])) < 0)
                 : this._elements.map(e => e.data)
+        }
+    }
+
+    get submitData()
+    {
+        if (this._enode) return this._enode.data
+        if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
+        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
+
+        if (this.incrUpdate)
+        {
+            const result: any = []
+            const keys = new Set<string>()
+            this._elements.filter(e => e.changed && !this.isRowDeleted(e)).forEach(e => {
+                const key = this.getPrimaryKey(e)
+                if (key) {
+                    keys.add(key)
+                    result.push(e.data)
+                }
+            })
+            for (let key in this._tracker)
+            {
+                if (keys.has(key) || !this._tracker[key].update) continue
+                result.push(this._tracker[key].update)
+            }
+            return result
+        }
+        else
+        {
+            const primary = this._schema.array?.primary || []
+            const reqflds = this._eschema.struct!.fields.filter(f => f.require || primary.includes(f.name)).map(f => f.name)
+            return reqflds.length 
+                ? this._elements.filter(e => e.changed).map(e => e.data).filter(d => reqflds.findIndex(f => isNull(d[f])) < 0)
+                : this._elements.filter(e => e.changed).map(e => e.data)
         }
     }
 
@@ -291,6 +325,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this._enode?.dispose()
         this._elements.forEach(e => e.dispose())
         this._elements = []
+        clearDebounce(this.refreshRawData)
         super.dispose()
     }
 
@@ -303,6 +338,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (!this._schema.array?.primary?.length) return
         const primarys = this._eschema.struct?.fields.map(f => f.name).filter(n => this._schema.array?.primary?.includes(n))
         if (!primarys?.length) return
+
+        this._errfld?.setError("") // clear previous error
         for(let i = 1; i < this._elements.length; i++)
         {
             const ele = this._elements[i] as StructNode
@@ -319,6 +356,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 {
                     const errfld = ele.getField(primarys[primarys.length - 1])
                     errfld?.setError(sformat("ERR_ARRAY_PRIMARY_DUPLICATE", errfld.display))
+                    this._errfld = errfld
                     return
                 }
             }
@@ -335,7 +373,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         // primary check
         this.primaryCheck()
         this.notify()
-    }, 20)
+    }, 100)
 
     // create new element
     private newElement(data?: any) {
@@ -368,15 +406,15 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
     // get the unique key combine from primarys
     private getPrimaryKey(node: AnySchemaNode | any) {
-        const primarys = this._eschema.array?.primary
+        const primarys = this._schema.array?.primary
         if (!primarys?.length) return
         const keys: string[] = []
         const data = node instanceof StructNode ? node.rawData : node
         for(let i = 0; i < primarys.length; i++)
         {
             let k = primarys[i]
-            const v = node[k]
-            if (isNull(k)) return undefined
+            const v = data[k]
+            if (isNull(v)) return undefined
             keys.push(`${v}`)
         }
         return keys.join(".")
@@ -424,8 +462,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                     noSchema: true,
                     querys: {
                         [this.name]: {
-                            count: 1,
-                            query: query
+                            take: 1,
+                            filter: query
                         }
                     }
                 })
@@ -467,13 +505,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             const appNode = this.parent as AppNode
             if (!appNode?.target) return false
 
-            const res = await pushAppData({
-                app: appNode.name,
-                target: appNode.target,
-                datas: {
-                    [this.name]: {
-                        data: [ row.data ]
-                    }
+            const res = await pushAppData(appNode.name, appNode.target, {
+                [this.name]: {
+                    data: [ row.data ]
                 }
             })
 
@@ -660,10 +694,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 fields: [this.name],
                 querys: {
                     [this.name]: {
-                        count,
-                        offset: page * count,
+                        take: count,
+                        skip: page * count,
                         descend,
-                        query: query || {}
+                        filter: query || {}
                     }
                 }
             })
@@ -724,9 +758,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
             // record query
             this._total = info?.total
-            this._count = info?.count
+            this._count = info?.take
             this._descend = info?.descend
-            this._query = info.query
+            this._query = info.filter
             this._page = page
             this.notify()
         }
@@ -753,6 +787,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _query: { [key:string]: any } | undefined
     private _descend: boolean | undefined
     private _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
+    private _errfld: AnySchemaNode | undefined
 
     //#endregion
 
@@ -776,10 +811,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             // record since we may change those in the view
             // offset must align with the page count, promise by the server
             this._total = this._config.total
-            this._count = this._config.count
+            this._count = this._config.take
             this._descend = this._config.descend
-            this._query = this._config.query ? { ...this._config.query } : undefined
-            this._page = this._count ? Math.floor((this._config.offset || 0) / this._count) : 0
+            this._query = this._config.filter ? { ...this._config.filter } : undefined
+            this._page = this._count ? Math.floor((this._config.skip || 0) / this._count) : 0
         }
 
         // element check

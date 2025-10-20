@@ -30,11 +30,28 @@ export function getvaluebypath(value: any, path: string)
 export function debounce(fn: Function, wait: number)
 {
   let timer:any = 0
-  return function (...args: any[])
+  const func = function (...args: any[])
   {
-    if (timer) clearTimeout(timer)
+    if (timer) { clearTimeout(timer); timer = 0 }
+    if (args.length && args[0] === clearDebounce) return
     timer = setTimeout(() => fn(...args), wait)
   }
+
+  func.cancel = () =>
+  {
+    if (timer) { clearTimeout(timer); timer = 0 }
+  }
+
+  return func
+}
+
+/**
+ * Clear timeout of debounce function
+ */
+export function clearDebounce(debouncedFn: Function)
+{
+  ;(debouncedFn as any).cancel?.()
+  debouncedFn(clearDebounce)
 }
 
 export function debounceby(fn: Function, wait: Function)

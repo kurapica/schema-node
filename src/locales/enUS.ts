@@ -43,6 +43,28 @@ export default {
     "system.numbers": "Number Array",
     "system.ints": "Integer Array",
 
+    "system.language": "Language",
+    "system.localetran": "Translate",
+    "system.localetran.lang": "Language",
+    "system.localetran.tran": "Translate",
+    "system.localetrans": "Translate List",
+
+    "system.localestring": "Locale string",
+    "system.localestring.default": "Default",
+    "system.localestring.trans": "Translate",
+    "system.localestrings": "Locale strings",
+
+    "system.entry": "Entry",
+    "system.entry.value": "Value",
+    "system.entry.label": "Label",
+    "system.entrys": "Entry List",
+
+    "system.str.toentry": "To Entry",
+    "system.str.toentrys": "To Entry List",
+    "system.str.tolocale": "To Locale String",
+    "system.str.getlanguages": "Get Language List",
+    "system.str.newguid": "Generate New GUID",
+    
     // system.conv
     "system.conv": "Number Conversion",
     "system.conv.default": "Default",
@@ -66,7 +88,7 @@ export default {
     "system.math.floor": "Floor",
     "system.math.max": "Maximum",
     "system.math.min": "Minimum",
-    "system.math.percenttofloat": "Convert Percentage to Float",
+    "system.math.percenttonum": "Convert Percentage to Float",
     "system.math.round": "Round",
     "system.math.todecimal": "To Decimal",
     "system.math.todouble": "To Double",
@@ -125,10 +147,15 @@ export default {
     "system.collection.delfield": "Delete Field and Return New Structure",
     "system.collection.getfields": "Extract Field from Each Element",
     "system.collection.sum": "Sum Array",
-    "system.collection.sumfields": "Sum Fields of Array Elements",
     "system.collection.average": "Average of Array",
-    "system.collection.averagefields": "Average Fields of Array Elements",
-
+    "system.collection.contains": "Array contains specified value",
+    "system.collection.notcontains": "Array does not contain specified value",
+    "system.collection.containskey": "Object contains specified key",
+    "system.collection.notcontainskey": "Object does not contain specified key",
+    "system.collection.newarray": "Create Array",
+    "system.collection.push": "Push Element to Array and Return New Array",
+    "system.collection.fieldequal": "Field Equals Specified Value",
+    
     // system.logic
     "system.logic": "Logical Operations",
     "system.logic.andalso": "And Also",

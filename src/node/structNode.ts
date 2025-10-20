@@ -3,13 +3,12 @@ import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { ISchemaConfig } from '../config/schemaConfig'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { debounce, isNull } from '../utils/toolset'
+import { clearDebounce, debounce, isNull } from '../utils/toolset'
 import { ArrayNode } from './arrayNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
-import { IStructFieldConfig } from '../schema/structSchema'
 import { DataChangeWatcher } from '../utils/dataChangeWatcher'
 import { RelationType } from '../enum/relationType'
 
@@ -25,6 +24,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get valid(): boolean { return this._fields.findIndex(f => !f.valid && !f.invisible) < 0 }
     get error(): any { return this._fields.find(f => !f.valid)?.error }
     get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
+    get isEmpty(): boolean { return this._fields.length === 0 || this._fields.findIndex(f => !f.isEmpty) < 0 }
     get original(): any {
         const result: { [key:string]: any } = {}
         this._fields.forEach(f => {
@@ -97,6 +97,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     override dispose(): void {
         this._fields.forEach(f => f.dispose() )
         this._fields = []
+        clearDebounce(this.refreshRawData)
         super.dispose()
     }
 
@@ -116,7 +117,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     private refreshRawData = debounce(() => {
         this._fields.forEach(f => this._data[f.name] = f.rawData)
         this.notify()
-    }, 20)
+    }, 50)
 
     /**
      * Gets the struct field by name

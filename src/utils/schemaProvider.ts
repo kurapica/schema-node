@@ -2,13 +2,13 @@ import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
 import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
-import { IEnumValueAccess, IEnumValueInfo } from "../schema/enumSchema"
+import { IEnumValueAccess, IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
-import { _LS } from "./locale"
+import { _LS, combineLocaleString, isNullLocalString } from "./locale"
 
 export const NS_SYSTEM = "system"
 
@@ -34,6 +34,13 @@ export const NS_SYSTEM_STRINGS = "system.strings"
 export const NS_SYSTEM_NUMBERS = "system.numbers"
 export const NS_SYSTEM_INTS = "system.ints"
 
+export const NS_SYSTEM_LANGUAGE = "system.language";
+export const NS_SYSTEM_LOCALE_STRING = "system.localestring";
+export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
+export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
+export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
+export const NS_SYSTEM_ENTRY = "system.entry";
+export const NS_SYSTEM_ENTRIES = "system.entrys";
 
 //#region Schema Provider
 
@@ -65,7 +72,7 @@ export interface ISchemaProvider {
      * @param app the name of the application
      * @return the application schema
      */
-    loadAppSchema(app: string): Promise<IAppSchema | undefined>
+    loadAppSchema(app: string, includeTypes?: boolean): Promise<IAppSchema | undefined>
 
     /**
      * Load the enum value sub list from the server
@@ -91,9 +98,10 @@ export interface ISchemaProvider {
      * @param schemaName the name of the function schema
      * @param args the arguments of the function
      * @param generic the generic type of the function
+     * @param target the application target
      * @returns the result
      */
-    callFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any>
+    callFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any>
 }
 
 let schemaProvider: ISchemaProvider | null = null
@@ -128,18 +136,25 @@ const appStructSchemaRoot = "__app_struct"
 export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
+        schema.loadState = (schema.loadState || 0) | loadState
+
+        // for root application without name
+        if (isNull(name)) {
+            registerAppSchema(schema.apps || [], loadState)
+            continue
+        }
+
         const exist = appSchemaCache[name]
 
         // combine
         if (exist)
         {
-            if ((exist.loadState || 0) > loadState) continue
-            exist.loadState = loadState
+            exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
 
             updateAppSchemaRefs(schema, false)
 
-            exist.display = schema.display
-            exist.desc = schema.desc
+            exist.display = combineLocaleString(exist.display, schema.display)
+            exist.desc = combineLocaleString(exist.desc, schema.desc)
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
@@ -154,7 +169,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             updateAppSchemaRefs(schema, true)
 
             // register type schema
-            if (schema.types) registerSchema(schema.types, loadState)
+            if (schema.nodeSchemas) registerSchema(schema.nodeSchemas, loadState)
             continue
         }
         
@@ -178,7 +193,6 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             root = app
         }
         
-        schema.loadState = loadState
         schema.nodeSchema = undefined
         appSchemaCache[name] = schema
         root.apps ||= []
@@ -197,9 +211,9 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         }
 
         // register type schema
-        if (schema.types) {
-            registerSchema(schema.types, loadState)
-            schema.types = undefined
+        if (schema.nodeSchemas) {
+            registerSchema(schema.nodeSchemas, loadState)
+            schema.nodeSchemas = undefined
         }
     }
     appSchemaChangeWatcher.notify(schemas.map(s => s.name))
@@ -251,13 +265,17 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
     name = name.toLowerCase()
 
     let schema = !name ? rootAppSchema : appSchemaCache[name]
-    if(schema) return schema
-    if (!schemaProvider) return undefined
+    if (schema?.loaded || !schemaProvider) return schema
+    if (schema) schema.loaded = true
 
     // load schema from provider
-    schema = await schemaProvider.loadAppSchema(name)
-    if (schema) registerAppSchema([schema], SchemaLoadState.Server)
-    return schema
+    schema = await schemaProvider.loadAppSchema(name, true)
+    if (schema) {
+        schema.loaded = true
+        if (schema.nodeSchemas) PrepareServerSchemas(schema.nodeSchemas)
+        registerAppSchema([schema], SchemaLoadState.Server)
+    }
+    return !name ? rootAppSchema : appSchemaCache[name]
 }
 
 /**
@@ -296,11 +314,24 @@ const schemaChangeWatcher = new DataChangeWatcher()
 export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
     for (const schema of schemas) {
         const name = schema.name.toLowerCase()
+        schema.loadState = (schema.loadState || 0) | loadState
 
         // for root namespace without name
         if (isNull(name)) {
             registerSchema(schema.schemas || [], loadState)
             continue
+        }
+
+        // prepare
+        switch(schema.type)
+        {
+            case SchemaType.Enum:
+                if (schema.enum?.values)
+                    prepareEnumValueInfos(schema.enum.type, schema.enum.values)
+                break;
+            case SchemaType.Scalar:
+                if (schema.scalar?.regex)
+                    schema.scalar.regex = schema.scalar.regex.replace(/\\\\/g, '\\')
         }
 
         const exist = schemaCache[name]
@@ -310,15 +341,18 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         {
             if (exist.type !== schema.type) continue
 
-            exist.display = schema.display || exist.display
+            exist.display = combineLocaleString(exist.display, schema.display)
+            exist.usedBy = schema.usedBy || exist.usedBy
+            exist.usedByApp = schema.usedByApp || exist.usedByApp
+
             if (schema.type === SchemaType.Namespace)
             {
                 exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
             }
             else
             {
-                if ((exist.loadState || 0) > loadState) continue
-                exist.loadState = loadState
+                if ((exist.loadState || 0) > schema.loadState) continue
+                exist.loadState = schema.loadState
             }
 
             // remove refs
@@ -333,28 +367,34 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                 
                 case SchemaType.Enum:
                     // keep sublist
-                    for(let i = 0; i < schema.enum.values.length; i++)
-                    {
-                        const value = schema.enum.values[i]
-                        value.subList = value.subList || exist.enum.values.find(v => v.value === value.value)?.subList
+                    if (!schema.enum) continue
+                    if (schema.enum?.values){
+                        for(let i = 0; i < schema.enum.values.length; i++)
+                        {
+                            const value = schema.enum.values[i]
+                            value.subList = value.subList || exist.enum?.values?.find(v => v.value == value.value)?.subList
+                        }
                     }
                     exist.enum = schema.enum
+
+                    if ((exist.loadState || 0) & SchemaLoadState.System) continue
                     break
 
                 case SchemaType.Scalar:
-                    exist.scalar = schema.scalar
+                    exist.scalar = schema.scalar || exist.scalar
                     break
 
                 case SchemaType.Struct:
-                    exist.struct = schema.struct
+                    exist.struct = schema.struct || exist.struct
                     break
 
                 case SchemaType.Array:
-                    exist.array = schema.array
+                    exist.array = schema.array || exist.array
                     break
 
                 case SchemaType.Function:
-                    exist.func = schema.func
+                    if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
+                        exist.func = schema.func || exist.func
                     break
             }
 
@@ -389,7 +429,11 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
 
         // append to the namespace
         addSchema(root, schema)
-        schema.loadState = (schema.loadState || 0) | loadState
+
+        // make system types already loaded
+        if ((loadState & SchemaLoadState.System) && schema.type !== SchemaType.Namespace)
+            schema.loaded = true
+
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
             arraySchemaMap[schema.array!.element.toLowerCase()] = schema
 
@@ -458,11 +502,10 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     }
 
     let schema = !name ? rootSchema : schemaCache[name]
-
-    if (schema && (((schema.loadState || 0) & SchemaLoadState.ServerLoaded) === SchemaLoadState.ServerLoaded || !schemaProvider))
+    if (schema?.loaded || !schemaProvider)
         return schema
 
-    if(schema) schema.loadState |= SchemaLoadState.ServerLoaded
+    if(schema) schema.loaded = true
     if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
@@ -616,13 +659,16 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
         if (schema.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
 
         // Compare the field
+        let match = 0;
         for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
             const tarfield = tarSchemInfo.struct!.fields[i]
             const field = schema.struct!.fields.find(f => f.name === tarfield.name)
+
             if (!field && !tarfield.require) continue // pass require field
             if (!field || !await isSchemaCanBeUseAs(field.type, tarfield.type)) return false
+            match++;
         }
-        return true
+        return match > 1
     }
     else if (schema.type === SchemaType.Array) {
         if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schema.array!.element, target) : false
@@ -813,6 +859,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     const schema = await getSchema(name)
     if (!schema?.enum || schema?.type !== SchemaType.Enum) return []
 
+    // root list
     if (isNull(value))
     {
         if (schema.enum.values && schema.enum.values.length) return schema.enum.values
@@ -822,60 +869,71 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
 
         if (!schemaProvider) throw new Error("Schema provider not provided")
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        prepareEnumValueInfos(schema.enum.type, einfos)
         schema.enum.values = einfos
-        return schema.enum!.values
+        return einfos
     }
     
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined
     if (einfo) {
-        if (einfo.subList && einfo.subList.length) return einfo.subList
+        if (einfo.hasSubList === false || einfo.subList && einfo.subList.length) return einfo.subList || []
     }
     
     // check load state
     if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
     if (!schemaProvider) throw new Error("Schema provider not provided")
+    
+    // only require sub list
     if (einfo)
     {
         const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        prepareEnumValueInfos(schema.enum.type, einfos)
         einfo.subList = einfos
-        return schema.enum!.values 
+        einfo.hasSubList = einfos.length > 0
+        return einfos
     }
-    const access = await schemaProvider.loadEnumAccessList(name, value)
+
+    // need full access
+    const access = await schemaProvider.loadEnumAccessList(name, value, false, true)
     if (!access?.length) return []
+    prepareEnumAccesses(schema.enum.type, access)
     
     // combine
     schema.enum.values ||= []
     let root = schema.enum.values
-    for(let i = 0; i < access.length - 1; i++)
+    for(let i = 0; i < access.length; i++)
     {
         if (!root.length)
-        {
             root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        const match = root.find(r => r.value == access[i].value)
-        if (!match) {
-            // rebuild all
-            root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        if (match.hasSubList)
-        {
-            match.subList ||= []
-            root = match.subList
+
+        if (access[i].value){
+            let match = root.find(r => r.value == access[i].value)
+            if (!match) {
+                // rebuild all
+                root.splice(0, 0, ...access[i].subList)
+                match = root.find(r => r.value == access[i].value)
+            }
+            
+            if (i < access.length - 1) {
+                match.hasSubList = true
+                match.subList ||= []
+                root = match.subList
+            }
         }
     }
     
     // check
-    einfo = root.find(r => r.value === value)
+    search = searchEnumValue(schema.enum.values, value)
+     einfo = search.length ? search[search.length - 1] : undefined
     if (!einfo || !einfo.hasSubList) return []
     if (einfo.subList?.length) return einfo.subList
 
     // try reload
     einfo.subList = await schemaProvider.loadEnumSubList(name, value, deep)
     if (!einfo.subList.length) einfo.hasSubList = false
+    prepareEnumValueInfos(schema.enum.type, einfo.subList)
     return einfo.subList
 }
 
@@ -908,27 +966,29 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
 
     // combine
     if (!access?.length) return []
+    prepareEnumAccesses(schema.enum.type, access)
     
     // combine
     schema.enum.values ||= []
     let root = schema.enum.values
-    for(let i = 0; i < access.length - 1; i++)
+    for(let i = 0; i < access.length; i++)
     {
         if (!root.length)
-        {
             root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        const match = root.find(r => r.value == access[i].value)
-        if (!match) {
-            // rebuild all
-            root.splice(0, 0, ...access[i].subList)
-            break
-        }
-        if (match.hasSubList)
-        {
-            match.subList ||= []
-            root = match.subList
+
+        if (access[i].value){
+            let match = root.find(r => r.value == access[i].value)
+            if (!match) {
+                // rebuild all
+                root.splice(0, 0, ...access[i].subList)
+                match = root.find(r => r.value == access[i].value)
+            }
+            
+            if (i < access.length - 1) {
+                match.hasSubList = true
+                match.subList ||= []
+                root = match.subList
+            }
         }
     }
 
@@ -942,7 +1002,7 @@ export function saveEnumSubList(name: string, value: any, subList: IEnumValueInf
     if (isNull(value)) return false
 
     const schema = getCachedSchema(name)
-    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & (SchemaLoadState.Server | SchemaLoadState.System))) return false
+    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & SchemaLoadState.System)) return false
     
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined
@@ -974,7 +1034,7 @@ const pendingCall: {
 } = {}
 const pendingComplexCall: any = {}
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[]) => schemaProvider!.callFunction(schemaName, args, generic))
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => schemaProvider!.callFunction(schemaName, args, generic, target))
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
@@ -983,7 +1043,7 @@ const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], 
  * @param generic The generic type of the function
  * @returns The schema information
  */
-export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[]): Promise<any> {
+export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any> {
     const schema = await getSchema(schemaName)
     if (!schema || schema.type !== SchemaType.Function) throw Error(`${schemaName} is not a function schema`)
     const funcInfo = schema.func!
@@ -1002,17 +1062,19 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     if (funcInfo.func && (!funcInfo.server || !schemaProvider)) {
         return await callFunc(funcInfo.func, args)
     }
-
+    
     // Schema provider check
     if (!schemaProvider) throw new Error("Schema provider not provided")
 
     // Combine and queue
-    const token = (!args || !args.length) 
+    let token = (!args || !args.length) 
         ? schema.name
         : args.findIndex(a => a && typeof a === "object") < 0
             ? `${schema.name}:${JSON.stringify(args)}` 
             : null
     if (token) {
+        if (target) token = `${token}->${target}`
+
         const result = shareFuncCallResult[token]
         if (result !== undefined) return result
 
@@ -1057,6 +1119,15 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
             root = next
         }
 
+        if (target) {
+            let next = root.get(target)
+            if (!next) {
+                next = new Map()
+                root.set(target, next)
+            }
+            root = next
+        }
+
         // avoid multi call
         let queue = root.get("CALL_QUEUE")
         if (queue) return await new Promise((resolve, reject) => queue.push({ resolve, reject }))
@@ -1095,7 +1166,7 @@ export function isSchemaDeletable(name: string)
     if (schema.loadState & SchemaLoadState.System) return false
     if (schemaRefs[schema.name.toLowerCase()]) return false
     if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
-    return true
+    return !schema.used
 }
 
 /**
@@ -1217,11 +1288,11 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     let objFields: string[] = []
     if (funcInfo.return) {
         const retSchema = await getSchema(funcInfo.return, funcInfo.generic)
-        if (retSchema?.type === SchemaType.Struct && !isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name)) {
+        if (retSchema?.type === SchemaType.Struct && !(await isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name))) {
             objFields = retSchema.struct!.fields.map(f => f.name)
         }
     }
-
+    
     // build the function
     const args = funcInfo.args.map(a => a.name)
     funcInfo.func = async function () {
@@ -1444,7 +1515,7 @@ function updateSchemaRefs(schema: INodeSchema, add: boolean)
     switch (schema.type)
     {
         case SchemaType.Scalar:
-            updateRef(schema.scalar.base, add)
+            updateRef(schema.scalar?.base, add)
             break
 
         case SchemaType.Struct:
