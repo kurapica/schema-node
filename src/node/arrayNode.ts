@@ -9,7 +9,7 @@ import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
-import { debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
+import { clearDebounce, debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
 import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
@@ -39,7 +39,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     }
     get rawData() { return this._enode ? this._enode.rawData : this._data }
     get original() { return this._enode ? this._enode.original : deepClone(this._original) }
-    
+    get isEmpty() { return this._enode ? this._enode.isEmpty : Array.isArray(this._data) ? this._data.length === 0 : true }
+
     /**
      * Gets the schema info of the array element
      */
@@ -324,7 +325,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         this._enode?.dispose()
         this._elements.forEach(e => e.dispose())
         this._elements = []
-        this.refreshRawData.cancel()
+        clearDebounce(this.refreshRawData)
         super.dispose()
     }
 

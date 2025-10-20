@@ -10,7 +10,7 @@ import { StructNode } from "../node/structNode"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
-import { clearDebounce, debounce, generateGuid, isEqual, isNull } from "../utils/toolset"
+import { clearDebounce, debounce, deepClone, generateGuid, isEqual, isNull } from "../utils/toolset"
 
 /**
  * The field that point to array itself
@@ -313,14 +313,24 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         node.data = res
                 }
             }
-            else 
+            else if (node instanceof StructNode)
+            {
+                handler = (res: any) => {
+                    const prev = node.rule.default
+                    node.rule.default = deepClone(res)
+                    if (!isNull(res) && (node.isEmpty || isEqual(node.data, prev)))
+                        node.data = res
+                    node.notifyState()
+                }
+            }
+            else
             {
                 let dftval: any = node.ruleSchema.default
                 handler = (res: any) => {
                     if (isNull(res)) res = dftval
                     const prev = node.rule.default
                     node.rule.default = res
-                    if (!isNull(res) && (isNull(node.data) || isEqual(node.data, prev)))
+                    if (!isNull(res) && (node.isEmpty || isEqual(node.data, prev)))
                         node.data = res
                     node.notifyState()
                 }

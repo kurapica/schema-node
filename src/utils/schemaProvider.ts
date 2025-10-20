@@ -153,8 +153,8 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
 
             updateAppSchemaRefs(schema, false)
 
-            exist.display = schema.display
-            exist.desc = schema.desc
+            exist.display = combineLocaleString(exist.display, schema.display)
+            exist.desc = combineLocaleString(exist.desc, schema.desc)
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
@@ -1002,7 +1002,7 @@ export function saveEnumSubList(name: string, value: any, subList: IEnumValueInf
     if (isNull(value)) return false
 
     const schema = getCachedSchema(name)
-    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & (SchemaLoadState.Server | SchemaLoadState.System))) return false
+    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & SchemaLoadState.System)) return false
     
     let search = searchEnumValue(schema.enum.values, value)
     let einfo = search.length ? search[search.length - 1] : undefined

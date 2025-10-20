@@ -2,11 +2,12 @@ import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
-import { deepClone, isEqual, isNull, debounce, generateGuid, sformat } from "../utils/toolset"
+import { deepClone, isEqual, isNull, debounce, generateGuid, sformat, clearDebounce } from "../utils/toolset"
 import { ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { getRuleSchema } from "../ruleSchema/ruleSchema"
+import { c } from "vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf"
 
 /**
  * The abstract schema node.
@@ -92,6 +93,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     * The submit data
     */
    get submitData(): any { return this.data }
+
+   /**
+    * Whether the node is empty
+    */
+   get isEmpty(): boolean { return isNull(this._data) }
 
     /**
      * The data is changed.
@@ -295,8 +301,8 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._watches.length = 0
         this._swatcher.dispose()
         this._watcher.dispose()
-        this.notify.cancel()
-        this.notifyState.cancel()
+        clearDebounce(this.notify)
+        clearDebounce(this.notifyState)
     }
 
     //#endregion
