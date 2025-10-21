@@ -68,7 +68,7 @@ export class RuleSchema {
         node.rule._actived = true
 
         // active push schemas
-        node.ruleSchema.pushSchemas?.forEach(p => activePushSchema(node, p))
+        node.ruleSchema.pushSchemas?.forEach(p => activePushSchema(node, p, init))
     }
 
     /**
@@ -146,7 +146,7 @@ export function getRuleSchema(schema: INodeSchema)
 /**
  * active
  */
-function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema) {
+function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema, init?: boolean) {
     const args: ISchemaNodePushArg[] = pushSchema.args.map(a => {
         if (a.field === NODE_SELF)
         {
@@ -540,12 +540,12 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         }
     }, 500)
 
-    node.rule._activePushes = node.rule._activePushes || []
-    node.rule._activePushes.push(push)
-
     // subscribe
     if (pushSchema.type !== RelationType.InitOnly)
     {
+        node.rule._activePushes = node.rule._activePushes || []
+        node.rule._activePushes.push(push)
+
         args.filter(a => a.node).forEach(a => {
             a.node!.activeRule()
             if (a.node.parent instanceof StructNode)
@@ -565,6 +565,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             node.watch(a.node!, push)
         })
     }
+    else if(!init)
+        return
 
     // process
     push()
