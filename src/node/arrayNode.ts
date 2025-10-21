@@ -14,6 +14,7 @@ import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
+import { IAppDataFieldInfo, IAppDataQueryOrder } from '../schema/appSchema'
 
 /**
  * The array schema data node
@@ -67,25 +68,33 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get incrUpdate(): boolean { return this._config.incrUpdate || false }
 
     /**
-     * Gets the total count
+     * Gets the current page
      */
-    get total() { return this.incrUpdate ? this._total! : this._elements.length }
+    get page() { return this._fieldInfo?.take ? Math.floor((this._fieldInfo.skip || 0) / this._fieldInfo.take) : 0 }
 
     /**
      * Gets the page count
      */
-    get pageCount() { return this.incrUpdate ? this._count! : this._elements.length }
+    get pageCount() { return this._fieldInfo?.take && this._fieldInfo?.total ? Math.ceil(this._fieldInfo.total / this._fieldInfo.take) : 1 }
+
+    /**
+     * Gets the total count
+     */
+    get total() { return this._fieldInfo?.total ?? this._elements.length }
 
     /**
      * Gets the query data
      */
-    get query() { return this.incrUpdate && this._query ? { ...this._query } : undefined }
+    get query() { return this._fieldInfo?.filter ? { ...this._fieldInfo.filter } : undefined }
 
     /**
-     * Gets the current page
+     * The order by info
      */
-    get page() { return this._page || 0 }
+    get orderBy(): IAppDataQueryOrder[] { return deepClone(this._fieldInfo.orderBy) || [] }
 
+    /**
+     * Set the array data
+     */
     set data(data: any)
     {
         if (!Array.isArray(data)) data = []
@@ -129,6 +138,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    /**
+     * Gets the array data
+     */
     get data() {
         if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
@@ -136,20 +148,16 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
         if (this.incrUpdate)
         {
+            // normally there is no need to fetch incr-update data for data push, keep here for safety
             const result: any = []
             const keys = new Set<string>()
-            this._elements.filter(e => e.changed && !this.isRowDeleted(e)).forEach(e => {
+            this._elements.filter(e => !this.isRowDeleted(e)).forEach(e => {
                 const key = this.getPrimaryKey(e)
                 if (key) {
                     keys.add(key)
                     result.push(e.data)
                 }
             })
-            for (let key in this._tracker)
-            {
-                if (keys.has(key) || !this._tracker[key].update) continue
-                result.push(this._tracker[key].update)
-            }
             return result
         }
         else
@@ -162,11 +170,14 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    /**
+     * Gets the submit data 
+     */
     get submitData()
     {
-        if (this._enode) return this._enode.data
+        if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
-        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
+        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.submitData).filter(d => !isNull(d))
 
         if (this.incrUpdate)
         {
@@ -394,6 +405,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                     const structNode = eleNode as StructNode
                     this.schema.array?.primary?.forEach(f => {
                         const fldNode = structNode.getField(f)
+                        if (!fldNode) return
                         fldNode.config.immutable = true
                         fldNode.notifyState()
                     })
@@ -493,7 +505,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         let isnew = false
         for (let i = 0; i < primarys.length; i++)
         {
-            const node = row.getField(primarys[primarys[i]])
+            const node = row.getField(primarys[i])
             if (isNull(node?.rawData) || !node.valid) return false
             if (node.changed) isnew = true
         }
@@ -516,24 +528,24 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 if (isnew)
                 {
                     // query match check
-                    if (this._query)
+                    if (this._fieldInfo.filter)
                     {
-                        for (let k in this._query) 
+                        for (let k in this._fieldInfo.filter)
                         {
-                            if (row.rawData[k] != this._query[k])
+                            if (row.rawData[k] != this._fieldInfo.filter[k])
                                 return true
                         }
                     }
 
                     // jump to the new record
-                    if (this._descend)
+                    if (this._fieldInfo.descend)
                     {
                         await this.setPage(0)
                     }
                     else
                     {
-                        const count = this._count || 10
-                        await this.setPage(Math.floor((this._total || 0) / count), count, false)
+                        const count = this._fieldInfo.take || 10
+                        await this.setPage(Math.floor((this._fieldInfo.total || 0) / count), count, false)
                     }
                 }
                 else
@@ -657,8 +669,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     async setPage(page: number, count?: number, descend?: boolean, query?: { [key:string]: any })
     {
         if (!this.incrUpdate) return
-        count ||= this._count || 10 // default should be provided by server
-        if (isNull(descend)) descend = this._descend
+        count ||= this._fieldInfo.take || 10 // default should be provided by server
+        if (isNull(descend)) descend = this._fieldInfo.descend
         const appNode = this.parent
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return
 
@@ -683,7 +695,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         else
         {
-            query = this._query
+            query = this._fieldInfo.filter
         }
 
         try
@@ -757,11 +769,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 this._elements.pop().dispose()
 
             // record query
-            this._total = info?.total
-            this._count = info?.take
-            this._descend = info?.descend
-            this._query = info.filter
-            this._page = page
+            this._fieldInfo = info
             this.notify()
         }
         catch(ex)
@@ -781,11 +789,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _eschema: INodeSchema = { name: '', type: SchemaType.Namespace }
     private _elements: AnySchemaNode[] = []
     private _enode: EnumNode | undefined
-    private _total: number | undefined
-    private _count: number | undefined
-    private _page: number | undefined
-    private _query: { [key:string]: any } | undefined
-    private _descend: boolean | undefined
+    private _fieldInfo: IAppDataFieldInfo | undefined
     private _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
     private _errfld: AnySchemaNode | undefined
 
@@ -806,17 +810,6 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         // init the raw data
         this._data = data
 
-        // page only for app fields with incr-update
-        if (this._config.incrUpdate) {
-            // record since we may change those in the view
-            // offset must align with the page count, promise by the server
-            this._total = this._config.total
-            this._count = this._config.take
-            this._descend = this._config.descend
-            this._query = this._config.filter ? { ...this._config.filter } : undefined
-            this._page = this._count ? Math.floor((this._config.skip || 0) / this._count) : 0
-        }
-
         // element check
         this._eschema = getCachedSchema(this._schema.array!.element)!
         if (this._eschema.type === SchemaType.Enum)
@@ -831,6 +824,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         else if (!this.schema.array?.single)
         {
+            // page info
+            this._fieldInfo = (config as IArrayConfig).fieldInfo ? { ... (config as IArrayConfig).fieldInfo } : undefined
+        
             // init elements
             for (let i = 0; i < data.length; i++)
             {

@@ -66,7 +66,7 @@ export function queryAppData(query: IAppDataQuery): Promise<IAppDataResult>
     const cacheSchema = getAppCachedSchema(query.app)
 
     // check
-    if (isNull(query.target))
+    if (isNull(query.target) || query.schemaOnly)
     {
         if (cacheSchema)
             return new Promise((resolve, _) => resolve({
