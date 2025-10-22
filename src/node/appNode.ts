@@ -1,7 +1,7 @@
 import { SchemaType } from "../enum/schemaType"
 import { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
-import { isNull } from "../utils/toolset"
+import { isEmpty, isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
 import { ScalarNode } from "./scalarNode"
@@ -157,6 +157,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      * Whether the given field is loaded
      */
     isFieldLoaded(name: string | AnySchemaNode): boolean {
+        if (!this._target) return true
         if (typeof(name) !== "string") name = name.name.toLowerCase()
         return ((this._fields.find(f => f.node.name.toLowerCase() === name)?.state || AppFieldNodeState.None) & AppFieldNodeState.Loaded) > 0
     }
@@ -480,16 +481,21 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
             const state = this._fields.find(f => f.node === n)?.state
             if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly)) && n.changed)
             {
-                pushNodes.push(n)
-                datas[n.name] = { data: n.submitData }
-                
-                if (n instanceof ArrayNode)
+                const submitData = n.submitData
+                const deletes = (n instanceof ArrayNode) ? n.deletes : null
+
+                if (!isEmpty(submitData) || (deletes && deletes.length > 0))
                 {
-                    const deletes = n.deletes
-                    if (deletes?.length) datas[n.name].deletes = deletes
+                    pushNodes.push(n)
+                    datas[n.name] = {}
+                    if (!isEmpty(submitData)) 
+                        datas[n.name].data = n.submitData
+                        if (deletes?.length) datas[n.name].deletes = deletes
                 }
             }
         }
+
+        if (!pushNodes.length) return { result: false }
 
         const result = await pushAppData(this.name, this.target, datas)
 

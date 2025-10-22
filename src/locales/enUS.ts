@@ -204,5 +204,11 @@ export default {
     "ADD": "Add",
     "DEL": "Delete",
 
+    "SAVE": "Sav",
+    "CANCEL": "Cancel",
+    "EDIT": "Edit",
+    "VIEW": "View",
+    "RESUME": "Resume",
+
     //#endregion
 }

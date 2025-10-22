@@ -23,7 +23,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get schemaType(): SchemaType { return SchemaType.Struct }
     get valid(): boolean { return this._fields.findIndex(f => !f.valid && !f.invisible) < 0 }
     get error(): any { return this._fields.find(f => !f.valid)?.error }
-    get changed(): boolean { return this._fields.findIndex(f => f.changed) >= 0 }
+    get changed(): boolean { return this._fields.findIndex(f => !f.displayOnly && f.changed) >= 0 }
     get isEmpty(): boolean { return this._fields.length === 0 || this._fields.findIndex(f => !f.isEmpty) < 0 }
     get original(): any {
         const result: { [key:string]: any } = {}

@@ -203,5 +203,11 @@ export default {
     "ADD": "添加",
     "DEL": "删除",
 
+    "SAVE": "保存",
+    "CANCEL": "取消",
+    "EDIT": "编辑",
+    "VIEW": "查看",
+    "RESUME": "恢复",
+
     //#endregion
 }
