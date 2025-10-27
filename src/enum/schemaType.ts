@@ -36,7 +36,7 @@ export enum SchemaType
     /**
      * The function node
      */
-    Function = "func",
+    Func = "func",
 }
 
 export type SchemaTypeValue = `${SchemaType}`
