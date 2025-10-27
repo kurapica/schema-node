@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
 import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
-import { deepClone, isNull } from "./toolset"
+import { deepClone, isEqual, isNull } from "./toolset"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { IStructScalarFieldConfig } from "../schema/structSchema"
 import { IFunctionArgumentInfo } from "../schema/functionSchema"
@@ -55,19 +55,13 @@ const newSystemEnum = <T extends Record<string, string | number>>(name: string, 
     }
 }
 
-const newSystemFunc = (name: string, returnType: string, args: IFunctionArgumentInfo[], funcImpl: (...args: any[]) => any, generic?: string): INodeSchema => {
+const newSystemFunc = (name: string, returnType: string, args: IFunctionArgumentInfo[], func: (...args: any[]) => any, generic?: string): INodeSchema => {
     return {
         name,
         type: SchemaType.Func,
         display: _LS(name),
         loadState: SchemaLoadState.System,
-        func: {
-            generic,
-            return: returnType,
-            args,
-            exps: [],
-            func: funcImpl
-        }
+        func: { generic, return: returnType, args, exps: [], func }
     }
 }
 
@@ -519,7 +513,7 @@ registerSchema([
             newSystemFunc("system.collection.average", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
                 arr.forEach(v => sum = sum.plus(v))
-                if (arr.length === 0) return 0.0
+                if (arr.length === 0) return 0
                 return sum.dividedBy(arr.length).toNumber()
             }, NS_SYSTEM_NUMBER),
 
@@ -547,7 +541,7 @@ registerSchema([
                 { name: "value", type: "T" }
             ], (arr: any[], v: any) => arr.includes(v)),
 
-            newSystemFunc("system.collection.newarray", NS_SYSTEM_ARRAY, [], () => { return [] }),
+            newSystemFunc("system.collection.newarray", NS_SYSTEM_ARRAY, [], () => []),
 
             newSystemFunc("system.collection.push", NS_SYSTEM_ARRAY, [
                 { name: "array", type: NS_SYSTEM_ARRAY },
@@ -558,7 +552,7 @@ registerSchema([
                 { name: "struct", type: NS_SYSTEM_STRUCT },
                 { name: "field", type: NS_SYSTEM_STRING },
                 { name: "value", type: "T" }
-            ], (s: {}, f: string, v: any) => !isNull(s) && (s as any)[f] == v),
+            ], (s: {}, f: string, v: any) => !isNull(s) &&  isEqual((s as any)[f], v)),
         ]),
 
         // logic func
@@ -586,7 +580,7 @@ registerSchema([
             newSystemFunc("system.logic.equal", NS_SYSTEM_BOOL, [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: any, y: any) => x == y),
+            ], isEqual),
 
             newSystemFunc("system.logic.greateequal", NS_SYSTEM_BOOL, [
                 { name: "x", type: "T" },
@@ -623,7 +617,7 @@ registerSchema([
             newSystemFunc("system.logic.notequal", NS_SYSTEM_BOOL, [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: any, y: any) => x != y),
+            ], (x: any, y: any) => !isEqual(x, y)),
 
             newSystemFunc("system.logic.orelse", NS_SYSTEM_BOOL, [
                 { name: "x", type: NS_SYSTEM_BOOL },
