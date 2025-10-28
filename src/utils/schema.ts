@@ -91,7 +91,7 @@ registerSchema([
         newSystemScalar(NS_SYSTEM_YEAR, NS_SYSTEM_INT, true, "^\\d{4}$"),
         newSystemScalar(NS_SYSTEM_YEARMONTH, NS_SYSTEM_DATE, true),
         newSystemScalar(NS_SYSTEM_GUID, NS_SYSTEM_STRING, false, "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$", { upLimit: 36 }),
-        newSystemScalar(NS_SYSTEM_LANGUAGE, NS_SYSTEM_STRING, false, "^[a-z]{2}(-[A-Z]{2})?$", { upLimit: 8, whiteList: "system.str.getlanguages" }),
+        newSystemScalar(NS_SYSTEM_LANGUAGE, NS_SYSTEM_STRING, false, "^[a-z]{2}(-?[A-Z]{2})?$", { upLimit: 8, whiteList: "system.str.getlanguages" }),
 
         //#endregion
 
@@ -117,7 +117,7 @@ registerSchema([
             { name: "tran", type: NS_SYSTEM_STRING }
         ]),
         newSystemStruct(NS_SYSTEM_LOCALE_STRING, [
-            { name: "key", type: NS_SYSTEM_STRING, require: true, upLimit: 128 },
+            { name: "key", type: NS_SYSTEM_STRING, upLimit: 128 },
             { name: "trans", type: NS_SYSTEM_LOCALE_TRANS }
         ]),
         newSystemStruct(NS_SYSTEM_ENTRY, [
@@ -365,7 +365,7 @@ registerSchema([
 
             newSystemFunc("system.datetime.equal", NS_SYSTEM_BOOL, [{ name: "x", type: NS_SYSTEM_DATE },{ name: "y", type: NS_SYSTEM_DATE }], (x: Date, y: Date) => x.getTime() == y.getTime()),
 
-            newSystemFunc("system.datetime.greatequal", NS_SYSTEM_BOOL, [{ name: "x", type: NS_SYSTEM_DATE },{ name: "y", type: NS_SYSTEM_DATE }], (x: Date, y: Date) => x.getTime() >= y.getTime()),
+            newSystemFunc("system.datetime.greateequal", NS_SYSTEM_BOOL, [{ name: "x", type: NS_SYSTEM_DATE },{ name: "y", type: NS_SYSTEM_DATE }], (x: Date, y: Date) => x.getTime() >= y.getTime()),
 
             newSystemFunc("system.datetime.greatethan", NS_SYSTEM_BOOL, [{ name: "x", type: NS_SYSTEM_DATE },{ name: "y", type: NS_SYSTEM_DATE }], (x: Date, y: Date) => x.getTime() > y.getTime()),
 
@@ -499,7 +499,7 @@ registerSchema([
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: {}, f: string): {} => ({ ...a, [f]: undefined }), NS_SYSTEM_STRUCT),
 
-            newSystemFunc("system.collection.append", "T2", [
+            newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: any[], f: string) => a.map(l => l[f]).filter(v => !isNull(v)), NS_SYSTEM_ARRAY),

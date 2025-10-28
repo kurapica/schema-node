@@ -392,13 +392,13 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         switch (this._eschema.type)
         {
             case SchemaType.Scalar:
-                eleNode = new ScalarNode({...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new ScalarNode({...this._config, type: this._eschema.name, require: false }, null, this)
                 break
             case SchemaType.Enum:
-                eleNode = new EnumNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new EnumNode({ ...this._config, type: this._eschema.name, require: false }, null, this)
                 break
             case SchemaType.Struct:
-                eleNode = new StructNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new StructNode({ ...this._config, type: this._eschema.name, require: false }, null, this)
                 if (this.incrUpdate)
                 {
                     // make incr update data primary field immutable
@@ -412,6 +412,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 }
                 break
         }
+        if (!isNull(data)) eleNode!.data = data
         if (!this.incrUpdate) eleNode?.subscribe(this.refreshRawData)
         return eleNode
     }
