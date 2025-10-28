@@ -14,6 +14,7 @@ export const NS_SYSTEM = "system"
 
 export const NS_SYSTEM_ARRAY = "system.array"
 export const NS_SYSTEM_STRUCT = "system.struct"
+export const NS_SYSTEM_JSON = "system.json"
 export const NS_SYSTEM_BOOL = "system.bool"
 export const NS_SYSTEM_DATE = "system.date"
 export const NS_SYSTEM_NUMBER = "system.number"
@@ -376,8 +377,6 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                         }
                     }
                     exist.enum = schema.enum
-
-                    if ((exist.loadState || 0) & SchemaLoadState.System) continue
                     break
 
                 case SchemaType.Scalar:
@@ -385,14 +384,17 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
 
                 case SchemaType.Struct:
-                    exist.struct = schema.struct || exist.struct
+                    // since the frontend may define special features that override the backend
+                    if (!(((exist.loadState || 0) & SchemaLoadState.System) && exist.struct?.fields?.length))
+                        exist.struct = schema.struct || exist.struct
                     break
 
                 case SchemaType.Array:
                     exist.array = schema.array || exist.array
                     break
 
-                case SchemaType.Function:
+                case SchemaType.Func:
+                    // keep the frontend implementation
                     if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
                         exist.func = schema.func || exist.func
                     break
@@ -1045,7 +1047,7 @@ const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], 
  */
 export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any> {
     const schema = await getSchema(schemaName)
-    if (!schema || schema.type !== SchemaType.Function) throw Error(`${schemaName} is not a function schema`)
+    if (!schema || schema.type !== SchemaType.Func) throw Error(`${schemaName} is not a function schema`)
     const funcInfo = schema.func!
 
     // Pre-check the function arguments
@@ -1528,7 +1530,7 @@ function updateSchemaRefs(schema: INodeSchema, add: boolean)
             schema.array?.relations?.forEach(r => updateRef(r.func, add))
             break
 
-        case SchemaType.Function:
+        case SchemaType.Func:
             updateRef(schema.func?.return, add)
             schema.func?.args?.forEach(a => updateRef(a.type, add))
             schema.func?.exps?.forEach(e => {

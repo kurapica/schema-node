@@ -1,7 +1,7 @@
 import { SchemaType } from "../enum/schemaType"
 import { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
-import { isNull } from "../utils/toolset"
+import { isEmpty, isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
 import { ScalarNode } from "./scalarNode"
@@ -98,34 +98,29 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get fields(): AnySchemaNode[] { return this._fields.map(f => f.node) }
 
     /**
-     * Gets all input fields
+     * Gets all input fields, excluding readonly input fields(ref | readonly)
      */
-    get inputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly))).map(f => f.node) }
+    get inputFields(): AnySchemaNode[] { return this.getFields(null, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    
+    /**
+     * Gets all loaded input fields for data submit
+     */
+    get loadedInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Loaded, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
 
     /**
-     * Gets all the front-end fields
+     * Gets all the ref input fields
      */
-    get frontEndFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.FrontEnd)).map(f => f.node) }
+    get refInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Ref | AppFieldNodeState.Readonly, AppFieldNodeState.Push) }
 
     /**
-     * Gets all the front-end push fields
+     * Gets all input fields, including all input fields(ref | readonly)
      */
-    get frontEndPushFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Push) && (f.state & AppFieldNodeState.FrontEnd) && !(f.state & AppFieldNodeState.Ref)).map(f => f.node) }
-
+    get allInputFields(): AnySchemaNode[] { return this.getFields(null, AppFieldNodeState.Push) }
+    
     /**
      * Gets all the non-ref push fields
      */
-    get pushFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Push) && !(f.state & AppFieldNodeState.Ref)).map(f => f.node) }
-
-    /**
-     * Gets all the non-push ref fields
-     */
-    get refFields(): AnySchemaNode[] { return this._fields.filter(f => (f.state & AppFieldNodeState.Ref) && !(f.state & AppFieldNodeState.Push)).map(f => f.node) }
-
-    /**
-     * Gets all loaded input fields
-     */
-    get loadedInputFields(): AnySchemaNode[] { return this._fields.filter(f => !(f.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref)) && (f.state & AppFieldNodeState.Loaded)).map(f => f.node) }
+    get pushFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Push, AppFieldNodeState.Ref) }
 
     /**
      * Gets all source apps
@@ -149,11 +144,37 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     getField(name: string) { return this._fields.find(f => f.node.name.toLowerCase() === name.toLowerCase() )?.node }
 
     /**
+     * Gets the field state
+     * @param name The field or field name
+     * @returns The field state
+     */
+    getFieldState(name: string | AnySchemaNode): AppFieldNodeState {
+        if (typeof(name) !== "string") name = name.name.toLowerCase()
+        return this._fields.find(f => f.node.name.toLowerCase() === name)?.state || AppFieldNodeState.None
+    }
+
+    /**
      * Whether the given field is loaded
      */
     isFieldLoaded(name: string | AnySchemaNode): boolean {
+        if (!this._target) return true
         if (typeof(name) !== "string") name = name.name.toLowerCase()
         return ((this._fields.find(f => f.node.name.toLowerCase() === name)?.state || AppFieldNodeState.None) & AppFieldNodeState.Loaded) > 0
+    }
+
+    /**
+     * Gets the fields for given state
+     * @param state The field state filter
+     * @param nostate The field state should not have
+     */
+    getFields(state: AppFieldNodeState = AppFieldNodeState.None, nostate: AppFieldNodeState = AppFieldNodeState.None): AnySchemaNode[] {
+        const fields: AnySchemaNode[] = []
+        for (const finfo of this._fields) {
+            if (state && !(finfo.state & state)) continue
+            if (nostate && (finfo.state & nostate)) continue
+            fields.push(finfo.node)
+        }
+        return fields
     }
 
     /**
@@ -401,6 +422,49 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     }
 
     /**
+     * Reload the fields
+     * @param nodes the reload nodes
+     * @param onlyNotLoaded whether only reload unloaded fields
+     */
+    async reload(nodes?: AnySchemaNode[] | string[], onlyNotLoaded: boolean = false): Promise<void> {
+        if (!this.target) return
+
+        const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
+        if (!nodes?.length) nodes = this.inputFields
+        for (let i = 0; i < nodes.length; i++)
+        {
+            let n = nodes[i]
+            if (typeof(n) === "object") n = n.name
+            n = n.toLowerCase()
+
+            const info = this._fields.find(f => f.node.name.toLowerCase() === n)
+            if (!info) continue
+            if (!(info.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.FrontEnd | AppFieldNodeState.Readonly ))
+                && (!onlyNotLoaded || !(info.state & AppFieldNodeState.Loaded)))
+            {
+                queryNodes.push(info)
+            }
+        }
+        if (!queryNodes.length) return
+
+        const query: IAppDataQuery = {
+            app: this.name,
+            target: this.target,
+            fields: queryNodes.map(n => n.node.name)
+        }
+        const result = await queryAppData(query)
+        if (!result) return
+
+        // assign data
+        for (let i = 0; i < queryNodes.length; i++)
+        {
+            const n = queryNodes[i]
+            n.state |= AppFieldNodeState.Loaded
+            n.node.data = result.results[n.node.name]
+        }
+    }
+
+    /**
      * Submit all changes
      * @param nodes the submit node fields, default all
      */
@@ -409,26 +473,29 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         const datas = {}
 
         const pushNodes: AnySchemaNode[] = []
-        if (!nodes?.length) nodes = this.inputFields
+        if (!nodes?.length) nodes = this.loadedInputFields
         for (let i = 0; i < nodes.length; i++)
         {
             let n = nodes[i]
             if (typeof(n) === "string") n = this.getField(n)
             const state = this._fields.find(f => f.node === n)?.state
-            if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref))
-                && n.changed)
+            if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly)) && n.changed)
             {
-                pushNodes.push(n)
+                const submitData = n.submitData
+                const deletes = (n instanceof ArrayNode) ? n.deletes : null
 
-                datas[n.name] = { data: n.submitData }
-                
-                if (n instanceof ArrayNode)
+                if (!isEmpty(submitData) || (deletes && deletes.length > 0))
                 {
-                    const deletes = n.deletes
-                    if (deletes?.length) datas[n.name].deletes = deletes
+                    pushNodes.push(n)
+                    datas[n.name] = {}
+                    if (!isEmpty(submitData)) 
+                        datas[n.name].data = n.submitData
+                        if (deletes?.length) datas[n.name].deletes = deletes
                 }
             }
         }
+
+        if (!pushNodes.length) return { result: false }
 
         const result = await pushAppData(this.name, this.target, datas)
 
@@ -503,9 +570,8 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                     node = new StructNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField } as IStructFieldConfig, d, this)
                     break
                 case SchemaType.Array:
-                    const info = data?.infos[fconf.name]
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, take: info?.take, total: info?.total, skip: info?.skip, descend: info?.descend, filter: info?.filter } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, fieldInfo: data?.infos[fconf.name] } as IStructArrayFieldConfig, d, this)
                     break
             }
             if (node) this._fields.push({ node, state })

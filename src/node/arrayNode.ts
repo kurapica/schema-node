@@ -14,6 +14,7 @@ import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
+import { IAppDataFieldInfo, IAppDataQueryOrder } from '../schema/appSchema'
 
 /**
  * The array schema data node
@@ -29,7 +30,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get changed(): boolean {
         if (this._enode) return this._enode.changed
         if (this.asSingle) return !isEqual(this._data, this._original)
-        if (this._elements.find(e => e.changed) || this._original?.length) return true
+        if (this._elements.find(e => e.changed) || (this._original?.length || 0) !== (this._elements.length || 0)) return true
         if (!this.incrUpdate) return false
         for (let key in this._tracker) {
             const track = this._tracker[key]
@@ -67,25 +68,33 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get incrUpdate(): boolean { return this._config.incrUpdate || false }
 
     /**
-     * Gets the total count
+     * Gets the current page
      */
-    get total() { return this.incrUpdate ? this._total! : this._elements.length }
+    get page() { return this._fieldInfo?.take ? Math.floor((this._fieldInfo.skip || 0) / this._fieldInfo.take) : 0 }
 
     /**
      * Gets the page count
      */
-    get pageCount() { return this.incrUpdate ? this._count! : this._elements.length }
+    get pageCount() { return this._fieldInfo?.take }
+
+    /**
+     * Gets the total count
+     */
+    get total() { return this._fieldInfo?.total ?? this._elements.length }
 
     /**
      * Gets the query data
      */
-    get query() { return this.incrUpdate && this._query ? { ...this._query } : undefined }
+    get query() { return this._fieldInfo?.filter ? { ...this._fieldInfo.filter } : undefined }
 
     /**
-     * Gets the current page
+     * The order by info
      */
-    get page() { return this._page || 0 }
+    get orderBy(): IAppDataQueryOrder[] { return deepClone(this._fieldInfo.orderBy) || [] }
 
+    /**
+     * Set the array data
+     */
     set data(data: any)
     {
         if (!Array.isArray(data)) data = []
@@ -114,7 +123,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             }
 
             // destory
-            for (let i = this._elements.length - 1; i > data.length; i--)
+            for (let i = this._elements.length - 1; i >= data.length; i--)
                 this._elements.pop()?.dispose()
 
             // new
@@ -129,6 +138,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    /**
+     * Gets the array data
+     */
     get data() {
         if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
@@ -136,20 +148,16 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
         if (this.incrUpdate)
         {
+            // normally there is no need to fetch incr-update data for data push, keep here for safety
             const result: any = []
             const keys = new Set<string>()
-            this._elements.filter(e => e.changed && !this.isRowDeleted(e)).forEach(e => {
+            this._elements.filter(e => !this.isRowDeleted(e)).forEach(e => {
                 const key = this.getPrimaryKey(e)
                 if (key) {
                     keys.add(key)
                     result.push(e.data)
                 }
             })
-            for (let key in this._tracker)
-            {
-                if (keys.has(key) || !this._tracker[key].update) continue
-                result.push(this._tracker[key].update)
-            }
             return result
         }
         else
@@ -162,11 +170,14 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
     }
 
+    /**
+     * Gets the submit data 
+     */
     get submitData()
     {
-        if (this._enode) return this._enode.data
+        if (this._enode) return this._enode.submitData
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
-        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
+        if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.submitData).filter(d => !isNull(d))
 
         if (this.incrUpdate)
         {
@@ -381,42 +392,58 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         switch (this._eschema.type)
         {
             case SchemaType.Scalar:
-                eleNode = new ScalarNode({...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new ScalarNode({...this._config, type: this._eschema.name, require: false }, null, this)
                 break
             case SchemaType.Enum:
-                eleNode = new EnumNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new EnumNode({ ...this._config, type: this._eschema.name, require: false }, null, this)
                 break
             case SchemaType.Struct:
-                eleNode = new StructNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+                eleNode = new StructNode({ ...this._config, type: this._eschema.name, require: false }, null, this)
                 if (this.incrUpdate)
                 {
                     // make incr update data primary field immutable
                     const structNode = eleNode as StructNode
                     this.schema.array?.primary?.forEach(f => {
                         const fldNode = structNode.getField(f)
+                        if (!fldNode) return
                         fldNode.config.immutable = true
                         fldNode.notifyState()
                     })
                 }
                 break
         }
+        if (!isNull(data)) eleNode!.data = data
         if (!this.incrUpdate) eleNode?.subscribe(this.refreshRawData)
         return eleNode
     }
 
     // get the unique key combine from primarys
-    private getPrimaryKey(node: AnySchemaNode | any) {
+    getPrimaryKey(node: AnySchemaNode | any) {
         const primarys = this._schema.array?.primary
         if (!primarys?.length) return
         const keys: string[] = []
-        const data = node instanceof StructNode ? node.rawData : node
-        for(let i = 0; i < primarys.length; i++)
+
+        if (node instanceof StructNode)
         {
-            let k = primarys[i]
-            const v = data[k]
-            if (isNull(v)) return undefined
-            keys.push(`${v}`)
+            for(let i = 0; i < primarys.length; i++)
+            {
+                let k = primarys[i]
+                const v = node.getField(k).rawData
+                if (isNull(v)) return undefined
+                keys.push(`${v}`)
+            }
         }
+        else
+        {
+            for(let i = 0; i < primarys.length; i++)
+            {
+                let k = primarys[i]
+                const v = node[k]
+                if (isNull(v)) return undefined
+                keys.push(`${v}`)
+            }
+        }
+
         return keys.join(".")
     }
 
@@ -426,6 +453,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     prepareRow(data?: {}) {
         if (!this.incrUpdate) return undefined
         const row = this.newElement(data) as StructNode
+        row.activeRule(true)
         
         // auto query the data with primary key without date scalar field
         const primarys = this.schema.array?.primary
@@ -440,40 +468,43 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         const appNode = this.parent as AppNode
         if (!appNode.target) return row
 
+        // load data with primary key
         let prevkey = ""
-        primarys.forEach(p => {
-            const node = row.getField(p)
-            row.watch(node, async () => {
-                const query = {}
-                let key = ""
-                for (let i = 0; i < primarys.length; i++) {
-                    const d = node.rawData
-                    if (isNull(d)) return
-                    query[p] = d
-                    key += `.${d instanceof Date ? d.toISOString() : d}`
-                }
-                if (key === prevkey) return
-                prevkey = key
+        const loadRowData = async() => {
+            const query = {}
+            let key = ""
+            for (let i = 0; i < primarys.length; i++) {
+                const d = row.getField(primarys[i]).submitData
+                if (isNull(d)) return
+                query[primarys[i]] = d
+                key += `.${d instanceof Date ? d.toISOString() : d}`
+            }
+            if (key === prevkey) return
+            prevkey = key
 
-                const res = await queryAppData({
-                    app: appNode.name,
-                    target: appNode.target,
-                    fields: [this.name],
-                    noSchema: true,
-                    querys: {
-                        [this.name]: {
-                            take: 1,
-                            filter: query
-                        }
+            const res = await queryAppData({
+                app: appNode.name,
+                target: appNode.target,
+                fields: [this.name],
+                noSchema: true,
+                querys: {
+                    [this.name]: {
+                        take: 1,
+                        filter: query
                     }
-                })
-                const data = res.results[this.name]
-                if (data && Array.isArray(data) && data.length)
-                {
-                    row.data = data[0]
-                    row.resetChanges()
                 }
             })
+            const data = res.results[this.name]
+            if (data && Array.isArray(data) && data.length)
+            {
+                row.data = data[0]
+                row.resetChanges()
+            }
+        }
+
+        primarys.forEach(p => {
+            const node = row.getField(p)
+            row.watch(node, loadRowData)
         })
 
         return row
@@ -493,21 +524,22 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         let isnew = false
         for (let i = 0; i < primarys.length; i++)
         {
-            const node = row.getField(primarys[primarys[i]])
+            const node = row.getField(primarys[i])
             if (isNull(node?.rawData) || !node.valid) return false
             if (node.changed) isnew = true
         }
 
         // save to server
         const key = this.getPrimaryKey(row)
-        if (isnew || forceSave) 
+        if (isnew || forceSave)
         {
             const appNode = this.parent as AppNode
             if (!appNode?.target) return false
-
+        
+            const submitData = row.submitData
             const res = await pushAppData(appNode.name, appNode.target, {
                 [this.name]: {
-                    data: [ row.data ]
+                    data: [ submitData ]
                 }
             })
 
@@ -516,24 +548,24 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 if (isnew)
                 {
                     // query match check
-                    if (this._query)
+                    if (this._fieldInfo.filter)
                     {
-                        for (let k in this._query) 
+                        for (let k in this._fieldInfo.filter)
                         {
-                            if (row.rawData[k] != this._query[k])
+                            if (!isEqual(submitData[k], this._fieldInfo.filter[k]))
                                 return true
                         }
                     }
 
                     // jump to the new record
-                    if (this._descend)
+                    if (this._fieldInfo.descend)
                     {
                         await this.setPage(0)
                     }
                     else
                     {
-                        const count = this._count || 10
-                        await this.setPage(Math.floor((this._total || 0) / count), count, false)
+                        const count = this._fieldInfo.take || 10
+                        await this.setPage(Math.floor((this._fieldInfo.total || 0) / count), count, false)
                     }
                 }
                 else
@@ -588,6 +620,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         if (this._enode || this.asSingle || start < 0 || start >= this._elements.length) return
         if (this.incrUpdate)
         {
+            // mark deleted
             for(let i = start; i < start + count; i++)
             {
                 const ele = this._elements[i]
@@ -648,42 +681,58 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     }
 
     /**
-     * Change the current page
+     * Change the current page 
+     * @todo support more orderby options in the next version
      * @param page The page no
      * @param count The page count, optional
      * @param descend Whether use descend order, optional
-     * @param query the query keys, optional
+     * @param filter the query keys, optional
+     * @param orderBy the order by info, optional
      */
-    async setPage(page: number, count?: number, descend?: boolean, query?: { [key:string]: any })
+    async setPage(page: number, count?: number, descend?: boolean, filter?: { [key:string]: any }, orderBy?: IAppDataQueryOrder[])
     {
-        if (!this.incrUpdate) return
-        count ||= this._count || 10 // default should be provided by server
-        if (isNull(descend)) descend = this._descend
+        //if (!this.incrUpdate) return
+        count ||= this._fieldInfo.take || 10 // default should be provided by server
+        if (isNull(descend)) descend = this._fieldInfo.descend
         const appNode = this.parent
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return
 
         // validate the keys
-        if (query)
+        const fields = this._eschema.struct?.fields
+        if (filter)
         {
-            const fields = this._eschema.struct?.fields
             const temp = {}
             let hasQuery = false
-            for (let k in query)
+            for (let k in filter)
             {
                 if (fields?.find(f => f.name.toLowerCase() === k.toLowerCase()))
                 {
-                    temp[k] = query[k]
+                    temp[k] = filter[k]
                     hasQuery = true
                 }
             }
             if (hasQuery)
-                query = temp
+                filter = temp
             else
-                query = undefined
+                filter = undefined
         }
         else
         {
-            query = this._query
+            filter = this._fieldInfo.filter
+        }
+
+        if (orderBy)
+        {
+            const temp: IAppDataQueryOrder[] = []
+            orderBy.forEach(o => {
+                if (fields?.find(f => f.name.toLowerCase() === o.field.toLowerCase()))
+                    temp.push(o)
+            })
+            orderBy = temp
+        }
+        else
+        {
+            orderBy = this._fieldInfo.orderBy
         }
 
         try
@@ -697,71 +746,76 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                         take: count,
                         skip: page * count,
                         descend,
-                        filter: query || {}
+                        filter,
+                        orderBy
                     }
                 }
             })
 
-            // record current changes
-            this._elements.forEach(e => {
-                const key = this.getPrimaryKey(e)
-                if (!key) return
-                if (e.changed && e.valid)
-                {
-                    this._tracker[key] ||= {}
-                    this._tracker[key].origin = e.original
-                    this._tracker[key].update = e.data
-                }
-                else if (this._tracker[key])
-                {
-                    if (this._tracker[key].delete)
+            this._fieldInfo = res.infos[this.name]
+            const data = res.results[this.name] || []
+
+            // refresh
+            if (this.incrUpdate){
+                // record current changes
+                this._elements.forEach(e => {
+                    const key = this.getPrimaryKey(e)
+                    if (!key) return
+                    if (e.changed && e.valid)
                     {
+                        this._tracker[key] ||= {}
                         this._tracker[key].origin = e.original
-                        this._tracker[key].update = undefined
+                        this._tracker[key].update = e.data
+                    }
+                    else if (this._tracker[key])
+                    {
+                        if (this._tracker[key].delete)
+                        {
+                            this._tracker[key].origin = e.original
+                            this._tracker[key].update = undefined
+                        }
+                        else
+                        {
+                            delete this._tracker[key]
+                        }
+                    }
+                })
+
+                // load new page
+                for (let i = 0; i < data.length; i++)
+                {
+                    let eleNode: AnySchemaNode
+                    if (this._elements.length <= i)
+                    {
+                        eleNode = this.newElement(data[i])
+                        this._elements.push(eleNode)
+                        this._data[i] = eleNode.rawData
                     }
                     else
                     {
-                        delete this._tracker[key]
+                        eleNode = this._elements[i]
+                        eleNode.data = data[i]
+                        eleNode.resetChanges()
+                    }
+
+                    // load tracker data
+                    const key = this.getPrimaryKey(data[i])
+                    if (key && this._tracker[key]?.update)
+                    {
+                        eleNode.data = this._tracker[key].update
                     }
                 }
-            })
 
-            // load new page
-            const data = res.results[this.name] || []
-            const info = res.infos[this.name]
-            for (let i = 0; i < data.length; i++)
+                for (let i = this._elements.length - 1; i >= data.length; i--)
+                    this._elements.pop().dispose()
+            }
+            else
             {
-                let eleNode: AnySchemaNode
-                if (this._elements.length <= i)
-                {
-                    eleNode = this.newElement(data[i])
-                    this._elements.push(eleNode)
-                    this._data[i] = eleNode.rawData
-                }
-                else
-                {
-                    eleNode = this._elements[i]
-                    eleNode.data = data[i]
-                    eleNode.resetChanges()
-                }
-
-                // load tracker data
-                const key = this.getPrimaryKey(eleNode)
-                if (key && this._tracker[key]?.update)
-                {
-                    eleNode.data = this._tracker[key].update
-                }
+                this.data = data
+                this.resetChanges()
             }
 
-            for (let i = this._elements.length - 1; i >= data.length; i--)
-                this._elements.pop().dispose()
-
             // record query
-            this._total = info?.total
-            this._count = info?.take
-            this._descend = info?.descend
-            this._query = info.filter
-            this._page = page
             this.notify()
         }
         catch(ex)
@@ -781,12 +835,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     private _eschema: INodeSchema = { name: '', type: SchemaType.Namespace }
     private _elements: AnySchemaNode[] = []
     private _enode: EnumNode | undefined
-    private _total: number | undefined
-    private _count: number | undefined
-    private _page: number | undefined
-    private _query: { [key:string]: any } | undefined
-    private _descend: boolean | undefined
-    private _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
+    private _fieldInfo: IAppDataFieldInfo | undefined
+    public _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
     private _errfld: AnySchemaNode | undefined
 
     //#endregion
@@ -806,17 +856,6 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         // init the raw data
         this._data = data
 
-        // page only for app fields with incr-update
-        if (this._config.incrUpdate) {
-            // record since we may change those in the view
-            // offset must align with the page count, promise by the server
-            this._total = this._config.total
-            this._count = this._config.take
-            this._descend = this._config.descend
-            this._query = this._config.filter ? { ...this._config.filter } : undefined
-            this._page = this._count ? Math.floor((this._config.skip || 0) / this._count) : 0
-        }
-
         // element check
         this._eschema = getCachedSchema(this._schema.array!.element)!
         if (this._eschema.type === SchemaType.Enum)
@@ -831,6 +870,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         else if (!this.schema.array?.single)
         {
+            // page info
+            this._fieldInfo = (config as IArrayConfig).fieldInfo ? { ... (config as IArrayConfig).fieldInfo } : undefined
+        
             // init elements
             for (let i = 0; i < data.length; i++)
             {

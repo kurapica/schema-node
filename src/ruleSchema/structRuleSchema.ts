@@ -147,6 +147,10 @@ export class StructRuleSchema extends RuleSchema
 
             // build rule schema for each field
             const schema = getCachedSchema(f.type)
+            if (!schema){
+                console.error(`Can't get schema for field ${f.name} with type ${f.type}`)
+                continue
+            }
             const ruleSchema = getRuleSchema(schema)
             this.schemas[f.name] = ruleSchema
             ruleSchema.loadConfig(f)

@@ -19,16 +19,6 @@ export enum DataCombineType
      * Count
      */
     Count = "count",
-
-    /**
-     * The min value
-     */
-    Min = "min",
-
-    /**
-     * The max value
-     */
-    Max = "max",
 }
 
 export type DataCombineTypeValue = `${DataCombineType}`

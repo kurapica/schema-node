@@ -8,6 +8,21 @@ export function isNull(value: any)
   return value == null || value == undefined || value === ""
 }
 
+export function isEmpty(value: any)
+{
+  if (isNull(value)) return true
+  if (Array.isArray(value)) return value.length === 0
+  if (typeof(value) === "object")
+  {
+    for (let k in value)
+    {
+      return false
+    }
+    return true
+  }
+  return false
+}
+
 /**
  * Gets the value by path
  */

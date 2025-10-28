@@ -285,10 +285,17 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     setError (err: string) {
         if (this._valid || this._error !== err)
         {
-            if (!isNull(err))
-                this._valid = false
             this._error = err
-            this.notifyState()
+            if (!isNull(err)) {
+                this._valid = false
+                this.notifyState()
+            }
+            else
+            {
+                this.validation().then(() => {
+                    this.notifyState()
+                })
+            }
         }
     }
 
