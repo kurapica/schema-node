@@ -1,6 +1,6 @@
 import { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
-import { getAppCachedSchema, ISchemaProvider, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
+import { defaultSchemaProvider, getAppCachedSchema, getSchemaApiBaseUrl, ISchemaProvider, postSchemaApi, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
 import { debounce, deepClone, isNull } from "./toolset";
 
 let DEBOUNCE_BATCH_QUERY = 50
@@ -35,6 +35,37 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
 
 let schemaProvider: IAppSchemaDataProvider | null = null
 
+export const defaultAppSchemaProvider: IAppSchemaDataProvider = {
+    ...defaultSchemaProvider,
+
+    batchQueryAppData: async function (queries: IAppDataQuery[]): Promise<IBatchQueryAppDataResult> {
+        return (await postSchemaApi("/batch-query-app-data", {
+            queries
+        }))
+    },
+
+    pushAppData: async function(app: string, target: string, datas: { [key:string]: IAppDataFieldPushQuery }): Promise<IAppDataPushResult>
+    {
+        return (await postSchemaApi("/push-app-data", {
+            app, target, datas
+        }))
+    },
+
+    setSourceTarget: async function(app: string, target: string, sourceApp: string, sourceTarget?: string): Promise<boolean>
+    {
+        return (await postSchemaApi("/set-source-target", {
+            app, target, sourceApp, sourceTarget
+        }))?.result
+    },
+
+    getSourceTarget: async function(app: string, target: string, sourceApp: string): Promise<string | undefined>
+    {
+        return (await postSchemaApi("/get-source-target", {
+            app, target, sourceApp
+        }))?.target
+    }
+}
+
 /**
  * Sets the data schema provider
  */
@@ -48,7 +79,7 @@ export function useAppDataProvider(provider: IAppSchemaDataProvider, debounce: n
  * Gets the data schema provider
  */
 export function getAppDataProvider(): IAppSchemaDataProvider | null {
-    return schemaProvider
+    return schemaProvider ?? (getSchemaApiBaseUrl() ? defaultAppSchemaProvider : null)
 }
 
 //#endregion
@@ -166,7 +197,8 @@ const processAppDataQueryQueue = debounce(() => {
     //#endregion
 
     // process
-    schemaProvider.batchQueryAppData(combineQueries)
+    let provider = getAppDataProvider()
+    provider.batchQueryAppData(combineQueries)
         .then(res => {
             // reg schema
             if (res.schemas?.length) registerSchema(res.schemas, SchemaLoadState.Server)
@@ -218,9 +250,10 @@ const processAppDataQueryQueue = debounce(() => {
  */
 export async function pushAppData(app: string, target: string, datas: { [key:string]: IAppDataFieldPushQuery }): Promise<IAppDataPushResult>
 {
+    let provider = getAppDataProvider()
     if (isNull(target)) throw "Push target must be provided"
-    if (!schemaProvider) throw "No App data provider"
-    return await schemaProvider.pushAppData(app, target, datas)
+    if (!provider) throw "No App data provider"
+    return await provider.pushAppData(app, target, datas)
 }
 
 //#endregion
