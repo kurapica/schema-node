@@ -1720,7 +1720,7 @@ function scanErrorPaths(fields?: Record<string, any>): string[] {
         for (let field in fields)
         {
             const fieldFmt = fields[field]
-            if (fieldFmt.indexOf('[error]') >= 0)
+            if (typeof fieldFmt === 'string' && fieldFmt.indexOf('[error]') >= 0)
             {
                 return [field]
             }
