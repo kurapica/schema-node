@@ -1720,7 +1720,7 @@ function scanErrorPaths(fields?: Record<string, any>): string[] {
         for (let field in fields)
         {
             const fieldFmt = fields[field]
-            if (typeof(fieldFmt) === 'string' && fieldFmt.indexOf('[error]') >= 0)
+            if (fieldFmt.indexOf('[error]') >= 0)
             {
                 return [field]
             }
@@ -1896,10 +1896,8 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
                         errorCheck = errorCheck[errorField]
                     }
                 }
-                if (typeof errorCheck == "string" && !isNull(errorCheck))
-                {
+                if (errorCheck) // 0 or "" means no error
                     throw new Error(errorCheck)
-                }
             }
 
             data = data[apiProtocol.response.unwrap]
