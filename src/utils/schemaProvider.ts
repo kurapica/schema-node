@@ -163,7 +163,6 @@ export function useSchemaProvider(provider: ISchemaProvider): void {
  * Gets the schema provider
  */
 export function getSchemaProvider(): ISchemaProvider | null {
-    console.log("Get Schema Provider:", schemaProvider, schemaApiBaseUrl)
     return schemaProvider ?? (schemaApiBaseUrl ? defaultSchemaProvider : null)
 }
 
@@ -1814,7 +1813,6 @@ if (document.querySelector('meta[name="schema-api-protocol"]'))
  */
 export function setSchemaApiBaseUrl(url: string | undefined): void {
     schemaApiBaseUrl = !isNull(url) ? url : undefined
-    console.log("Set Schema API Base URL:", schemaApiBaseUrl)
 }
 
 /**
@@ -1835,7 +1833,6 @@ export function getSchemaApiBaseUrl(): string | undefined {
 export async function postSchemaApi(url: string, param: any, noProtocol: boolean = false): Promise<any> {
     try
     {
-        console.log("postSchemaApi:", url, param, noProtocol)
         let site: string = schemaApiBaseUrl
         if (!site) return null
 
