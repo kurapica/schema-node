@@ -1,6 +1,8 @@
 export default {
 
     "language": "中",
+    "[LIST.PREFIX]": "",
+    "[LIST.SUFFIX]": "列表",
 
     //#region Namespace
 
@@ -378,6 +380,7 @@ export default {
     "system.schema.nodeschema.func": "函数定义",
 
     "system.schema.appfieldschema": "应用字段",
+    "system.schema.appfieldschema.app": "所属应用",
     "system.schema.appfieldschema.name": "字段名",
     "system.schema.appfieldschema.type": "字段类型",
     "system.schema.appfieldschema.display": "字段展示",

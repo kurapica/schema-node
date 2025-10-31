@@ -208,7 +208,10 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             exist.nodeSchema = undefined
 
             if (schema.hasFields || schema.fields?.length)
+            {
                 delete exist.apps
+                schema.fields?.forEach(f => f.app = exist.name)
+            }
             else if(schema.apps?.length)
                 registerAppSchema(schema.apps, loadState)
 
@@ -247,6 +250,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         if (schema.hasFields || schema.fields?.length)
         {
             delete schema.apps
+            schema.fields?.forEach(f => f.app = schema.name)
             updateAppSchemaRefs(schema, true)
         }
         else if(schema.apps?.length)
@@ -478,8 +482,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         // append to the namespace
         addSchema(root, schema)
 
-        // make system types already loaded
-        if ((loadState & SchemaLoadState.System) && schema.type !== SchemaType.Namespace)
+        // Only namespace require another load
+        if (schema.type !== SchemaType.Namespace)
             schema.loaded = true
 
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
@@ -489,7 +493,9 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         updateSchemaRefs(schema, true)
         
         if (schema.type === SchemaType.Namespace && schema.schemas)
+        {
             registerSchema([...schema.schemas], loadState)
+        }
     }
     schemaChangeWatcher.notify(schemas.map(s => s.name))
 }
@@ -1086,7 +1092,7 @@ const pendingCall: {
 } = {}
 const pendingComplexCall: any = {}
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => schemaProvider!.callFunction(schemaName, args, generic, target))
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => getSchemaProvider()!.callFunction(schemaName, args, generic, target))
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
@@ -1111,12 +1117,12 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     }
 
     // Client function call it direclty
-    if (funcInfo.func && (!funcInfo.server || !schemaProvider)) {
+    if (funcInfo.func && (!funcInfo.server || !getSchemaProvider())) {
         return await callFunc(funcInfo.func, args)
     }
     
     // Schema provider check
-    if (!schemaProvider) throw new Error("Schema provider not provided")
+    if (!getSchemaProvider()) throw new Error("Schema provider not provided")
 
     // Combine and queue
     let token = (!args || !args.length) 
@@ -1266,7 +1272,7 @@ function addSchema(root: INodeSchema, schema: INodeSchema)
 // build the function schema to function
 async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     // server-side function
-    if (!funcInfo.exps.length || (funcInfo.server && schemaProvider)) return false
+    if (!funcInfo.exps.length || (funcInfo.server && getSchemaProvider())) return false
 
     // arg or exp type map
     const exptypes: { [key: string]: INodeSchema } = {}
@@ -1284,7 +1290,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
 
         // get the call func
         const cfinfo = await getSchema(fexp.func)
-        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && schemaProvider)) return false
+        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && getSchemaProvider())) return false
 
         // try buil the call func
         const cfuncInfo = cfinfo.func
@@ -1704,6 +1710,24 @@ export interface ISchemaApiProtocolMeta
     error?: string[]
 }
 
+let schemaApiHeaders = [] as { key: string, value: string }[]
+
+export function setSchemaApiHeaders(headers: { key: string, value: string }[]) {
+    schemaApiHeaders = headers
+}
+
+axios.interceptors.request.use(config => {
+    // add frontend auth headers
+    if (schemaApiHeaders.length) {
+        for (const header of schemaApiHeaders) {
+            if (header.key && header.value) {
+                config.headers[header.key] = header.value
+            }
+        }
+    }
+    return config
+})
+
 // The schema api base url
 if (document.querySelector('meta[name="schema-api-base-url"]'))
 {
@@ -1889,11 +1913,11 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
             if (apiProtocol.error && apiProtocol.error.length)
             {
                 let errorCheck = data
-                for (let errorField of apiProtocol.error)
+                for (let i = 0; i < apiProtocol.error.length; i++) 
                 {
-                    if (typeof(errorCheck) === 'object' && errorField in errorCheck)
+                    if (errorCheck && typeof(errorCheck) === 'object')
                     {
-                        errorCheck = errorCheck[errorField]
+                        errorCheck = errorCheck[apiProtocol.error[i]]
                     }
                 }
                 if (errorCheck) // 0 or "" means no error

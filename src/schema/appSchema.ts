@@ -76,6 +76,11 @@ export interface IAppSchema
 export interface IAppFieldSchema
 {
     /**
+     * The application name
+     */
+    app: string
+
+    /**
      * The field name
      */
     name: string

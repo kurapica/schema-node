@@ -1,6 +1,8 @@
 export default {
 
     "language": "EN",
+    "list.prefix": "",
+    "list.suffix": " list",
 
     //#region Namespace
 
@@ -379,6 +381,7 @@ export default {
     "system.schema.nodeschema.func": "Function Definitions",
 
     "system.schema.appfieldschema": "App field",
+    "system.schema.appfieldschema.app": "Application",
     "system.schema.appfieldschema.name": "Field name",
     "system.schema.appfieldschema.type": "Field type",
     "system.schema.appfieldschema.display": "Field display",
