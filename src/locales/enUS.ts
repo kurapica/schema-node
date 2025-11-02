@@ -1,8 +1,8 @@
 export default {
 
     "language": "EN",
-    "list.prefix": "",
-    "list.suffix": " list",
+    "[LIST.PREFIX]": "",
+    "[LIST.SUFFIX]": " List",
 
     //#region Namespace
 
