@@ -9,9 +9,15 @@ export default defineConfig({
       formats: ['es', 'cjs'],
       fileName: (format) => format === 'cjs' ? `index.js` : `index.${format}.js`,
     },
-    rollupOptions: {
+    rollupOptions: {      
+      external: [
+        'axios',
+        'bignumber.js'
+      ],
       output: {
         globals: {
+          'axios': 'axios',
+          'bignumber.js': 'BigNumber',
           'schema-node': 'SchemaNode'
         }
       }

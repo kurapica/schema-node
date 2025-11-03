@@ -36,13 +36,16 @@ export const NS_SYSTEM_STRINGS = "system.strings"
 export const NS_SYSTEM_NUMBERS = "system.numbers"
 export const NS_SYSTEM_INTS = "system.ints"
 
-export const NS_SYSTEM_LANGUAGE = "system.language";
-export const NS_SYSTEM_LOCALE_STRING = "system.localestring";
-export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
-export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
-export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
-export const NS_SYSTEM_ENTRY = "system.entry";
-export const NS_SYSTEM_ENTRIES = "system.entrys";
+export const NS_SYSTEM_LANGUAGE = "system.language"
+export const NS_SYSTEM_LOCALE_STRING = "system.localestring"
+export const NS_SYSTEM_LOCALE_TRAN = "system.localetran"
+export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings"
+export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans"
+export const NS_SYSTEM_ENTRY = "system.entry"
+export const NS_SYSTEM_ENTRIES = "system.entrys"
+
+export const NS_SYSTEM_SCHEMA = "system.schema"
+export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 
 //#region Schema Provider
 
@@ -624,7 +627,7 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
     registerSchema([{
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
-        display: _LS(`Anonmous array for ${name}`),
+        display: _LS(`{[LIST.PREFIX]}{@${name}}{[LIST.SUFFIX]}`),
         array: { element: schema.name }
     }])
     return arraySchemaMap[name]
