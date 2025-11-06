@@ -1,6 +1,8 @@
 export default {
 
     "language": "EN",
+    "[LIST.PREFIX]": "",
+    "[LIST.SUFFIX]": " List",
 
     //#region Namespace
 
@@ -180,7 +182,9 @@ export default {
     "system.logic.greateequal": "Greater Than or Equal",
     "system.logic.greatethan": "Greater Than",
     "system.logic.isnull": "Is Null",
-    "system.logic.notnull": "Not null",
+    "system.logic.notnull": "Not Null",
+    "system.logic.isempty": "Is Empty",
+    "system.logic.notempty": "Not Empty",
     "system.logic.lessequal": "Less Than or Equal",
     "system.logic.lessthan": "Less Than",
     "system.logic.not": "Not",
@@ -271,7 +275,14 @@ export default {
     "system.schema.enumvalueinfo.disable": "Disabled",
     "system.schema.enumvalueinfo.sublist": "SubList",
     "system.schema.enumvalueinfo.hassublist": "Has Sublist",
-    "system.schema.enumvalueinfos": "Enum Value Info List",
+
+    "system.schema.enumintvalueinfo.value": "Value",
+    "system.schema.enumintvalueinfo.name": "Name",
+    "system.schema.enumintvalueinfo.disable": "Disabled",
+
+    "system.schema.enumflagvalueinfo.value": "Value",
+    "system.schema.enumflagvalueinfo.name": "Name",
+    "system.schema.enumflagvalueinfo.disable": "Disabled",
 
     "system.schema.enumschema": "Enum Definition",
     "system.schema.enumschema.type": "Enum Value Type",
@@ -279,10 +290,10 @@ export default {
     "system.schema.enumschema.values": "Enum Values",
 
     "system.schema.structfldfuncarg": "Struct Field Func Arg",
+    "system.schema.structfldfuncarg.label": "Label",
     "system.schema.structfldfuncarg.type": "Arg Type",
     "system.schema.structfldfuncarg.name": "Field Name",
     "system.schema.structfldfuncarg.value": "Value",
-    "system.schema.structfldfuncargs": "Struct Field Func Args",
 
     "system.schema.structfieldconfig": "Struct Field Type",
     "system.schema.structfieldconfig.name": "Field Name",
@@ -307,7 +318,6 @@ export default {
     "system.schema.structfieldconfig.root": "Enum Root Value",
     "system.schema.structfieldconfig.anylevel": "Any Level Selectable",
     "system.schema.structfieldconfig.singleflag": "Single Flag",
-    "system.schema.structfieldconfigs": "Struct Field Type List",
 
     "system.schema.structfieldrelation": "Field Relation",
     "system.schema.structfieldrelation.field": "Target Field",
@@ -316,7 +326,6 @@ export default {
     "system.schema.structfieldrelation.type": "Relation Type",
     "system.schema.structfieldrelation.func": "Relation Function",
     "system.schema.structfieldrelation.args": "Function Arguments",
-    "system.schema.structfieldrelations": "Field Relation List",
 
     "system.schema.structschema": "Struct Definition",
     "system.schema.structschema.base": "Base Type",
@@ -326,12 +335,10 @@ export default {
     "system.schema.datacombine": "Data Combine Rule",
     "system.schema.datacombine.field": "Field",
     "system.schema.datacombine.type": "Combine Rule",
-    "system.schema.datacombines": "Data Combine Rule List",
 
     "system.schema.dataindex": "Array Index",
     "system.schema.dataindex.name": "Index Name",
     "system.schema.dataindex.fields": "Index Field",
-    "system.schema.dataindexes": "Array Indexes",
 
     "system.schema.arrayschema": "Array Definition",
     "system.schema.arrayschema.element": "Element Type",
@@ -344,13 +351,11 @@ export default {
     "system.schema.funcarg.name": "Name",
     "system.schema.funcarg.type": "Type",
     "system.schema.funcarg.nullable": "Nullable",
-    "system.schema.funcargs": "Function Argument List",
 
     "system.schema.funccallarg": "Function Call Argument",
     "system.schema.funccallarg.name": "Expression",
     "system.schema.funccallarg.value": "Literal",
     "system.schema.funccallarg.display": "Argument",
-    "system.schema.funccallargs": "Function Call Argument List",
 
     "system.schema.funcexp": "Function Expression Config",
     "system.schema.funcexp.name": "Expression Name",
@@ -358,7 +363,6 @@ export default {
     "system.schema.funcexp.func": "Function",
     "system.schema.funcexp.return": "Return Type",
     "system.schema.funcexp.args": "Arguments",
-    "system.schema.funcexps": "Function Expression List",
 
     "system.schema.functionschema": "Function Definition",
     "system.schema.functionschema.return": "Return Type",
@@ -379,6 +383,7 @@ export default {
     "system.schema.nodeschema.func": "Function Definitions",
 
     "system.schema.appfieldschema": "App field",
+    "system.schema.appfieldschema.app": "Application",
     "system.schema.appfieldschema.name": "Field name",
     "system.schema.appfieldschema.type": "Field type",
     "system.schema.appfieldschema.display": "Field display",

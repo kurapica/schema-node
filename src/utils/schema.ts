@@ -1,10 +1,10 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
-import { deepClone, isEqual, isNull } from "./toolset"
+import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
-import { IStructScalarFieldConfig } from "../schema/structSchema"
+import { IStructEnumFieldConfig, IStructFieldRelation, IStructScalarFieldConfig } from "../schema/structSchema"
 import { IFunctionArgumentInfo } from "../schema/functionSchema"
 import { EnumValueType } from "../enum/enumValueType"
 import { RelationType } from "../enum/relationType"
@@ -13,11 +13,11 @@ import { DataCombineType } from "../enum/dataCombineType"
 
 //#region Utility
 
-const newSystemSchema = (name: string, schemas?: INodeSchema[], type: SchemaType = SchemaType.Namespace): INodeSchema => {
+export const newSystemSchema = (name: string, schemas?: INodeSchema[], type: SchemaType = SchemaType.Namespace): INodeSchema => {
     return { name, type, display: _LS(name), loadState: SchemaLoadState.System, schemas: schemas }
 }
 
-const newSystemScalar = (name: string, base?: string, error?: boolean, regex?: string, options?: {}): INodeSchema => {
+export const newSystemScalar = (name: string, base?: string, error?: boolean, regex?: string, options?: {}): INodeSchema => {
     return {
         name,
         type: SchemaType.Scalar,
@@ -27,21 +27,24 @@ const newSystemScalar = (name: string, base?: string, error?: boolean, regex?: s
     }
 }
 
-const newSystemArray = (name: string, element: string, ...primary: string[]): INodeSchema => {
-    return { name, type: SchemaType.Array, display: _LS(name), loadState: SchemaLoadState.System, array: { element, primary } }
+export const newSystemArray = (name: string, element: string, ...primary: string[]): INodeSchema => {
+    return { name, type: SchemaType.Array, display: _LS(element ? `{[LIST.PREFIX]}{@${element}}{[LIST.SUFFIX]}` : name), loadState: SchemaLoadState.System, array: { element, primary } }
+}
+export const newSystemRelArray = (name: string, element: string, relations: IStructFieldRelation[], ...primary: string[]): INodeSchema => {
+    return { name, type: SchemaType.Array, display: _LS(element ? `{[LIST.PREFIX]}{@${element}}{[LIST.SUFFIX]}` : name), loadState: SchemaLoadState.System, array: { element, primary, relations } }
 }
 
-const newSystemStruct = (name: string, fields: IStructScalarFieldConfig[]): INodeSchema => {
+export const newSystemStruct = (name: string, fields: (IStructScalarFieldConfig | IStructEnumFieldConfig)[], relations?: IStructFieldRelation[]): INodeSchema => {
     return {
         name,
         type: SchemaType.Struct,
         display: _LS(name),
         loadState: SchemaLoadState.System,
-        struct: { fields: fields.map(f => ({ display: _LS(`${name}.${f.name}`), ...f })) }
+        struct: { fields: fields.map(f => ({ display: _LS(`${name}.${f.name}`), ...f })), relations },
     }
 }
 
-const newSystemEnum = <T extends Record<string, string | number>>(name: string, e:T): INodeSchema => {
+export const newSystemEnum = <T extends Record<string, string | number>>(name: string, e:T): INodeSchema => {
     const entries = Object.entries(e)
     return {
         name,
@@ -55,7 +58,7 @@ const newSystemEnum = <T extends Record<string, string | number>>(name: string, 
     }
 }
 
-const newSystemFunc = (name: string, returnType: string, args: IFunctionArgumentInfo[], func: (...args: any[]) => any, generic?: string): INodeSchema => {
+export const newSystemFunc = (name: string, returnType: string, args: IFunctionArgumentInfo[], func: (...args: any[]) => any, generic?: string): INodeSchema => {
     return {
         name,
         type: SchemaType.Func,
@@ -600,6 +603,14 @@ registerSchema([
                 { name: "value", type: "T", nullable: true }
             ], (v: any) => !isNull(v)),
 
+            newSystemFunc("system.logic.isempty", NS_SYSTEM_BOOL, [
+                { name: "value", type: "T", nullable: true }
+            ], isEmpty),
+
+            newSystemFunc("system.logic.notempty", NS_SYSTEM_BOOL, [
+                { name: "value", type: "T", nullable: true }
+            ], (v: any) => !isEmpty(v)),
+
             newSystemFunc("system.logic.lessequal", NS_SYSTEM_BOOL, [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
@@ -628,20 +639,20 @@ registerSchema([
         //#endregion
     
         //#region system.schema
-        newSystemSchema("system.schema", [
+        newSystemSchema(NS_SYSTEM_SCHEMA, [
 
             // scalar
-            newSystemScalar("system.schema.anytype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.namespace", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.scalartype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.enumtype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.structtype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.arraytype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.functype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.validfunc", "system.schema.functype", undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.whitelistfunc", "system.schema.functype", undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.arrayeletype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
-            newSystemScalar("system.schema.valuetype", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
+            newSystemScalar(NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
+            newSystemScalar("system.schema.anytype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.scalartype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.enumtype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.structtype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.arraytype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.functype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.arrayeletype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.valuetype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.validfunc", "system.schema.functype"),
+            newSystemScalar("system.schema.whitelistfunc", "system.schema.functype"),
             newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 64 }),
             newSystemScalar("system.schema.anyvalue"),
 

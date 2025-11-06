@@ -1,6 +1,8 @@
 export default {
 
     "language": "中",
+    "[LIST.PREFIX]": "",
+    "[LIST.SUFFIX]": "列表",
 
     //#region Namespace
 
@@ -179,8 +181,10 @@ export default {
     "system.logic.equal": "等于",
     "system.logic.greateequal": "大于等于",
     "system.logic.greatethan": "大于",
-    "system.logic.isnull": "判定是否为空",
-    "system.logic.notnull": "判定非空",
+    "system.logic.isnull": "判定是否为null",
+    "system.logic.notnull": "判定非null",
+    "system.logic.isempty": "判定是否为空",
+    "system.logic.notempty": "判定非空",
     "system.logic.lessequal": "小于等于",
     "system.logic.lessthan": "小于",
     "system.logic.not": "不满足",
@@ -270,7 +274,14 @@ export default {
     "system.schema.enumvalueinfo.disable": "停用",
     "system.schema.enumvalueinfo.sublist": "子枚举值",
     "system.schema.enumvalueinfo.hassublist": "有子元素",
-    "system.schema.enumvalueinfos": "枚举字段信息列表",
+
+    "system.schema.enumintvalueinfo.value": "枚举值",
+    "system.schema.enumintvalueinfo.name": "枚举名",
+    "system.schema.enumintvalueinfo.disable": "停用",
+
+    "system.schema.enumflagvalueinfo.value": "枚举值",
+    "system.schema.enumflagvalueinfo.name": "枚举名",
+    "system.schema.enumflagvalueinfo.disable": "停用",
 
     "system.schema.enumschema": "枚举值定义",
     "system.schema.enumschema.type": "枚举值数据类型",
@@ -278,10 +289,10 @@ export default {
     "system.schema.enumschema.values": "枚举值列表",
 
     "system.schema.structfldfuncarg": "结构体字段函数参数",
+    "system.schema.structfldfuncarg.label": "名称",
     "system.schema.structfldfuncarg.type": "参数类型",
     "system.schema.structfldfuncarg.name": "字段名",
     "system.schema.structfldfuncarg.value": "值",
-    "system.schema.structfldfuncargs": "结构体字段函数参数列表",
 
     "system.schema.structfieldconfig": "结构体字段类型",
     "system.schema.structfieldconfig.name": "字段名",
@@ -306,7 +317,6 @@ export default {
     "system.schema.structfieldconfig.root": "根值",
     "system.schema.structfieldconfig.anylevel": "枚举值任意级可选",
     "system.schema.structfieldconfig.singleflag": "单标志位",
-    "system.schema.structfieldconfigs": "结构体字段类型列表",
 
     "system.schema.structfieldrelation": "字段数据关联",
     "system.schema.structfieldrelation.field": "目标字段",
@@ -315,7 +325,6 @@ export default {
     "system.schema.structfieldrelation.type": "关系类型",
     "system.schema.structfieldrelation.func": "关系函数",
     "system.schema.structfieldrelation.args": "函数参数",
-    "system.schema.structfieldrelations": "字段数据关联列表",
 
     "system.schema.structschema": "结构体类型定义",
     "system.schema.structschema.base": "基础类型",
@@ -325,12 +334,10 @@ export default {
     "system.schema.datacombine": "数据合并规则",
     "system.schema.datacombine.field": "字段",
     "system.schema.datacombine.type": "合并规则",
-    "system.schema.datacombines": "数据合并规则列表",
 
     "system.schema.dataindex": "数组索引",
     "system.schema.dataindex.name": "索引名称",
     "system.schema.dataindex.fields": "索引字段",
-    "system.schema.dataindexes": "数组索引列表",
 
     "system.schema.arrayschema": "数组定义",
     "system.schema.arrayschema.element": "元素数据类型",
@@ -343,13 +350,11 @@ export default {
     "system.schema.funcarg.name": "名称",
     "system.schema.funcarg.type": "类型",
     "system.schema.funcarg.nullable": "允许为空",
-    "system.schema.funcargs": "函数参数列表",
 
     "system.schema.funccallarg": "函数调用参数",
     "system.schema.funccallarg.name": "表达式",
     "system.schema.funccallarg.value": "常量",
     "system.schema.funccallarg.display": "参数名",
-    "system.schema.funccallargs": "函数调用参数列表",
 
     "system.schema.funcexp": "函数表达式配置",
     "system.schema.funcexp.name": "表达式名称",
@@ -357,7 +362,6 @@ export default {
     "system.schema.funcexp.func": "调用函数",
     "system.schema.funcexp.return": "返回类型",
     "system.schema.funcexp.args": "调用参数列表",
-    "system.schema.funcexps": "函数表达式列表",
 
     "system.schema.functionschema": "函数类型定义",
     "system.schema.functionschema.return": "返回值类型",
@@ -378,6 +382,7 @@ export default {
     "system.schema.nodeschema.func": "函数定义",
 
     "system.schema.appfieldschema": "应用字段",
+    "system.schema.appfieldschema.app": "所属应用",
     "system.schema.appfieldschema.name": "字段名",
     "system.schema.appfieldschema.type": "字段类型",
     "system.schema.appfieldschema.display": "字段展示",

@@ -2,6 +2,8 @@ import { DataChangeWatcher } from './dataChangeWatcher'
 import enUS from '../locales/enUS'
 import zhCN from '../locales/zhCN'
 import { isNull } from './toolset'
+import { getAppCachedSchema, getCachedSchema } from './schemaProvider'
+import { SchemaType } from '../enum/schemaType'
 
 const locales: {[key:string]: {[key:string]: string}} = {
     'enUS': enUS,
@@ -195,19 +197,7 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
     },
     apply(target, thisArg, args) {
         const [key] = args
-
-        if (isNull(key)) return ""
-        if (typeof(key) === "string")
-        {
-            if (key in currLocale) return currLocale[key]
-        }
-        else if(typeof(key) === "object") 
-        {
-            const l = key as ILocaleString
-            const tran = l.trans?.find(t => currLang.startsWith(t.lang) || t.lang.startsWith(currLang))
-            return tran?.tran || currLocale[l.key] || l.key || ""
-        }
-        return key
+        return localeStringToString(key)
     }
 })
 
@@ -224,4 +214,70 @@ export function isNullLocalString(value: string | ILocaleString | null | undefin
 export function combineLocaleString(locale: string | ILocaleString | null | undefined, other)
 {
     return _LS(isNullLocalString(locale) ? other : locale)
+}
+
+/**
+ * parse the locale string to string, the key may complex like '{list.prefix}{@system.schema.structschema.type}{list.suffix}'
+ */
+export function localeStringToString(value: ILocaleString | string | null | undefined): string
+{
+    if (isNull(value)) return ""
+    if (typeof(value) === "string") return currLocale[value] !== undefined && currLocale[value] !== null ? currLocale[value] : value
+
+    if (!value?.key) return ""
+
+    if (value.key && value.key.indexOf("{") >= 0)
+    {
+        let count = 0;
+        const result = value.key.replace(/{(.*?)}/g, (match, p1) => {
+            count++;
+
+            if (p1.startsWith("@"))
+            {
+                // schema
+                let key = p1.substring(1)
+                let field: string = ""
+                if (key.indexOf(":") >= 0)
+                    [key, field] = key.split(":")
+
+                const schema = getCachedSchema(key)
+                if (schema) {
+                    if (!isNull(field) && schema.type === SchemaType.Struct && schema.struct?.fields?.length) {
+                        const f = schema.struct.fields.find(f => f.name === field)
+                        return f?.display?.key ? localeStringToString(f.display) : _L(f.name)
+                    }
+                    return schema.display?.key ? localeStringToString(schema.display) : _L(schema.name)
+                }
+
+                return currLocale[key] !== undefined && currLocale[key] !== null ? currLocale[key] : p1
+            }
+            else if(p1.startsWith("#"))
+            {
+                // app schema
+                let key = p1.substring(1)
+                let field: string = ""
+                if (key.indexOf(":") >= 0)
+                    [key, field] = key.split(":")
+
+                const schema = getAppCachedSchema(key)
+                if (schema) {
+                    if (!isNull(field) && schema.fields?.length) {
+                        const f = schema.fields.find(f => f.name === field)
+                        return f?.display?.key ? localeStringToString(f.display) : _L(f.name)
+                    }
+                    return schema.display?.key ? localeStringToString(schema.display) : _L(schema.name)
+                }
+
+                return currLocale[key] !== undefined && currLocale[key] !== null ? currLocale[key] : p1
+            }
+            else
+            {
+                return currLocale[p1] !== undefined && currLocale[p1] !== null ? currLocale[p1] : p1
+            }
+        })
+        if (count > 0) return result
+    }
+    
+    const tran = value.trans?.find(t => currLang.startsWith(t.lang) || t.lang.startsWith(currLang))
+    return tran?.tran || (currLocale[value.key] !== undefined && currLocale[value.key] !== null ? currLocale[value.key] : value.key || "")
 }

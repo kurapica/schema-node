@@ -67,7 +67,6 @@ export class ArrayRuleSchema extends RuleSchema
     constructor(schema: INodeSchema){
         super(schema)
         if (!schema.array?.element) {
-            console.log("miss array ele", schema)
             return
         }
 

@@ -8,7 +8,8 @@ import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/no
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
-import { _LS, combineLocaleString, isNullLocalString } from "./locale"
+import { _LS, combineLocaleString } from "./locale"
+import axios from "axios"
 
 export const NS_SYSTEM = "system"
 
@@ -35,13 +36,16 @@ export const NS_SYSTEM_STRINGS = "system.strings"
 export const NS_SYSTEM_NUMBERS = "system.numbers"
 export const NS_SYSTEM_INTS = "system.ints"
 
-export const NS_SYSTEM_LANGUAGE = "system.language";
-export const NS_SYSTEM_LOCALE_STRING = "system.localestring";
-export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
-export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
-export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
-export const NS_SYSTEM_ENTRY = "system.entry";
-export const NS_SYSTEM_ENTRIES = "system.entrys";
+export const NS_SYSTEM_LANGUAGE = "system.language"
+export const NS_SYSTEM_LOCALE_STRING = "system.localestring"
+export const NS_SYSTEM_LOCALE_TRAN = "system.localetran"
+export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings"
+export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans"
+export const NS_SYSTEM_ENTRY = "system.entry"
+export const NS_SYSTEM_ENTRIES = "system.entrys"
+
+export const NS_SYSTEM_SCHEMA = "system.schema"
+export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 
 //#region Schema Provider
 
@@ -61,6 +65,11 @@ export const NS_SYSTEM_ENTRIES = "system.entrys";
  * by a server.
  */
 export interface ISchemaProvider {
+    /**
+     * Get the schema api protocol information
+     */
+    protocol(): Promise<ISchemaApiProtocolMeta | undefined>
+
     /**
      * Load the schema information
      * @param names The names of the schema
@@ -105,7 +114,46 @@ export interface ISchemaProvider {
     callFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any>
 }
 
+let schemaApiBaseUrl: string | undefined = undefined
 let schemaProvider: ISchemaProvider | null = null
+
+// default schema provider
+export const defaultSchemaProvider: ISchemaProvider = {
+    protocol: async (): Promise<ISchemaApiProtocolMeta | undefined> => {
+        return (await postSchemaApi("/protocol", {}, true)) || undefined
+    },
+    
+    loadSchema: async (names: string[]): Promise<INodeSchema[]> => {
+        return (await postSchemaApi("/load-schema", {
+            names: names
+        }))?.schemas || []
+    },
+
+    loadAppSchema: async (app: string, includeTypes?: boolean): Promise<IAppSchema | undefined> => {
+        return (await postSchemaApi("/load-app-schema", {
+            name: app,
+            includeTypes
+        }))?.schema
+    },
+
+    loadEnumSubList: async (name: string, value?: any, fullList?: boolean): Promise<IEnumValueInfo[]> => {
+        return (await postSchemaApi("/load-enum-sub-list", {
+            name, value, fullList
+        }))?.values
+    },
+
+    loadEnumAccessList: async (name: string, value: any, noSubList?: boolean, withSubList?: boolean): Promise<IEnumValueAccess[]> => {
+        return (await postSchemaApi("/load-enum-access-list", {
+            name, value, noSubList, withSubList
+        }))?.access
+    },
+
+    callFunction: async (name: string, args: any[], generic?: string | string[], target?: string): Promise<any> => {
+        return (await postSchemaApi("/call-function", {
+            name, args, generic, target
+        }))?.result
+    },
+}
 
 /**
  * Sets the schema provider
@@ -118,7 +166,7 @@ export function useSchemaProvider(provider: ISchemaProvider): void {
  * Gets the schema provider
  */
 export function getSchemaProvider(): ISchemaProvider | null {
-    return schemaProvider
+    return schemaProvider ?? (schemaApiBaseUrl ? defaultSchemaProvider : null)
 }
 
 //#endregion
@@ -163,7 +211,10 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             exist.nodeSchema = undefined
 
             if (schema.hasFields || schema.fields?.length)
+            {
                 delete exist.apps
+                schema.fields?.forEach(f => f.app = exist.name)
+            }
             else if(schema.apps?.length)
                 registerAppSchema(schema.apps, loadState)
 
@@ -202,6 +253,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
         if (schema.hasFields || schema.fields?.length)
         {
             delete schema.apps
+            schema.fields?.forEach(f => f.app = schema.name)
             updateAppSchemaRefs(schema, true)
         }
         else if(schema.apps?.length)
@@ -266,11 +318,12 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
     name = name.toLowerCase()
 
     let schema = !name ? rootAppSchema : appSchemaCache[name]
-    if (schema?.loaded || !schemaProvider) return schema
+    let provider = getSchemaProvider()
+    if (schema?.loaded || !provider) return schema
     if (schema) schema.loaded = true
 
     // load schema from provider
-    schema = await schemaProvider.loadAppSchema(name, true)
+    schema = await provider.loadAppSchema(name, true)
     if (schema) {
         schema.loaded = true
         if (schema.nodeSchemas) PrepareServerSchemas(schema.nodeSchemas)
@@ -432,8 +485,8 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         // append to the namespace
         addSchema(root, schema)
 
-        // make system types already loaded
-        if ((loadState & SchemaLoadState.System) && schema.type !== SchemaType.Namespace)
+        // Only namespace require another load
+        if (schema.type !== SchemaType.Namespace)
             schema.loaded = true
 
         if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
@@ -443,7 +496,9 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
         updateSchemaRefs(schema, true)
         
         if (schema.type === SchemaType.Namespace && schema.schemas)
+        {
             registerSchema([...schema.schemas], loadState)
+        }
     }
     schemaChangeWatcher.notify(schemas.map(s => s.name))
 }
@@ -504,14 +559,15 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     }
 
     let schema = !name ? rootSchema : schemaCache[name]
-    if (schema?.loaded || !schemaProvider)
+    let provider = getSchemaProvider()
+    if (schema?.loaded || !provider)
         return schema
 
     if(schema) schema.loaded = true
-    if (!schemaProvider) throw new Error(`Schema provider not provided to get ${name}`)
+    if (!provider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
-    const schemas = await schemaProvider.loadSchema([name]) || []
+    const schemas = await provider.loadSchema([name]) || []
     PrepareServerSchemas(schemas)
     registerSchema(schemas, SchemaLoadState.Server)
     return schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
@@ -571,7 +627,7 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
     registerSchema([{
         name: `${name}s_${generateGuidPart()}`,
         type: SchemaType.Array,
-        display: _LS(`Anonmous array for ${name}`),
+        display: _LS(`{[LIST.PREFIX]}{@${name}}{[LIST.SUFFIX]}`),
         array: { element: schema.name }
     }])
     return arraySchemaMap[name]
@@ -869,8 +925,9 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
         // check load state
         if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
-        if (!schemaProvider) throw new Error("Schema provider not provided")
-        const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        let provider = getSchemaProvider()
+        if (!provider) throw new Error("Schema provider not provided")
+        const einfos = await provider.loadEnumSubList(name, value, deep)
         prepareEnumValueInfos(schema.enum.type, einfos)
         schema.enum.values = einfos
         return einfos
@@ -885,12 +942,13 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     // check load state
     if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
-    if (!schemaProvider) throw new Error("Schema provider not provided")
-    
+    let provider = getSchemaProvider()
+    if (!provider) throw new Error("Schema provider not provided")
+
     // only require sub list
     if (einfo)
     {
-        const einfos = await schemaProvider.loadEnumSubList(name, value, deep)
+        const einfos = await provider.loadEnumSubList(name, value, deep)
         prepareEnumValueInfos(schema.enum.type, einfos)
         einfo.subList = einfos
         einfo.hasSubList = einfos.length > 0
@@ -898,7 +956,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     }
 
     // need full access
-    const access = await schemaProvider.loadEnumAccessList(name, value, false, true)
+    const access = await provider.loadEnumAccessList(name, value, false, true)
     if (!access?.length) return []
     prepareEnumAccesses(schema.enum.type, access)
     
@@ -933,7 +991,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
     if (einfo.subList?.length) return einfo.subList
 
     // try reload
-    einfo.subList = await schemaProvider.loadEnumSubList(name, value, deep)
+    einfo.subList = await provider.loadEnumSubList(name, value, deep)
     if (!einfo.subList.length) einfo.hasSubList = false
     prepareEnumValueInfos(schema.enum.type, einfo.subList)
     return einfo.subList
@@ -963,8 +1021,9 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
     if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
 
     // query
-    if (!schemaProvider) throw new Error("Schema provider not provided")
-    const access = await schemaProvider.loadEnumAccessList(name, value)
+    let provider = getSchemaProvider()
+    if (!provider) throw new Error("Schema provider not provided")
+    const access = await provider.loadEnumAccessList(name, value)
 
     // combine
     if (!access?.length) return []
@@ -1036,7 +1095,7 @@ const pendingCall: {
 } = {}
 const pendingComplexCall: any = {}
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => schemaProvider!.callFunction(schemaName, args, generic, target))
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => getSchemaProvider()!.callFunction(schemaName, args, generic, target))
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
@@ -1061,12 +1120,12 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
     }
 
     // Client function call it direclty
-    if (funcInfo.func && (!funcInfo.server || !schemaProvider)) {
+    if (funcInfo.func && (!funcInfo.server || !getSchemaProvider())) {
         return await callFunc(funcInfo.func, args)
     }
     
     // Schema provider check
-    if (!schemaProvider) throw new Error("Schema provider not provided")
+    if (!getSchemaProvider()) throw new Error("Schema provider not provided")
 
     // Combine and queue
     let token = (!args || !args.length) 
@@ -1216,7 +1275,7 @@ function addSchema(root: INodeSchema, schema: INodeSchema)
 // build the function schema to function
 async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     // server-side function
-    if (!funcInfo.exps.length || (funcInfo.server && schemaProvider)) return false
+    if (!funcInfo.exps.length || (funcInfo.server && getSchemaProvider())) return false
 
     // arg or exp type map
     const exptypes: { [key: string]: INodeSchema } = {}
@@ -1234,7 +1293,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
 
         // get the call func
         const cfinfo = await getSchema(fexp.func)
-        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && schemaProvider)) return false
+        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && getSchemaProvider())) return false
 
         // try buil the call func
         const cfuncInfo = cfinfo.func
@@ -1628,6 +1687,254 @@ interface IExpressionArg {
      * require
      */
     require: boolean
+}
+
+//#endregion
+
+//#region Api schema Protocol
+
+export interface ISchemaApiProtocolRequestMeta
+{
+    wrap?: string
+    fields?: Record<string, any>
+}
+
+export interface ISchemaApiProtocolResponseMeta
+{
+    unwrap?: string
+    fields?: Record<string, any>
+}
+
+export interface ISchemaApiProtocolMeta
+{
+    name?: string
+    request?: ISchemaApiProtocolRequestMeta
+    response?: ISchemaApiProtocolResponseMeta
+    error?: string[]
+}
+
+let schemaApiHeaders = [] as { key: string, value: string }[]
+
+export function setSchemaApiHeaders(headers: { key: string, value: string }[]) {
+    schemaApiHeaders = headers
+}
+
+axios.interceptors.request.use(config => {
+    // add frontend auth headers
+    if (schemaApiHeaders.length) {
+        for (const header of schemaApiHeaders) {
+            if (header.key && header.value) {
+                config.headers[header.key] = header.value
+            }
+        }
+    }
+    return config
+})
+
+// The schema api base url
+if (document.querySelector('meta[name="schema-api-base-url"]'))
+{
+    schemaApiBaseUrl = document.querySelector('meta[name="schema-api-base-url"]').getAttribute('content') || undefined
+}
+
+// check protocol from meta tag
+let apiProtocol: ISchemaApiProtocolMeta | undefined = undefined
+
+function scanErrorPaths(fields?: Record<string, any>): string[] {
+    let errorPaths: string[] = []
+    if (fields)
+    {
+        for (let field in fields)
+        {
+            const fieldFmt = fields[field]
+            if (typeof fieldFmt === 'string' && fieldFmt.indexOf('[error]') >= 0)
+            {
+                return [field]
+            }
+            else if (typeof(fieldFmt) === 'object')
+            {
+                const subPaths = scanErrorPaths(fieldFmt)
+                if (subPaths.length)
+                {
+                    return [field, ...subPaths]
+                }
+            }
+        }
+    }
+    return []
+}
+
+function generateField(url: string, fmt: any): any | undefined
+{
+    if (typeof(fmt) !== 'string') return undefined
+
+    let type: string;
+    let format: string | null;
+    let example: string | null;
+
+    const match = fmt.match(/^(\w+)\[?(\w*)\]?:?(.*)?$/)
+    if (match.length >= 2)
+    {
+        if (match[1] == "string")
+        {
+            if (match[2] == "uuid")
+            {
+                return crypto.randomUUID()
+            }
+            else if(match[2] == "timestamp")
+            {
+                return new Date().toISOString()
+            }
+            else if(match[2] == "date")
+            {
+                return new Date().toISOString().split('T')[0]
+            }
+            else if(match[2] == "url")
+            {
+                return url.startsWith("/") ? url.substring(1) : url
+            }
+            return match[3] || ""
+        }
+        else if (match[1] == "integer")
+        {
+            return !isNull(match[3]) ? match[3] : Math.floor(Math.random() * 10000)
+        }
+    }
+    return undefined
+}
+
+function setSchemaApiProtocol(protocol: any): boolean {
+    if (protocol && typeof protocol === 'object' 
+        && protocol.name && typeof protocol.name === 'string'
+        && (!protocol.request || typeof protocol.request === 'object')
+        && (!protocol.response || typeof protocol.response === 'object'))
+    {
+        apiProtocol = {
+            name: protocol.name,
+            request: protocol.request,
+            response: protocol.response,
+            error: scanErrorPaths(protocol.response?.fields)
+        }
+        return true
+    }
+    return false
+}
+
+// Read protocol meta if defined
+if (document.querySelector('meta[name="schema-api-protocol"]'))
+{
+    try
+    {
+        let content = document.querySelector('meta[name="schema-api-protocol"]').getAttribute('content') || ''
+        if (content) setSchemaApiProtocol(JSON.parse(content))
+    }
+    catch(ex)
+    {
+        console.warn("Invalid schema-api-protocol meta tag content.")
+    }
+}
+
+/**
+ * Sets the schema api base url
+ * @param url The schema api base url
+ */
+export function setSchemaApiBaseUrl(url: string | undefined): void {
+    schemaApiBaseUrl = !isNull(url) ? url : undefined
+}
+
+/**
+ * Gets the schema api base url
+ * @returns The schema api base url
+ */
+export function getSchemaApiBaseUrl(): string | undefined {
+    return schemaApiBaseUrl
+}
+
+/**
+ * Posts query to the schema api, the default implements
+ * @param url the request url
+ * @param param the request params
+ * @param noProtocol whether to ignore protocol processing
+ * @returns the result
+ */
+export async function postSchemaApi(url: string, param: any, noProtocol: boolean = false): Promise<any> {
+    try
+    {
+        let site: string = schemaApiBaseUrl
+        if (!site) return null
+
+        if (site.endsWith("/")) site = site.substring(0, site.length - 1)
+        if (url.startsWith("/")) url = url.substring(1)
+
+        // Read protocol meta if not yet defined
+        if (!noProtocol)
+        {
+            if (!apiProtocol)
+            {
+                try
+                {
+                    const provider = getSchemaProvider()
+                    if (provider)
+                    {
+                        const response = await provider.protocol()
+                        if (response) setSchemaApiProtocol(response)
+                    }
+
+                    // use default if not provided
+                    if (!apiProtocol) setSchemaApiProtocol({ name: "Default" })
+                }
+                catch(ex)
+                {
+                    console.warn("Invalid schema-api-protocol meta tag content.")
+                    setSchemaApiProtocol({ name: "Default" })
+                }
+            }
+
+            // build request according to protocol
+            if (apiProtocol.request && apiProtocol.request.wrap)
+            {
+                let requestParam: any = { [apiProtocol.request.wrap]: param }
+                for (let field in apiProtocol.request.fields || {})
+                {
+                    const fieldFmt = apiProtocol.request.fields[field]
+                    requestParam[field] = generateField(url, fieldFmt)
+                }
+                param = requestParam
+            }
+        }
+        
+        const result: any = await axios.post(`${site}/${url}`, param, {
+            headers: { 'Content-Type': 'application/json' }
+        })
+
+        let data = result?.data
+        
+        // unwrap response according to protocol
+        if (!noProtocol && apiProtocol.response && apiProtocol.response.unwrap)
+        {
+            // check error protocol
+            if (apiProtocol.error && apiProtocol.error.length)
+            {
+                let errorCheck = data
+                for (let i = 0; i < apiProtocol.error.length; i++) 
+                {
+                    if (errorCheck && typeof(errorCheck) === 'object')
+                    {
+                        errorCheck = errorCheck[apiProtocol.error[i]]
+                    }
+                }
+                if (errorCheck) // 0 or "" means no error
+                    throw new Error(errorCheck)
+            }
+
+            data = data[apiProtocol.response.unwrap]
+        }
+        return data
+    }
+    catch(ex)
+    {
+        return null
+    }
 }
 
 //#endregion
