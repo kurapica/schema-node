@@ -47,6 +47,9 @@ export const NS_SYSTEM_ENTRIES = "system.entrys"
 export const NS_SYSTEM_SCHEMA = "system.schema"
 export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 
+export const NS_SYSTEM_WORKFLOW = "system.workflow"
+export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
+
 //#region Schema Provider
 
 /**

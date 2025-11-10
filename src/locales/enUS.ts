@@ -192,6 +192,32 @@ export default {
     "system.logic.notequal": "Not Equal",
     "system.logic.orelse": "Or Else",
 
+    // system.event
+    "system.event": "System Event",
+    "system.event.schema": "Schema Definition Event",
+    "system.event.schema.change": "Schema Definition Change Event",
+    "system.event.schema.delete": "Schema Definition Deletion Event",
+
+    "system.event.appschema": "App Definition Event",
+    "system.event.appschema.delete": "App Definition Deletion Event",
+    "system.event.appschema.update": "App Definition Update Event",
+
+    "system.event.appdata": "App Data Event",
+    "system.event.appdata.create": "App Data Creation Event",
+    "system.event.appdata.update": "App Data Update Event",
+    "system.event.appdata.delete": "App Data Deletion Event",
+    "system.event.appdata.read": "App Data Read Event",
+
+    "system.workflow": "System Workflow",
+    "system.workflow.call": "Function Call Node",
+    "system.workflow.control": "Control Node",
+    "system.workflow.control.goto": "Go to Node",
+
+    "system.workflow.event": "Event Trigger Node",
+    "system.workflow.event.app": "App Data Event Trigger Node",
+
+    // system.workflow
+
     // system.schema
 
     "system.schema": "Schema Definition Helper",
@@ -217,6 +243,8 @@ export default {
     "system.schema.schematype.array": "Array",
     "system.schema.schematype.func": "Function",
     "system.schema.schematype.json": "Json",
+    "system.schema.schematype.event": "Event",
+    "system.schema.schematype.workflow": "Workflow",
 
     "system.schema.relationtype": "Relation Purpose",
     "system.schema.relationtype.default": "Default Value",

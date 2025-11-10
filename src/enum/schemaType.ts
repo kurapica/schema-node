@@ -37,6 +37,16 @@ export enum SchemaType
      * The function node
      */
     Func = "func",
+
+    /**
+     * The event node
+     */
+    Event = "event",
+
+    /**
+     * The workflow node
+     */
+    Workflow = "workflow"
 }
 
 export type SchemaTypeValue = `${SchemaType}`

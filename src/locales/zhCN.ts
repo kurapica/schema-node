@@ -192,6 +192,30 @@ export default {
     "system.logic.notequal": "不等于",
     "system.logic.orelse": "任一满足",
 
+    // system.event
+    "system.event": "系统事件",
+    "system.event.schema": "类型定义事件",
+    "system.event.schema.change": "类型定义变更事件",
+    "system.event.schema.delete": "类型定义删除事件",
+
+    "system.event.appschema": "应用定义事件",
+    "system.event.appschema.delete": "应用定义删除事件",
+    "system.event.appschema.update": "应用定义更新事件",
+
+    "system.event.appdata": "应用数据事件",
+    "system.event.appdata.create": "应用数据创建事件",
+    "system.event.appdata.update": "应用数据更新事件",
+    "system.event.appdata.delete": "应用数据删除事件",
+    "system.event.appdata.read": "应用数据读取事件",
+
+    "system.workflow": "系统工作流",
+    "system.workflow.call": "函数调用节点",
+    "system.workflow.control": "工作流控制节点",
+    "system.workflow.control.goto": "跳转到指定节点",
+
+    "system.workflow.event": "事件触发节点",
+    "system.workflow.event.app": "应用数据事件触发节点",
+
     // system.schema
     "system.schema": "类型定义辅助",
     "system.schema.namespace": "命名空间",
@@ -216,6 +240,8 @@ export default {
     "system.schema.schematype.array": "数组类型",
     "system.schema.schematype.func": "函数类型",
     "system.schema.schematype.json": "JSON类型",
+    "system.schema.schematype.event": "事件类型",
+    "system.schema.schematype.workflow": "工作流类型",
 
     "system.schema.relationtype": "字段计算结果用途",
     "system.schema.relationtype.default": "默认值计算",

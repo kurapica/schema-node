@@ -2,9 +2,11 @@ import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
+import { IEventSchema } from "./eventSchema"
 import { IFunctionSchema } from "./functionSchema"
 import { IScalarSchema } from "./scalarSchema"
 import { IStructSchema } from "./structSchema"
+import { IWorkflowSchema } from "./workflowSchema"
 
 /**
  * The data node schema
@@ -51,6 +53,16 @@ export interface INodeSchema
      * The function schema if type is function
      */
     func?: IFunctionSchema
+
+    /**
+     * The event schema if type is event
+     */
+    event?: IEventSchema
+
+    /**
+     * The workflow schema if type is workflow
+     */
+    workflow?: IWorkflowSchema
 
     /**
      * The sub schemas of of the namespace
