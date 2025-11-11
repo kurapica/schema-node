@@ -483,6 +483,12 @@ registerSchema([
 
                 return Math.floor(diffMs / oneDayMs);
             }),
+
+            newSystemFunc("system.datetime.between", NS_SYSTEM_BOOL, [
+                { name: "date", type: NS_SYSTEM_DATE },
+                { name: "start", type: NS_SYSTEM_DATE },
+                { name: "stop", type: NS_SYSTEM_DATE }
+            ], (d: Date, s: Date, e: Date) => d.getTime() >= s.getTime() && d.getTime() <= e.getTime()),
         ]),
 
         // collection func
@@ -507,7 +513,10 @@ registerSchema([
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
-            ], (a: any[], f: string) => a.map(l => l[f]).filter(v => !isNull(v)), NS_SYSTEM_ARRAY),
+            ], (a: any[], f: string) => {
+                console.log("call getfields", a, f)
+                return a.map(l => l[f]).filter(v => !isNull(v))
+            }, NS_SYSTEM_ARRAY),
 
             newSystemFunc("system.collection.sum", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
@@ -660,7 +669,7 @@ registerSchema([
             newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 32 }),
             newSystemScalar("system.schema.anyvalue"),
 
-            newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 64 }),
+            newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
             newSystemScalar("system.schema.appfield", "system.schema.varname"),
             newSystemScalar("system.schema.appworkflow", "system.schema.varname"),
 

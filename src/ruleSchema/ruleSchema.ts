@@ -513,8 +513,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             let value = a.node.rawData
                             if (a.checkArrayNode) {
                                 let n = node
-                                while (n.parent && !(n.parent instanceof ArrayNode))
+                                while (n.parent && n.parent !== a.node)
                                     n = n.parent
+
+                                if (!n.parent)
+                                {
+                                    n = node
+                                    while (n.parent && !(n.parent instanceof ArrayNode))
+                                        n = n.parent
+                                }
 
                                 const arrayIndex = (n.parent as ArrayNode).indexof(n) as number
                                 if (Array.isArray(value) && arrayIndex >= 0)
