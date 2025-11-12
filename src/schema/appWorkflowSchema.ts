@@ -39,6 +39,11 @@ export interface IAppWorkflowNodeSchema
     type: string
 
     /**
+     * the workflow arguments
+     */
+    args?: IFunctionCallArgument[]
+
+    /**
      * The workflow payload schema type
      */
     payload: string
@@ -72,4 +77,9 @@ export interface IAppWorkflowNodeSchema
      * Whether the node is a fork node
      */
     fork?: boolean
+
+    /**
+     * The fork key
+     */
+    forkKey?: string
 }
