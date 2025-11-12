@@ -3,12 +3,14 @@ export default {
     "language": "中",
     "[LIST.PREFIX]": "",
     "[LIST.SUFFIX]": "列表",
+    "[GENERIC]": "泛型",
 
     //#region Namespace
 
     // system
     "system": "系统命名空间",
     "system.array": "基础数组",
+    "system.list": "通用列表",
     "system.struct": "基础结构体",
     "system.json": "JSON数据",
 
@@ -215,16 +217,27 @@ export default {
     "system.workflow.call": "函数调用节点",
     "system.workflow.control": "工作流控制节点",
     "system.workflow.control.goto": "跳转到指定节点",
-    "system.workflow.control.gotostate": "跳转工作流状态",
-    "system.workflow.control.gotostate.flag": "条件标志",
-    "system.workflow.control.gotostate.trueNode": "真值跳转",
-    "system.workflow.control.gotostate.falseNode": "假值跳转",
 
     "system.workflow.event": "事件触发节点",
-    "system.workflow.event.app": "应用数据事件触发节点",
-    "system.workflow.event.appstate": "应用数据事件触发节点状态",
-    "system.workflow.event.appstate.target": "应用目标",
-    "system.workflow.event.appstate.field": "应用字段",
+    "system.workflow.event.app": "应用事件触发事件",
+
+    "system.workflow.event.apppayload": "应用事件触发事件负载",
+    "system.workflow.event.apppayload.application": "应用",
+
+    "system.workflow.event.appdata": "应用目标数据访问事件",
+
+    "system.workflow.event.appdatapayload": "应用目标数据访问事件负载",
+    "system.workflow.event.appdatapayload.application": "应用",
+    "system.workflow.event.appdatapayload.target": "应用目标",
+
+    "system.workflow.event.appfielddata": "应用字段数据变更事件",
+
+    "system.workflow.event.appfielddatapayload": "应用字段数据变更事件负载",
+    "system.workflow.event.appfielddatapayload.application": "应用",
+    "system.workflow.event.appfielddatapayload.field": "应用字段",
+    "system.workflow.event.appfielddatapayload.target": "应用目标",
+    "system.workflow.event.appfielddatapayload.data": "更新数据",
+    "system.workflow.event.appfielddatapayload.origin": "原始数据",
 
     // system.schema
     "system.schema": "类型定义辅助",
@@ -417,7 +430,7 @@ export default {
     "system.schema.funcexp.type": "调用方式",
     "system.schema.funcexp.func": "调用函数",
     "system.schema.funcexp.return": "返回类型",
-    "system.schema.funcexp.args": "调用参数列表123",
+    "system.schema.funcexp.args": "调用参数列表",
 
     "system.schema.functionschema": "函数类型定义",
     "system.schema.functionschema.return": "返回值类型",
@@ -472,6 +485,7 @@ export default {
     "system.schema.workflowschema.payload": "负载类型",
     "system.schema.workflowschema.state": "配置类型",
     "system.schema.workflowschema.session": "会话类型",
+    "system.schema.workflowschema.args": "参数类型",
 
     "system.schema.appworkflow": "应用工作流定义",
     "system.schema.eventtype": "事件类型",
@@ -498,10 +512,11 @@ export default {
     "system.schema.appworkflownodeschema.display": "展示名",
     "system.schema.appworkflownodeschema.desc": "描述",
     "system.schema.appworkflownodeschema.type": "类型",
+    "system.schema.appworkflownodeschema.args": "参数",
     "system.schema.appworkflownodeschema.payload": "负载",
     "system.schema.appworkflownodeschema.previous": "前置节点",
     "system.schema.appworkflownodeschema.func": "函数",
-    "system.schema.appworkflownodeschema.args": "参数",
+    "system.schema.appworkflownodeschema.funcArgs": "函数参数",
     "system.schema.appworkflownodeschema.event": "事件",
     "system.schema.appworkflownodeschema.fork": "分叉",
     "system.schema.appworkflownodeschema.state": "状态",

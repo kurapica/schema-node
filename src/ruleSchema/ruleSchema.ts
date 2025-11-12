@@ -382,8 +382,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumNode)
-            {
+            else if (node instanceof ArrayNode && node.enumNode){
                 handler = (res: any) => {
                     node.enumNode.rule.root = res
                     node.enumNode.validation().finally(() => node.enumNode.notifyState())

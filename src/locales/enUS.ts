@@ -3,12 +3,14 @@ export default {
     "language": "EN",
     "[LIST.PREFIX]": "",
     "[LIST.SUFFIX]": " List",
+    "[GENERIC]": "Generic",
 
     //#region Namespace
 
     // system
     "system": "System Namespace",
     "system.array": "Basic Array",
+    "system.list": "Generic List",
     "system.struct": "Basic Structure",
     "system.json": "JSON Data",
 
@@ -215,16 +217,26 @@ export default {
     "system.workflow.call": "Function Call Node",
     "system.workflow.control": "Control Node",
     "system.workflow.control.goto": "Go to Node",
-    "system.workflow.control.gotostate": "Goto Node State",
-    "system.workflow.control.gotostate.flag": "Flag",
-    "system.workflow.control.gotostate.trueNode": "True Node",
-    "system.workflow.control.gotostate.falseNode": "False Node",
 
     "system.workflow.event": "Event Trigger Node",
-    "system.workflow.event.app": "App Data Event Trigger Node",
-    "system.workflow.event.appstate": "App data event node state",
-    "system.workflow.event.appstate.target": "App Target",
-    "system.workflow.event.appstate.field": "App Field",
+    "system.workflow.event.app": "Application Event Trigger Event",
+
+    "system.workflow.event.apppayload": "Application Data Event Payload",
+    "system.workflow.event.apppayload.application": "Application",
+
+    "system.workflow.event.appdata": "Application Target Data Access Event",
+
+    "system.workflow.event.appdatapayload": "Application Target Data Access Event Payload",
+    "system.workflow.event.appdatapayload.application": "Application",
+    "system.workflow.event.appdatapayload.target": "Application Target",
+
+    "system.workflow.event.appfielddata": "Application Field Data Change Event",
+    "system.workflow.event.appfielddatapayload": "Application Field Data Change Event Payload",
+    "system.workflow.event.appfielddatapayload.application": "Application",
+    "system.workflow.event.appfielddatapayload.field": "Application Field",
+    "system.workflow.event.appfielddatapayload.target": "Application Target",
+    "system.workflow.event.appfielddatapayload.data": "Updated Data",
+    "system.workflow.event.appfielddatapayload.origin": "Original Data",
 
     // system.workflow
 
@@ -475,6 +487,7 @@ export default {
     "system.schema.workflowschema.payload": "Payload Type",
     "system.schema.workflowschema.state": "Configuration Type",
     "system.schema.workflowschema.session": "Session Type",
+    "system.schema.workflowschema.args": "Arguments",
 
     "system.schema.appworkflow": "App Workflow Definition",
     "system.schema.eventtype": "Event Type",
@@ -501,10 +514,11 @@ export default {
     "system.schema.appworkflownodeschema.display": "Display",
     "system.schema.appworkflownodeschema.desc": "Description",
     "system.schema.appworkflownodeschema.type": "Type",
+    "system.schema.appworkflownodeschema.args": "Arguments",
     "system.schema.appworkflownodeschema.payload": "Payload",
     "system.schema.appworkflownodeschema.previous": "Previous Node",
     "system.schema.appworkflownodeschema.func": "Function",
-    "system.schema.appworkflownodeschema.args": "Arguments",
+    "system.schema.appworkflownodeschema.funcArgs": "Function Arguments",
     "system.schema.appworkflownodeschema.event": "Event",
     "system.schema.appworkflownodeschema.fork": "Fork",
     "system.schema.appworkflownodeschema.state": "State",

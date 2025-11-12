@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { generateGuidPart, isNull, useQueueQuery } from "./toolset"
+import { isNull, useQueueQuery } from "./toolset"
 import { IEnumValueAccess, IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { IFunctionSchema } from "../schema/functionSchema"
 import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
@@ -13,7 +13,11 @@ import axios from "axios"
 
 export const NS_SYSTEM = "system"
 
+export const REGEX_GENERIC_TYPE = /^T\d*$/
+export const REGEX_GENERIC_IMPLEMENT = /^([\w\.]+)<(.+)>$/
+
 export const NS_SYSTEM_ARRAY = "system.array"
+export const NS_SYSTEM_LIST = "system.list"
 export const NS_SYSTEM_STRUCT = "system.struct"
 export const NS_SYSTEM_JSON = "system.json"
 export const NS_SYSTEM_BOOL = "system.bool"
@@ -561,11 +565,21 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         name = Array.isArray(generic) ? generic[index] : generic
     }
 
+    // geneiric implement check
+    const match = name.match(REGEX_GENERIC_IMPLEMENT)
+    let geneiricTypes: string[] = []
+    if (match && match.length >= 3)
+    {
+        geneiricTypes = match[2].split(",").map(t => t.trim())
+        name = match[1]
+    }
+
+    // cache check
     let schema = !name ? rootSchema : schemaCache[name]
     let provider = getSchemaProvider()
-    if (schema?.loaded || !provider)
-        return schema
+    if (schema?.loaded || !provider) return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
 
+    // load schema from provider
     if(schema) schema.loaded = true
     if (!provider) throw new Error(`Schema provider not provided to get ${name}`)
 
@@ -573,7 +587,9 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     const schemas = await provider.loadSchema([name]) || []
     PrepareServerSchemas(schemas)
     registerSchema(schemas, SchemaLoadState.Server)
-    return schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
+
+    schema = schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
+    return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
 }
 
 /**
@@ -613,7 +629,17 @@ export function getCachedSchema(name: string): INodeSchema | undefined {
         return
     }
 
-    return !name ? rootSchema : schemaCache[name]
+    // geneiric implement check
+    const match = name.match(REGEX_GENERIC_IMPLEMENT)
+    let geneiricTypes: string[] = []
+    if (match && match.length >= 3)
+    {
+        geneiricTypes = match[2].split(",").map(t => t.trim())
+        name = match[1]
+    }
+
+    const schema = !name ? rootSchema : schemaCache[name]
+    return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
 }
 
 /**
@@ -626,14 +652,34 @@ export async function getArraySchema(name: string | INodeSchema, noautocreate: b
     name = schema.name.toLowerCase()
     if (noautocreate || arraySchemaMap[name]) return arraySchemaMap[name]
 
-    // provide a default one
-    registerSchema([{
-        name: `${name}s_${generateGuidPart()}`,
-        type: SchemaType.Array,
-        display: _LS(`{[LIST.PREFIX]}{@${name}}{[LIST.SUFFIX]}`),
-        array: { element: schema.name }
-    }])
-    return arraySchemaMap[name]
+    // provide the generic
+    return getCachedSchema(`system.list<${name}>`)
+}
+
+/**
+ * Gets the generic parameter names of a schema
+ */
+export function getGenericParameter(name: string | INodeSchema) : string[] | undefined
+{
+    const schema = typeof name === "string" ? getCachedSchema(name) : name
+    if (schema?.type == SchemaType.Array) {
+        if (schema.array.element?.match(REGEX_GENERIC_TYPE)) {
+            return ["T"]
+        }
+    }
+    else if (schema?.type == SchemaType.Struct) {
+        const temp = new Set<string>()
+        const generics = schema.struct?.fields?.filter(f => { 
+            if (f.type.match(REGEX_GENERIC_TYPE)) {
+                if (!temp.has(f.type)) {
+                    temp.add(f.type)
+                    return true
+                }
+            } 
+            return false
+        })?.map(f => f.type) || []
+        return generics.length ? generics : undefined
+    }
 }
 
 /**
@@ -846,6 +892,54 @@ export async function isStructFieldIndexable(config: IStructFieldConfig)
         default:
             return false
     }
+}
+
+const genericSchemaCache: { [key: string]: INodeSchema } = {}
+function buildGenericType(schema: INodeSchema, genericTypes: string[]): INodeSchema | undefined {
+    if (!genericTypes?.length) return undefined
+    const genTypes = getGenericParameter(schema)
+    if (!genTypes || genTypes.length !== genericTypes.length) return undefined
+
+    const genKey = `${schema.name}<${genericTypes.join(",")}>`.toLowerCase()
+    if (genericSchemaCache[genKey]) return genericSchemaCache[genKey]
+
+    if (schema.type === SchemaType.Array) {
+        const genSchema: INodeSchema = {
+            name: genKey,
+            type: SchemaType.Array,
+            display: _LS(`{[LIST.PREFIX]}{@${genericTypes[0]}}{[LIST.SUFFIX]}`),
+            loaded: true,
+            loadState: schema.loadState,
+            array: { element: genericTypes[0] }
+        }
+        genericSchemaCache[genKey] = genSchema
+        return genSchema
+    }
+    else if(schema.type === SchemaType.Struct) {
+        const genSchema: INodeSchema = {
+            name: genKey,
+            type: SchemaType.Struct,
+            display: schema.display,
+            loaded: true,
+            loadState: schema.loadState,
+            struct: {
+                fields: schema.struct!.fields.map(f => {
+                    if (f.type.match(REGEX_GENERIC_TYPE)) {
+                        const index = genTypes.indexOf(f.type)
+                        return {
+                            ...f,
+                            type: genericTypes[index]
+                        }
+                    }
+                    return f
+                }),
+                relations: schema.struct?.relations?.map(r => r)
+            }
+        }
+        genericSchemaCache[genKey] = genSchema
+        return genSchema
+    }
+    return undefined
 }
 
 //#endregion

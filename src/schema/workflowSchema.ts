@@ -1,4 +1,5 @@
 import { WorkflowModeValue } from "../enum/workflowMode";
+import { IFunctionArgumentInfo } from "./functionSchema";
 
 /**
  * Interface representing the schema of a workflow.
@@ -23,4 +24,9 @@ export interface IWorkflowSchema {
      * The session schema type
      */
     session?: string,
+
+    /**
+     * The arguments for the workflow
+     */
+    args?: IFunctionArgumentInfo[],
 }

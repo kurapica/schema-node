@@ -7,7 +7,6 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { getRuleSchema } from "../ruleSchema/ruleSchema"
-import { c } from "vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf"
 
 /**
  * The abstract schema node.
