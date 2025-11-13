@@ -202,6 +202,7 @@ export default {
     "system.data.getappdatabytwokey": "根据双键值获取应用数据",
     "system.data.getappdatabythreekey": "根据三键值获取应用数据",
     "system.data.getappdatabyfourkey": "根据四键值获取应用数据",
+    "system.data.incrappdata": "增量更新应用数据",
 
     // system.event
     "system.event": "系统事件",
@@ -595,6 +596,8 @@ export default {
     "RESUME": "恢复",
     "MOVETOP": "置顶",
     "CONFIRM": "确认",
+    "ACTIVE": "激活",
+    "DEACTIVE": "停用",
 
     //#endregion
 }

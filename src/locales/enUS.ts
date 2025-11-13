@@ -202,6 +202,7 @@ export default {
     "system.data.getappdatabytwokey": "Gets App Data by Two Keys",
     "system.data.getappdatabythreekey": "Gets App Data by Three Keys",
     "system.data.getappdatabyfourkey": "Gets App Data by Four Keys",
+    "system.data.incrappdata": "Incrementally Update App Data",
 
     // system.event
     "system.event": "System Event",
@@ -598,6 +599,8 @@ export default {
     "RESUME": "Resume",
     "MOVETOP": "Move to Top",
     "CONFIRM": "Confirm",
+    "ACTIVE": "Active",
+    "DEACTIVE": "Deactive",
 
     //#endregion
 }

@@ -142,11 +142,11 @@ export function PrepareServerSchemas(schemas?: INodeSchema[])
 {
     if (!schemas?.length) return
     schemas.forEach(s => {
-        if (typeof(s.loadState) === "string")
+        if (typeof(s?.loadState) === "string")
         {
             s.loadState = schemaLoadStateMap[(s.loadState as string).toLowerCase()] || undefined
         }
-        if (s.type === SchemaType.Namespace)
+        if (s?.type === SchemaType.Namespace)
         {
             PrepareServerSchemas(s.schemas)
         }
