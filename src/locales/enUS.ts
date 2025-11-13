@@ -195,6 +195,14 @@ export default {
     "system.logic.notequal": "Not Equal",
     "system.logic.orelse": "Or Else",
 
+    // system.data
+    "system.data": "Data Operations",
+    "system.data.getappdata": "Gets App Data",
+    "system.data.getappdatabyonekey": "Gets App Data by Single Key",
+    "system.data.getappdatabytwokey": "Gets App Data by Two Keys",
+    "system.data.getappdatabythreekey": "Gets App Data by Three Keys",
+    "system.data.getappdatabyfourkey": "Gets App Data by Four Keys",
+
     // system.event
     "system.event": "System Event",
     "system.event.schema": "Schema Definition Event",
@@ -215,6 +223,8 @@ export default {
     "system.workflow.node": "Workflow Node",
 
     "system.workflow.call": "Function Call Node",
+    "system.workflow.appcall": "Function Call With Target",
+
     "system.workflow.control": "Control Node",
     "system.workflow.control.goto": "Go to Node",
 
@@ -237,6 +247,8 @@ export default {
     "system.workflow.event.appfielddatapayload.target": "Application Target",
     "system.workflow.event.appfielddatapayload.data": "Updated Data",
     "system.workflow.event.appfielddatapayload.origin": "Original Data",
+
+    "system.workflow.delay": "Wait for specified seconds",
 
     // system.workflow
 
@@ -521,6 +533,7 @@ export default {
     "system.schema.appworkflownodeschema.funcArgs": "Function Arguments",
     "system.schema.appworkflownodeschema.event": "Event",
     "system.schema.appworkflownodeschema.fork": "Fork",
+    "system.schema.appworkflownodeschema.forkKey": "Fork Key",
     "system.schema.appworkflownodeschema.state": "State",
 
     "system.schema.appworkflowschema": "App Workflow Definition",
@@ -584,6 +597,7 @@ export default {
     "VIEW": "View",
     "RESUME": "Resume",
     "MOVETOP": "Move to Top",
+    "CONFIRM": "Confirm",
 
     //#endregion
 }

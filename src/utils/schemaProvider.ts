@@ -8,7 +8,7 @@ import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/no
 import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
 import { IAppSchema } from "../schema/appSchema"
-import { _LS, combineLocaleString } from "./locale"
+import { _L, _LS, combineLocaleString, ILocaleString } from "./locale"
 import axios from "axios"
 
 export const NS_SYSTEM = "system"
@@ -215,6 +215,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
             exist.fields = schema.fields?.length ? schema.fields : exist.fields
+            exist.workflows = schema.workflows?.length ? schema.workflows : exist.workflows
             exist.nodeSchema = undefined
 
             if (schema.hasFields || schema.fields?.length)
@@ -940,6 +941,51 @@ function buildGenericType(schema: INodeSchema, genericTypes: string[]): INodeSch
         return genSchema
     }
     return undefined
+}
+
+interface IFieldAccessWhiteListItem {
+    value: string,
+    label: string,
+    children?: IFieldAccessWhiteListItem[]
+}
+
+/**
+ * Gets the field access white list
+ * @param type The wanted type
+ * @param fields The fields to be checked
+ * @returns The field access white list
+ */
+export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = ""): Promise<IFieldAccessWhiteListItem[]>
+{
+    const result: IFieldAccessWhiteListItem[] = []
+    for(const field of fields)
+    {
+        const value = prefix ? `${prefix}.${field.name}` : field.name
+        if (await isSchemaCanBeUseAs(field.type, type))
+        {
+            result.push({
+                value: value,
+                label: _L(field.display) || field.name
+            })
+        }
+        else
+        {
+            const fieldSchema = await getSchema(field.type)
+            if (fieldSchema?.type === SchemaType.Struct)
+            {
+                const subList = await getFieldAccessWhiteList(type, fieldSchema.struct!.fields, value)
+                if (subList.length)
+                {
+                    result.push({
+                        value: value,
+                        label: _L(field.display) || field.name,
+                        children: subList
+                    })
+                }
+            }
+        }
+    }
+    return result
 }
 
 //#endregion

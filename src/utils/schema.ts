@@ -515,7 +515,6 @@ registerSchema([
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: any[], f: string) => {
-                console.log("call getfields", a, f)
                 return a.map(l => l[f]).filter(v => !isNull(v))
             }, NS_SYSTEM_ARRAY),
 

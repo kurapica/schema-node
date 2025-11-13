@@ -195,6 +195,14 @@ export default {
     "system.logic.notequal": "不等于",
     "system.logic.orelse": "任一满足",
 
+    // system.data
+    "system.data": "数据操作",
+    "system.data.getappdata": "获取应用数据",
+    "system.data.getappdatabyonekey": "根据单一键值获取应用数据",
+    "system.data.getappdatabytwokey": "根据双键值获取应用数据",
+    "system.data.getappdatabythreekey": "根据三键值获取应用数据",
+    "system.data.getappdatabyfourkey": "根据四键值获取应用数据",
+
     // system.event
     "system.event": "系统事件",
     "system.event.schema": "类型定义事件",
@@ -215,6 +223,8 @@ export default {
     "system.workflow.node": "工作流节点",
 
     "system.workflow.call": "函数调用节点",
+    "system.workflow.appcall": "应用函数调用",
+
     "system.workflow.control": "工作流控制节点",
     "system.workflow.control.goto": "跳转到指定节点",
 
@@ -238,6 +248,8 @@ export default {
     "system.workflow.event.appfielddatapayload.target": "应用目标",
     "system.workflow.event.appfielddatapayload.data": "更新数据",
     "system.workflow.event.appfielddatapayload.origin": "原始数据",
+
+    "system.workflow.delay": "等待指定秒数",
 
     // system.schema
     "system.schema": "类型定义辅助",
@@ -519,6 +531,7 @@ export default {
     "system.schema.appworkflownodeschema.funcArgs": "函数参数",
     "system.schema.appworkflownodeschema.event": "事件",
     "system.schema.appworkflownodeschema.fork": "分叉",
+    "system.schema.appworkflownodeschema.forkKey": "分叉键",
     "system.schema.appworkflownodeschema.state": "状态",
 
     "system.schema.appworkflowschema": "应用工作流定义",
@@ -581,6 +594,7 @@ export default {
     "VIEW": "查看",
     "RESUME": "恢复",
     "MOVETOP": "置顶",
+    "CONFIRM": "确认",
 
     //#endregion
 }

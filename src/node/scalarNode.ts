@@ -25,7 +25,6 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         }
         else if (this.isString) {
             value = `${value instanceof Date ? value.toISOString() : typeof (value) === "object" ? JSON.stringify(value) : value}`
-            if (value.startsWith("{") || value.startsWith("[") || value.endsWith("}") || value.endsWith("]")) value = null
         }
         else if (this.isNumber) {
             if (typeof value === "string")
@@ -86,10 +85,6 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             {
                 // pass
             }
-            else if (value.startsWith("{") || value.endsWith("}") || value.startsWith("[") || value.endsWith("]")) {
-                this._valid = false
-                this._error = sformat("ERR_REGEX_NOT_MATCH", config.display, uplimit)
-            }
             else if (uplimit && value.length > uplimit) {
                 this._valid = false
                 this._error = sformat("ERR_LEN_CANT_BE_GREATTHAN", config.display, uplimit)
@@ -102,7 +97,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
+            else if (!rule.asSuggest && rule.whiteList?.length && (!inWhiteList(value, rule.whiteList) || rule.blackList?.length && inWhiteList(value, rule.blackList))) {
                 this._valid = false
                 this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
@@ -128,7 +123,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
                 this._valid = false
                 this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
             }
-            else if (!rule.asSuggest && rule.whiteList?.length && (rule.whiteList.findIndex(v => typeof (v) === "object" ? `${v.value}` === `${value}` : `${v}` == `${value}`) < 0 || rule.blackList?.length && rule.blackList.findIndex(b => `${b}` === `${value}`) >= 0)) {
+            else if (!rule.asSuggest && rule.whiteList?.length && (!inWhiteList(value, rule.whiteList) || rule.blackList?.length && inWhiteList(value, rule.blackList))) {
                 this._valid = false
                 this._error = sformat("ERR_NOT_IN_ENUMLIST", config.display)
             }
@@ -327,4 +322,8 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         super(config, data, parent)
         this._valueType = getScalarValueType(config.type)
     }
+}
+
+function inWhiteList(value: any, list: any[]): boolean {
+    return list.findIndex(v => typeof (v) === "object" ? (`${v.value}` === `${value}` || Array.isArray(v.children) && inWhiteList(value, v.children)) : `${v}` == `${value}`) >= 0
 }
