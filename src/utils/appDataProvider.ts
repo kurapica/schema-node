@@ -111,7 +111,8 @@ export function queryAppData(query: IAppDataQuery): Promise<IAppDataResult>
         query.schemaOnly = true
         query.noSchema = undefined
     }
-    if (!schemaProvider) throw "No App data provider"
+
+    if (!getAppDataProvider()) throw "No App data provider"
     if (isNull(query.noSchema) && cacheSchema) query.noSchema = true
 
     // prepare the query

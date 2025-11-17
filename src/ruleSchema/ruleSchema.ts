@@ -382,8 +382,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     node.validation().finally(() => node.notifyState())
                 }
             }
-            else if (node instanceof ArrayNode && node.enumNode)
-            {
+            else if (node instanceof ArrayNode && node.enumNode){
                 handler = (res: any) => {
                     node.enumNode.rule.root = res
                     node.enumNode.validation().finally(() => node.enumNode.notifyState())
@@ -513,8 +512,15 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             let value = a.node.rawData
                             if (a.checkArrayNode) {
                                 let n = node
-                                while (n.parent && !(n.parent instanceof ArrayNode))
+                                while (n.parent && n.parent !== a.node)
                                     n = n.parent
+
+                                if (!n.parent)
+                                {
+                                    n = node
+                                    while (n.parent && !(n.parent instanceof ArrayNode))
+                                        n = n.parent
+                                }
 
                                 const arrayIndex = (n.parent as ArrayNode).indexof(n) as number
                                 if (Array.isArray(value) && arrayIndex >= 0)

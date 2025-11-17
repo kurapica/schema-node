@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
@@ -10,6 +10,7 @@ import { EnumValueType } from "../enum/enumValueType"
 import { RelationType } from "../enum/relationType"
 import { ExpressionType } from "../enum/expressionType"
 import { DataCombineType } from "../enum/dataCombineType"
+import { WorkflowMode } from "../enum/workflowMode"
 
 //#region Utility
 
@@ -28,7 +29,7 @@ export const newSystemScalar = (name: string, base?: string, error?: boolean, re
 }
 
 export const newSystemArray = (name: string, element: string, ...primary: string[]): INodeSchema => {
-    return { name, type: SchemaType.Array, display: _LS(element ? `{[LIST.PREFIX]}{@${element}}{[LIST.SUFFIX]}` : name), loadState: SchemaLoadState.System, array: { element, primary } }
+    return { name, type: SchemaType.Array, display: _LS(element && element !== "T" ? `{[LIST.PREFIX]}{@${element}}{[LIST.SUFFIX]}` : name), loadState: SchemaLoadState.System, array: { element, primary } }
 }
 export const newSystemRelArray = (name: string, element: string, relations: IStructFieldRelation[], ...primary: string[]): INodeSchema => {
     return { name, type: SchemaType.Array, display: _LS(element ? `{[LIST.PREFIX]}{@${element}}{[LIST.SUFFIX]}` : name), loadState: SchemaLoadState.System, array: { element, primary, relations } }
@@ -77,6 +78,7 @@ registerSchema([
     newSystemSchema(NS_SYSTEM, [
         //#region base type
         newSystemArray(NS_SYSTEM_ARRAY, ""),
+        newSystemArray(NS_SYSTEM_LIST, "T"),
         newSystemStruct(NS_SYSTEM_STRUCT, []),
         newSystemSchema(NS_SYSTEM_JSON, undefined, SchemaType.Json),
         //#endregion
@@ -481,6 +483,12 @@ registerSchema([
 
                 return Math.floor(diffMs / oneDayMs);
             }),
+
+            newSystemFunc("system.datetime.between", NS_SYSTEM_BOOL, [
+                { name: "date", type: NS_SYSTEM_DATE },
+                { name: "start", type: NS_SYSTEM_DATE },
+                { name: "stop", type: NS_SYSTEM_DATE }
+            ], (d: Date, s: Date, e: Date) => d.getTime() >= s.getTime() && d.getTime() <= e.getTime()),
         ]),
 
         // collection func
@@ -505,7 +513,9 @@ registerSchema([
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
-            ], (a: any[], f: string) => a.map(l => l[f]).filter(v => !isNull(v)), NS_SYSTEM_ARRAY),
+            ], (a: any[], f: string) => {
+                return a.map(l => l[f]).filter(v => !isNull(v))
+            }, NS_SYSTEM_ARRAY),
 
             newSystemFunc("system.collection.sum", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
@@ -649,12 +659,18 @@ registerSchema([
             newSystemScalar("system.schema.structtype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.arraytype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.functype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.eventtype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.workflowtype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.arrayeletype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.valuetype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.validfunc", "system.schema.functype"),
             newSystemScalar("system.schema.whitelistfunc", "system.schema.functype"),
-            newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 64 }),
+            newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 32 }),
             newSystemScalar("system.schema.anyvalue"),
+
+            newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
+            newSystemScalar("system.schema.appfield", "system.schema.varname"),
+            newSystemScalar("system.schema.appworkflow", "system.schema.varname"),
 
             // enum
             newSystemEnum("system.schema.schematype", SchemaType),
@@ -662,6 +678,17 @@ registerSchema([
             newSystemEnum("system.schema.expressiontype", ExpressionType),
             newSystemEnum("system.schema.enumvaluetype", EnumValueType),
             newSystemEnum("system.schema.datacombinetype", DataCombineType),
+            newSystemEnum("system.schema.workflowmode", WorkflowMode),
+
+            // array
+            newSystemArray("system.schema.appworkflows", "system.schema.appworkflow"),
+        ]),
+        //#endregion
+
+        //#region system.workflow
+        newSystemSchema(NS_SYSTEM_WORKFLOW, [
+            // scalar
+            newSystemScalar(NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_STRING, undefined, undefined, { upLimit: 32 }),
         ]),
         //#endregion
     ])
