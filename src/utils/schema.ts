@@ -10,7 +10,6 @@ import { EnumValueType } from "../enum/enumValueType"
 import { RelationType } from "../enum/relationType"
 import { ExpressionType } from "../enum/expressionType"
 import { DataCombineType } from "../enum/dataCombineType"
-import { EventScope } from "../enum/eventScope"
 import { WorkflowMode } from "../enum/workflowMode"
 
 //#region Utility
@@ -679,7 +678,6 @@ registerSchema([
             newSystemEnum("system.schema.expressiontype", ExpressionType),
             newSystemEnum("system.schema.enumvaluetype", EnumValueType),
             newSystemEnum("system.schema.datacombinetype", DataCombineType),
-            newSystemEnum("system.schema.eventscope", EventScope),
             newSystemEnum("system.schema.workflowmode", WorkflowMode),
 
             // array

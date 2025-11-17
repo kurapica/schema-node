@@ -3,7 +3,6 @@ export * from './enum/expressionType'
 export * from './enum/relationType'
 export * from './enum/schemaType'
 export * from './enum/dataCombineType'
-export * from './enum/eventScope'
 export * from './enum/workflowMode'
 
 export * from './schema/nodeSchema'
