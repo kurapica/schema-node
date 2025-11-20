@@ -64,6 +64,8 @@ export default {
     "system.entry.label": "标签",
     "system.entrys": "字典项列表",
 
+    "system.context": "请求上下文",
+
     //#endregion
 
     //#region Message

@@ -16,6 +16,11 @@ export enum WorkflowMode {
      * An event workflow
      */
     Event = 'event',
+
+    /**
+     * An interaction workflow
+     */
+    Interaction = 'interaction',
 }
 
 export type WorkflowModeValue = `${WorkflowMode}`

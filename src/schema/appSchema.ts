@@ -25,6 +25,16 @@ export interface IAppSchema
     desc?: ILocaleString
 
     /**
+     * The authorization policy type
+     */
+    auth?: string
+
+    /**
+     * The data authorization policy type
+     */
+    dataAuth?: string
+
+    /**
      * Has sub applications, app can only have sub apps or fields
      */
     hasApps?: boolean

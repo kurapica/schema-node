@@ -32,12 +32,6 @@ export enum SchemaType
      * The json node
      */
     Json = "json",
-
-    /**
-     * The function node
-     */
-    Func = "func",
-
     /**
      * The event node
      */
@@ -46,7 +40,17 @@ export enum SchemaType
     /**
      * The workflow node
      */
-    Workflow = "workflow"
+    Workflow = "workflow",
+
+    /**
+     * The policy node
+     */
+    Policy = "policy",
+
+    /**
+     * The function node
+     */
+    Func = "func",
 }
 
 export type SchemaTypeValue = `${SchemaType}`

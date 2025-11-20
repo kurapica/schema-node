@@ -47,6 +47,7 @@ export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings"
 export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans"
 export const NS_SYSTEM_ENTRY = "system.entry"
 export const NS_SYSTEM_ENTRIES = "system.entrys"
+export const NS_SYSTEM_CONTEXT = "system.context"
 
 export const NS_SYSTEM_SCHEMA = "system.schema"
 export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"

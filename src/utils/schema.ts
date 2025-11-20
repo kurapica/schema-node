@@ -11,6 +11,8 @@ import { RelationType } from "../enum/relationType"
 import { ExpressionType } from "../enum/expressionType"
 import { DataCombineType } from "../enum/dataCombineType"
 import { WorkflowMode } from "../enum/workflowMode"
+import { PolicyCombine } from "../enum/policyCombine"
+import { PolicyScope } from "../enum/policyScope"
 
 //#region Utility
 
@@ -661,6 +663,7 @@ registerSchema([
             newSystemScalar("system.schema.functype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.eventtype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.workflowtype", NS_SYSTEM_SCHEMA_NS),
+            newSystemScalar("system.schema.policytype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.arrayeletype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.valuetype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.validfunc", "system.schema.functype"),
@@ -679,6 +682,8 @@ registerSchema([
             newSystemEnum("system.schema.enumvaluetype", EnumValueType),
             newSystemEnum("system.schema.datacombinetype", DataCombineType),
             newSystemEnum("system.schema.workflowmode", WorkflowMode),
+            newSystemEnum("system.schema.policyscope", PolicyScope),
+            newSystemEnum("system.schema.policycombine", PolicyCombine),
 
             // array
             newSystemArray("system.schema.appworkflows", "system.schema.appworkflow"),

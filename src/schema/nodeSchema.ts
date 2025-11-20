@@ -4,6 +4,7 @@ import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
 import { IEventSchema } from "./eventSchema"
 import { IFunctionSchema } from "./functionSchema"
+import { IPolicySchema } from "./policySchema"
 import { IScalarSchema } from "./scalarSchema"
 import { IStructSchema } from "./structSchema"
 import { IWorkflowSchema } from "./workflowSchema"
@@ -63,6 +64,16 @@ export interface INodeSchema
      * The workflow schema if type is workflow
      */
     workflow?: IWorkflowSchema
+
+    /**
+     * The permission policy schema
+     */
+    policy?: IPolicySchema
+
+    /**
+     * The policy type for the schema
+     */
+    auth?: string
 
     /**
      * The sub schemas of of the namespace
