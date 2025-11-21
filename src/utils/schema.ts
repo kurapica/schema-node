@@ -180,6 +180,21 @@ registerSchema([
                 { name: "sep", type: NS_SYSTEM_STRING }
             ], (a: string, b: string) => a.split(b).filter(s => s.length)),
 
+            newSystemFunc("system.str.startswith", NS_SYSTEM_BOOL, [
+                { name: "str", type: NS_SYSTEM_STRING },
+                { name: "prefix", type: NS_SYSTEM_STRING }
+            ], (a: string, b: string) => a.startsWith(b)),
+
+            newSystemFunc("system.str.endswith", NS_SYSTEM_BOOL, [
+                { name: "str", type: NS_SYSTEM_STRING },
+                { name: "suffix", type: NS_SYSTEM_STRING }
+            ], (a: string, b: string) => a.endsWith(b)),
+
+            newSystemFunc("system.str.contains", NS_SYSTEM_BOOL, [
+                { name: "str", type: NS_SYSTEM_STRING },
+                { name: "substr", type: NS_SYSTEM_STRING }
+            ], (a: string, b: string) => a.includes(b)),
+
             newSystemFunc("system.str.tolocale", NS_SYSTEM_LOCALE_STRING, [{ name: "str", type: NS_SYSTEM_STRING, nullable: true }], (a?: string) => _LS(a || "")),
 
             newSystemFunc("system.str.toentry", NS_SYSTEM_ENTRY, [

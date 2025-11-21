@@ -18,26 +18,16 @@ export enum PolicyScope {
     /// Delete Schema
     /// </summary>
     SchemaDelete = "schemaDelete",
-    
-    /// <summary>
-    /// Create App Data
-    /// </summary>
-    DataCreate = "dataCreate",
-    
+     
     /// <summary>
     /// Read App Data
     /// </summary>
     DataRead = "dataRead",
     
     /// <summary>
-    /// Update App Data
+    /// Write App Data
     /// </summary>
-    DataUpdate = "dataUpdate",
-    
-    /// <summary>
-    /// Delete App Data
-    /// </summary>
-    DataDelete = "dataDelete",
+    DataWrite = "dataWrite",
     
     /// <summary>
     /// Row access filter

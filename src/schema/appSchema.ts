@@ -2,6 +2,7 @@ import { ILocaleString } from "../utils/locale"
 import { IAppFieldSchema } from "./appFieldSchema"
 import { IAppWorkflowSchema } from "./appWorkflowSchema"
 import { INodeSchema, SchemaLoadState } from "./nodeSchema"
+import { IPolicyItem } from "./policySchema"
 import { IStructFieldRelation } from "./structSchema"
 
 /**
@@ -32,7 +33,7 @@ export interface IAppSchema
     /**
      * The data authorization policy type
      */
-    dataAuth?: string
+    auths?: IPolicyItem[]
 
     /**
      * Has sub applications, app can only have sub apps or fields
