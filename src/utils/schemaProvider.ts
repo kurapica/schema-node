@@ -212,6 +212,8 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
 
             exist.display = combineLocaleString(exist.display, schema.display)
             exist.desc = combineLocaleString(exist.desc, schema.desc)
+            exist.auth = schema.auth
+            exist.auths = schema.auths
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
@@ -405,6 +407,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             if (exist.type !== schema.type) continue
 
             exist.display = combineLocaleString(exist.display, schema.display)
+            exist.auth = schema.auth
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -459,6 +462,10 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     // keep the frontend implementation
                     if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
                         exist.func = schema.func || exist.func
+                    break
+
+                case SchemaType.Policy:
+                    exist.policy = schema.policy
                     break
             }
 
@@ -2077,7 +2084,8 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
     }
     catch(ex)
     {
-        return null
+        console.log(ex)
+        throw ex
     }
 }
 

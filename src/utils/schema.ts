@@ -577,12 +577,6 @@ registerSchema([
                 { name: "array", type: NS_SYSTEM_ARRAY },
                 { name: "value", type: "T" }
             ], (arr: any[], v: any) => { return [...arr, v] }),
-
-            newSystemFunc("system.collection.fieldequal", NS_SYSTEM_ARRAY, [
-                { name: "struct", type: NS_SYSTEM_STRUCT },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T" }
-            ], (s: {}, f: string, v: any) => !isNull(s) &&  isEqual((s as any)[f], v)),
         ]),
 
         // logic func
@@ -701,6 +695,7 @@ registerSchema([
             newSystemEnum("system.schema.policycombine", PolicyCombine),
 
             // array
+            newSystemArray("system.schema.policyscopes", "system.schema.policyscope"),
             newSystemArray("system.schema.appworkflows", "system.schema.appworkflow"),
         ]),
         //#endregion

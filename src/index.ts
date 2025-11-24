@@ -4,6 +4,8 @@ export * from './enum/relationType'
 export * from './enum/schemaType'
 export * from './enum/dataCombineType'
 export * from './enum/workflowMode'
+export * from './enum/policyScope'
+export * from './enum/policyCombine'
 
 export * from './schema/nodeSchema'
 export * from './schema/scalarSchema'
