@@ -55,6 +55,8 @@ export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 export const NS_SYSTEM_WORKFLOW = "system.workflow"
 export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
 
+export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"
+
 //#region Schema Provider
 
 /**
@@ -572,6 +574,7 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
         if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
         name = Array.isArray(generic) ? generic[index] : generic
+        if (!name) return undefined
     }
 
     // geneiric implement check
@@ -963,20 +966,20 @@ interface IFieldAccessWhiteListItem {
  * @param fields The fields to be checked
  * @returns The field access white list
  */
-export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = ""): Promise<IFieldAccessWhiteListItem[]>
+export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false): Promise<IFieldAccessWhiteListItem[]>
 {
     const result: IFieldAccessWhiteListItem[] = []
     for(const field of fields)
     {
         const value = prefix ? `${prefix}.${field.name}` : field.name
-        if (await isSchemaCanBeUseAs(field.type, type))
+        if (!type || await isSchemaCanBeUseAs(field.type, type))
         {
             result.push({
                 value: value,
                 label: _L(field.display) || field.name
             })
         }
-        else
+        else if (!noDepth)
         {
             const fieldSchema = await getSchema(field.type)
             if (fieldSchema?.type === SchemaType.Struct)

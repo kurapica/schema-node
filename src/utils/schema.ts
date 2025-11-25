@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
@@ -13,6 +13,7 @@ import { DataCombineType } from "../enum/dataCombineType"
 import { WorkflowMode } from "../enum/workflowMode"
 import { PolicyCombine } from "../enum/policyCombine"
 import { PolicyScope } from "../enum/policyScope"
+import { SchemaNodeStatus } from "../enum/schemaNodeStatus"
 
 //#region Utility
 
@@ -693,6 +694,7 @@ registerSchema([
             newSystemEnum("system.schema.workflowmode", WorkflowMode),
             newSystemEnum("system.schema.policyscope", PolicyScope),
             newSystemEnum("system.schema.policycombine", PolicyCombine),
+            newSystemEnum(NS_SYSTEM_SCHEMA_STATUS, SchemaNodeStatus),
 
             // array
             newSystemArray("system.schema.policyscopes", "system.schema.policyscope"),

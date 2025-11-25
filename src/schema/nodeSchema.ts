@@ -1,3 +1,4 @@
+import { SchemaNodeStatusValue } from "../enum/schemaNodeStatus"
 import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
@@ -94,6 +95,11 @@ export interface INodeSchema
      * Already loaded from the server
      */
     loaded?: boolean
+
+    /**
+     * The schema node status for diagnosis
+     */
+    status?: SchemaNodeStatusValue
 
     /**
      * The schema is used provided by the server
