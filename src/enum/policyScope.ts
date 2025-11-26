@@ -1,42 +1,47 @@
 export enum PolicyScope {
-    /// <summary>
-    /// Create Schema
-    /// </summary>
+    /**
+     * Create Schema
+     */
     SchemaCreate = "schemaCreate",
     
-    /// <summary>
-    /// Read Schema
-    /// </summary>
+    /**
+     * Read Schema
+     */
     SchemaRead = "schemaRead",
     
-    /// <summary>
-    /// Update Schema
-    /// </summary>
+    /**
+     * Update Schema
+     */
     SchemaUpdate = "schemaUpdate",
     
-    /// <summary>
-    /// Delete Schema
-    /// </summary>
+    /**
+     * Delete Schema
+     */
     SchemaDelete = "schemaDelete",
      
-    /// <summary>
-    /// Read App Data
-    /// </summary>
+    /**
+     * Read App Data
+     */
     DataRead = "dataRead",
     
-    /// <summary>
-    /// Write App Data
-    /// </summary>
+    /**
+     * Write App Data
+     */
     DataWrite = "dataWrite",
+
+    /**
+     * Function execute
+     */
+    FuncExecute = "funcExecute",
     
-    /// <summary>
-    /// Row access filter
-    /// </summary>
+    /**
+     * Row access filter
+     */
     RowAccess = "rowAccess",
     
-    /// <summary>
-    /// Column access filter
-    /// </summary>
+    /**
+     * Column access filter
+     */
     ColumnAccess = "columnAccess",
 }
 
