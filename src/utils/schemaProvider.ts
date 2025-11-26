@@ -57,6 +57,8 @@ export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
 
 export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"
 
+export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret"
+
 //#region Schema Provider
 
 /**
@@ -574,7 +576,7 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
         if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
         name = Array.isArray(generic) ? generic[index] : generic
-        if (!name) return undefined
+        if (isNull(name)) return undefined
     }
 
     // geneiric implement check
@@ -1544,6 +1546,10 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
                     continue
                 }
             }
+
+            // special case for ifret
+            if (exp.func.name === NS_SYSTEM_LOGIC_IFRET)
+                if (val[0]) return val[1]
 
             // call
             switch (exp.type) {

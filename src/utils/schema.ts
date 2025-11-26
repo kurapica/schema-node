@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
@@ -515,7 +515,9 @@ registerSchema([
 
             newSystemFunc("system.collection.newstruct", "T", [], () => { return {} }, NS_SYSTEM_STRUCT),
 
-            newSystemFunc("system.collection.getfield", "T2", [{ name: "struct", type: "T1" },{ name: "field", type: NS_SYSTEM_STRING }], (a: any, f: string) => a[f], NS_SYSTEM_STRUCT),
+            newSystemFunc("system.collection.getfield", "T2", [{ name: "struct", type: "T1" },{ name: "field", type: NS_SYSTEM_STRING } ], (a: any, f: string, d: any) =>  (a ? a[f] : null) ?? d, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.getfielddefault", "T2", [{ name: "struct", type: "T1" },{ name: "field", type: NS_SYSTEM_STRING },{ name: "default", type: "T2" }], (a: any, f: string, d: any) =>  (a ? a[f] : null) ?? d, NS_SYSTEM_STRUCT),
 
             newSystemFunc("system.collection.setfield", "T1", [
                 { name: "struct", type: "T1" },
@@ -582,6 +584,12 @@ registerSchema([
 
         // logic func
         newSystemSchema("system.logic", [
+            // stop execution
+            newSystemFunc(NS_SYSTEM_LOGIC_IFRET, "T", [
+                { name: "cond", type: NS_SYSTEM_BOOL },
+                { name: "ret", type: "T" }
+            ], (cond: boolean, ret: any) => cond ? ret : ret),
+
             newSystemFunc("system.logic.andalso", NS_SYSTEM_BOOL, [
                 { name: "x", type: NS_SYSTEM_BOOL },
                 { name: "y", type: NS_SYSTEM_BOOL }
