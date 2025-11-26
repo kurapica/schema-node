@@ -106,4 +106,9 @@ export interface IFunctionCallArgument {
    * The const value
   */
   value?: any
+
+  /**
+   * The argument type
+   */
+  type?: string
 }

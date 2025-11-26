@@ -64,6 +64,8 @@ export default {
     "system.entry.label": "Label",
     "system.entrys": "Entry List",
 
+    "system.context": "Request Context",
+
     //#endregion
 
     //#region Message

@@ -47,12 +47,17 @@ export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings"
 export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans"
 export const NS_SYSTEM_ENTRY = "system.entry"
 export const NS_SYSTEM_ENTRIES = "system.entrys"
+export const NS_SYSTEM_CONTEXT = "system.context"
 
 export const NS_SYSTEM_SCHEMA = "system.schema"
 export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 
 export const NS_SYSTEM_WORKFLOW = "system.workflow"
 export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
+
+export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"
+
+export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret"
 
 //#region Schema Provider
 
@@ -211,6 +216,8 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
 
             exist.display = combineLocaleString(exist.display, schema.display)
             exist.desc = combineLocaleString(exist.desc, schema.desc)
+            exist.auth = schema.auth
+            exist.auths = schema.auths
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
             exist.relations = schema.relations
@@ -404,6 +411,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             if (exist.type !== schema.type) continue
 
             exist.display = combineLocaleString(exist.display, schema.display)
+            exist.auth = schema.auth
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -458,6 +466,10 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     // keep the frontend implementation
                     if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
                         exist.func = schema.func || exist.func
+                    break
+
+                case SchemaType.Policy:
+                    exist.policy = schema.policy
                     break
             }
 
@@ -564,6 +576,7 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
         const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
         if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
         name = Array.isArray(generic) ? generic[index] : generic
+        if (isNull(name)) return undefined
     }
 
     // geneiric implement check
@@ -955,20 +968,20 @@ interface IFieldAccessWhiteListItem {
  * @param fields The fields to be checked
  * @returns The field access white list
  */
-export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = ""): Promise<IFieldAccessWhiteListItem[]>
+export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false): Promise<IFieldAccessWhiteListItem[]>
 {
     const result: IFieldAccessWhiteListItem[] = []
     for(const field of fields)
     {
         const value = prefix ? `${prefix}.${field.name}` : field.name
-        if (await isSchemaCanBeUseAs(field.type, type))
+        if (!type || await isSchemaCanBeUseAs(field.type, type))
         {
             result.push({
                 value: value,
                 label: _L(field.display) || field.name
             })
         }
-        else
+        else if (!noDepth)
         {
             const fieldSchema = await getSchema(field.type)
             if (fieldSchema?.type === SchemaType.Struct)
@@ -1534,6 +1547,10 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
                 }
             }
 
+            // special case for ifret
+            if (exp.func.name === NS_SYSTEM_LOGIC_IFRET)
+                if (val[0]) return val[1]
+
             // call
             switch (exp.type) {
                 // direct call
@@ -2076,7 +2093,8 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
     }
     catch(ex)
     {
-        return null
+        console.log(ex)
+        throw ex
     }
 }
 

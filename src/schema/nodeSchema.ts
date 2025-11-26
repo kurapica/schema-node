@@ -1,9 +1,11 @@
+import { SchemaNodeStatusValue } from "../enum/schemaNodeStatus"
 import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
 import { ILocaleString } from "../utils/locale"
 import { IArraySchema } from "./arraySchema"
 import { IEnumSchema } from "./enumSchema"
 import { IEventSchema } from "./eventSchema"
 import { IFunctionSchema } from "./functionSchema"
+import { IPolicySchema } from "./policySchema"
 import { IScalarSchema } from "./scalarSchema"
 import { IStructSchema } from "./structSchema"
 import { IWorkflowSchema } from "./workflowSchema"
@@ -65,6 +67,16 @@ export interface INodeSchema
     workflow?: IWorkflowSchema
 
     /**
+     * The permission policy schema
+     */
+    policy?: IPolicySchema
+
+    /**
+     * The policy type for the schema
+     */
+    auth?: string
+
+    /**
      * The sub schemas of of the namespace
      */
     schemas?: INodeSchema[]
@@ -83,6 +95,11 @@ export interface INodeSchema
      * Already loaded from the server
      */
     loaded?: boolean
+
+    /**
+     * The schema node status for diagnosis
+     */
+    status?: SchemaNodeStatusValue
 
     /**
      * The schema is used provided by the server
