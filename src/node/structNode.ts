@@ -33,6 +33,15 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
         })
         return result
     }
+    get fullerror(): any {
+        const errs = this._fields.filter(f => !f.valid && !f.invisible).map(f => ({ name: f.name, error: f.fullerror }))
+        if (errs.length){
+            const err = {}
+            errs.forEach(e => { err[e.name] = e.error })
+            return err
+        }
+        return undefined
+    }
 
     get data()
     {

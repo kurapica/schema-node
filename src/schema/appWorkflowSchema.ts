@@ -1,3 +1,4 @@
+import { ILocaleString } from "../utils/locale"
 import { IFunctionCallArgument } from "./functionSchema"
 
 /**
@@ -16,6 +17,16 @@ export interface IAppWorkflowSchema
     name: string
 
     /**
+     * The display name
+     */
+    display?: ILocaleString
+
+    /**
+     * The description
+     */
+    desc?: ILocaleString
+
+    /**
      * Whether the workflow is active
      */
     active: boolean
@@ -32,6 +43,11 @@ export interface IAppWorkflowNodeSchema
      * The node name
      */
     name: string
+
+    /**
+     * The display name
+     */
+    display?: ILocaleString
 
     /**
      * The workflow schema type

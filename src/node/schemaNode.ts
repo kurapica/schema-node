@@ -114,6 +114,11 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     get error(): string | undefined { return this._error }
 
     /**
+     * The full error data
+     */
+    get fullerror(): any { return this._error }
+
+    /**
      * The parent node of the node.
      */
     get parent(): AnySchemaNode | undefined { return this._parent }
@@ -218,7 +223,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Reset the change state of the node and children.
      */
-    resetChanges(): void { this._original = deepClone(this._data) }
+    resetChanges(): void {  this._original = deepClone(this._data) }
 
     /**
      * Reset to original value

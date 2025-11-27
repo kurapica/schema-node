@@ -1,4 +1,4 @@
-import { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
+import { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult, IInteractionRequest } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
 import { defaultSchemaProvider, getAppCachedSchema, getSchemaApiBaseUrl, ISchemaProvider, postSchemaApi, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
 import { debounce, deepClone, isNull } from "./toolset";
@@ -31,6 +31,18 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
      * Get the source app and target for an app target
      */
     getSourceTarget(app: string, target: string, sourceApp: string): Promise<string | undefined>
+
+    
+    /**
+     * Process the interaction workflow request
+     * @param app The application name
+     * @param target The application target
+     * @param workflow The workflow name
+     * @param node The workflow node name
+     * @param workflowId The workflow instance id
+     * @param data The interaction form data
+     */
+    interaction(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
 }
 
 let schemaProvider: IAppSchemaDataProvider | null = null
@@ -63,6 +75,13 @@ export const defaultAppSchemaProvider: IAppSchemaDataProvider = {
         return (await postSchemaApi("/get-source-target", {
             app, target, sourceApp
         }))?.target
+    },
+
+    interaction: async function(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
+    {
+        return (await postSchemaApi("/interaction", {
+            app, target, workflow, node, workflowId, data
+        }))?.result
     }
 }
 
@@ -255,6 +274,16 @@ export async function pushAppData(app: string, target: string, datas: { [key:str
     if (isNull(target)) throw "Push target must be provided"
     if (!provider) throw "No App data provider"
     return await provider.pushAppData(app, target, datas)
+}
+
+/**
+ * Active interaction request
+ */
+export async function interactionWorkflow(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
+{
+    let provider = getAppDataProvider()
+    if (!provider) throw "No App data provider"
+    return await provider.interaction(app, target, workflow, node, workflowId, data)
 }
 
 //#endregion

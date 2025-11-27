@@ -89,17 +89,17 @@ registerSchema([
         //#region scalar
         newSystemScalar(NS_SYSTEM_BOOL, undefined, true),
         newSystemScalar(NS_SYSTEM_DATE, undefined, true),
-        newSystemScalar(NS_SYSTEM_NUMBER, undefined, true, "^(\\-|\\+)?\\d+(\\.\\d+)?(e\\-\\d+)?$"),
-        newSystemScalar(NS_SYSTEM_DOUBLE, NS_SYSTEM_NUMBER, true, "^-?\\d+\\.?\\d+$"),
-        newSystemScalar(NS_SYSTEM_FLOAT, NS_SYSTEM_DOUBLE, true, "^\\d+(\\.\\d+)?$"),
-        newSystemScalar(NS_SYSTEM_PERCENT, NS_SYSTEM_FLOAT, true, "^\\d+(\\.\\d+)?$", { upLimit: 100, lowLimit: 0 }),
+        newSystemScalar(NS_SYSTEM_NUMBER, undefined, true, "^(\-|\+)?\d+(\.\d+)?(e\-\d+)?$"),
+        newSystemScalar(NS_SYSTEM_DOUBLE, NS_SYSTEM_NUMBER, true, "^(\-|\+)?\d+\.?\d+$"),
+        newSystemScalar(NS_SYSTEM_FLOAT, NS_SYSTEM_DOUBLE, true, "^\d+(\.\d+)?$"),
+        newSystemScalar(NS_SYSTEM_PERCENT, NS_SYSTEM_FLOAT, true, "^\d+(\.\d+)?$", { upLimit: 100, lowLimit: 0 }),
         newSystemScalar(NS_SYSTEM_FULLDATE, NS_SYSTEM_DATE, true),
-        newSystemScalar(NS_SYSTEM_INT, NS_SYSTEM_NUMBER, true, "^(\\-|\\+)?\\d+$"),
+        newSystemScalar(NS_SYSTEM_INT, NS_SYSTEM_NUMBER, true, "^(\-|\+)?\d+$"),
         newSystemScalar(NS_SYSTEM_STRING),
-        newSystemScalar(NS_SYSTEM_YEAR, NS_SYSTEM_INT, true, "^\\d{4}$"),
+        newSystemScalar(NS_SYSTEM_YEAR, NS_SYSTEM_INT, true, "^\d{4}$"),
         newSystemScalar(NS_SYSTEM_YEARMONTH, NS_SYSTEM_DATE, true),
         newSystemScalar(NS_SYSTEM_GUID, NS_SYSTEM_STRING, false, "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$", { upLimit: 36 }),
-        newSystemScalar(NS_SYSTEM_LANGUAGE, NS_SYSTEM_STRING, false, "^[a-z]{2}(-?[A-Z]{2})?$", { upLimit: 8, whiteList: "system.str.getlanguages" }),
+        newSystemScalar(NS_SYSTEM_LANGUAGE, NS_SYSTEM_STRING, false, "^[a-z]{2}-?[A-Z]{2}$", { upLimit: 8, whiteList: "system.str.getlanguages" }),
 
         //#endregion
 
@@ -228,6 +228,12 @@ registerSchema([
             }),
 
             newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], () => crypto.randomUUID()),
+
+            newSystemFunc("system.str.replace", NS_SYSTEM_STRING, [
+                { name: "str", type: NS_SYSTEM_STRING },
+                { name: "search", type: NS_SYSTEM_STRING },
+                { name: "replace", type: NS_SYSTEM_STRING, nullable: true }
+            ], (str: string, search: string, replace: string) => str.split(search).join(replace || "")),
         ]),
 
         // math func
@@ -530,13 +536,19 @@ registerSchema([
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: {}, f: string): {} => ({ ...a, [f]: undefined }), NS_SYSTEM_STRUCT),
 
+            newSystemFunc("system.collection.fieldequal", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: {}, f: string, v: any): {} => isEqual(v, a[f]), NS_SYSTEM_STRUCT),
+
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: any[], f: string) => {
                 return a.map(l => l[f]).filter(v => !isNull(v))
             }, NS_SYSTEM_ARRAY),
-
+            
             newSystemFunc("system.collection.sum", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
                 arr.forEach(v => sum = sum.plus(v))
@@ -686,7 +698,7 @@ registerSchema([
             newSystemScalar("system.schema.valuetype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.validfunc", "system.schema.functype"),
             newSystemScalar("system.schema.whitelistfunc", "system.schema.functype"),
-            newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 32 }),
+            newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\w*$", { upLimit: 32 }),
             newSystemScalar("system.schema.anyvalue"),
 
             newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),

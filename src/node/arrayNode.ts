@@ -42,6 +42,20 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get original() { return this._enode ? this._enode.original : deepClone(this._original) }
     get isEmpty() { return this._enode ? this._enode.isEmpty : Array.isArray(this._data) ? this._data.length === 0 : true }
 
+    get fullerror(): any {
+        if (this._enode) return this._enode.fullerror
+        if (this.asSingle) return this._valid ? this._errfld : undefined
+        const errs = {}
+        let hasErr = false
+        this._elements.forEach((e, i) => {
+            if (!e.valid) {
+                errs[i] = e.fullerror
+                hasErr = true
+            }
+        })
+        return hasErr ? errs : undefined
+    }
+
     /**
      * Gets the schema info of the array element
      */

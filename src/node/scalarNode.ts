@@ -63,8 +63,8 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         const rule = this._rule
 
         // reset
-        this._error = ""
         this._valid = true
+        this._error = ""
 
         // null check
         if (isNull(this._data)) {
@@ -95,7 +95,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             }
             else if (scalarInfo?.regex && !(new RegExp(scalarInfo.regex)).test(value)) {
                 this._valid = false
-                this._error = sformat(scalarInfo.error || "ERR_REGEX_NOT_MATCH", config.display)
+                this._error = sformat(scalarInfo.error?.key ? scalarInfo.error  : "ERR_REGEX_NOT_MATCH", config.display)
             }
             else if (!rule.asSuggest && rule.whiteList?.length && (!inWhiteList(value, rule.whiteList) || rule.blackList?.length && inWhiteList(value, rule.blackList))) {
                 this._valid = false
@@ -174,7 +174,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
             catch(ex)
             {
                 this._valid = false
-                this._error = `${ex}` //TODO
+                this._error = `${ex || "unknown error"}` //TODO
             }
         }
     }

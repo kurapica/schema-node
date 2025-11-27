@@ -11,7 +11,7 @@ import { ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
 import { StructRuleSchema } from "../ruleSchema"
 import { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
-import { pushAppData, queryAppData } from "../utils/appDataProvider"
+import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
 import { INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, DataCombineTypeValue } from "../enum/dataCombineType"
 
@@ -41,10 +41,20 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     // override properties
     get schemaType(): SchemaType { return SchemaType.Struct }
     get valid(): boolean { return this.loadedInputFields.findIndex(f => !f.valid && !f.invisible) < 0 }
-    get error(): any { return this.loadedInputFields.find(f => !f.valid)?.error }
+    get error(): any { return this.loadedInputFields.find(f => !f.valid && !f.invisible)?.error }
     get changed(): boolean { return this.loadedInputFields.findIndex(f => f.changed) >= 0 }
     get data() { return undefined } // no raw data access
     get name() { return this._appSchema.name }
+
+    get fullerror(): any {
+        const errs = this.loadedInputFields.filter(f => !f.valid && !f.invisible).map(f => ({ name: f.name, error: f.fullerror }))
+        if (errs.length){
+            const err = {}
+            errs.forEach(e => { err[e.name] = e.error })
+            return err
+        }
+        return undefined
+    }
 
     // override methods
 
@@ -505,6 +515,17 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
         return result
     }
 
+    /**
+     * Active the workflow interaction node
+     * @param workflow The workflow name
+     * @param node The workflow node name
+     * @param workflowId The workflow instance id
+     * @param data The interaction form data
+     */
+    async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any): Promise<boolean> {
+        return await interactionWorkflow(this.name, this.target, workflow, node, workflowId, data)
+    }
+
     //#endregion
 
     //#region Field
@@ -587,7 +608,9 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
 export async function getAppNode(query: IAppDataQuery, readonly?: boolean): Promise<AppNode | undefined>
 {
     const result = await queryAppData(query)
-    return result ? new AppNode(query.app, query.target, result, readonly) : undefined
+    const node = result ? new AppNode(query.app, query.target, result, readonly) : undefined
+    node?.resetChanges()
+    return node
 }
 
 //#region Utility

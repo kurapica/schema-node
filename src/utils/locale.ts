@@ -83,6 +83,8 @@ export const SCHEMA_LANGUAGES =  [
     { value: "uzUZ", label: "Oʻzbekcha" },
     { value: "viVN", label: "Tiếng Việt" },
     { value: "zhCN", label: "简体中文" },
+    { value: "zhHK", label: "繁體中文（香港）" },
+    { value: "zhMO", label: "繁體中文（澳門）" },
     { value: "zhTW", label: "繁體中文" },
     { value: "zuZA", label: "isiZulu" }
 ]
