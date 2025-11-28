@@ -156,7 +156,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
      * Gets the array data
      */
     get data() {
-        if (this._enode) return this._enode.submitData
+        if (this._enode) return this._enode.data
         if (this.asSingle) return Array.isArray(this._data) ? deepClone(this._data) : []
         if (this._eschema.type !== SchemaType.Struct) return this._elements.map(e => e.data).filter(d => !isNull(d))
 
@@ -488,7 +488,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             const query = {}
             let key = ""
             for (let i = 0; i < primarys.length; i++) {
-                const d = row.getField(primarys[i]).submitData
+                const d = row.getField(primarys[i]).data
                 if (isNull(d)) return
                 query[primarys[i]] = d
                 key += `.${d instanceof Date ? d.toISOString() : d}`
@@ -550,11 +550,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             const appNode = this.parent as AppNode
             if (!appNode?.target) return false
         
-            const submitData = row.submitData
+            const data = row.data
             const res = await pushAppData(appNode.name, appNode.target, {
-                [this.name]: {
-                    data: [ submitData ]
-                }
+                [this.name]: { data: [ data ] }
             })
 
             if (res.result)
@@ -566,7 +564,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                     {
                         for (let k in this._fieldInfo.filter)
                         {
-                            if (!isEqual(submitData[k], this._fieldInfo.filter[k]))
+                            if (!isEqual(data[k], this._fieldInfo.filter[k]))
                                 return true
                         }
                     }
