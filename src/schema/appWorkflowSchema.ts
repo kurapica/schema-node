@@ -1,5 +1,6 @@
 import { ILocaleString } from "../utils/locale"
 import { IFunctionCallArgument } from "./functionSchema"
+import { IPolicyItem } from "./policySchema"
 
 /**
  * The application workflow schema
@@ -25,6 +26,11 @@ export interface IAppWorkflowSchema
      * The description
      */
     desc?: ILocaleString
+
+    /**
+     * The data authorization policies for the field, normally the row access policies
+     */
+    auths: IPolicyItem[]
 
     /**
      * Whether the workflow is active
