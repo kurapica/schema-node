@@ -33,6 +33,7 @@ export default {
     "system.year": "年份",
     "system.year.unit": "年",
     "system.guid": "GUID",
+    "system.guid.error": "必须是有效的GUID格式",
     "system.yearmonth": "年月",
     "system.rangedate": "年月日时间范围",
     "system.rangedate.start": "起始时间",
