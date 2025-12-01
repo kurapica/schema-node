@@ -1,6 +1,6 @@
-import { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult, IInteractionRequest } from "../schema/appSchema";
+import type { IAppDataFieldPushQuery, IAppDataPushResult, IAppDataQuery, IAppDataResult, IBatchQueryAppDataResult } from "../schema/appSchema";
 import { SchemaLoadState } from "../schema/nodeSchema";
-import { defaultSchemaProvider, getAppCachedSchema, getSchemaApiBaseUrl, ISchemaProvider, postSchemaApi, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
+import { defaultSchemaProvider, getAppCachedSchema, getSchemaApiBaseUrl, type ISchemaProvider, postSchemaApi, registerAppSchema, registerSchema, useSchemaProvider } from "./schemaProvider";
 import { debounce, deepClone, isNull } from "./toolset";
 
 let DEBOUNCE_BATCH_QUERY = 50
@@ -42,7 +42,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
      * @param workflowId The workflow instance id
      * @param data The interaction form data
      */
-    interaction(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
+    interaction(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<boolean>
 }
 
 let schemaProvider: IAppSchemaDataProvider | null = null
@@ -77,7 +77,7 @@ export const defaultAppSchemaProvider: IAppSchemaDataProvider = {
         }))?.target
     },
 
-    interaction: async function(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
+    interaction: async function(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<boolean>
     {
         return (await postSchemaApi("/interaction", {
             app, target, workflow, node, workflowId, data
@@ -218,11 +218,11 @@ const processAppDataQueryQueue = debounce(() => {
 
     // process
     let provider = getAppDataProvider()
-    provider.batchQueryAppData(combineQueries)
+    provider?.batchQueryAppData(combineQueries)
         .then(res => {
             // reg schema
             if (res.schemas?.length) registerSchema(res.schemas, SchemaLoadState.Server)
-            registerAppSchema(res.results.filter(r => r.schema).map(r => r.schema), SchemaLoadState.Server)
+            registerAppSchema(res.results?.filter(r => r.schema).map(r => r.schema!) || [], SchemaLoadState.Server)
 
             // resolve
             queue.forEach(q => {
@@ -279,7 +279,7 @@ export async function pushAppData(app: string, target: string, datas: { [key:str
 /**
  * Active interaction request
  */
-export async function interactionWorkflow(app: string, target: string, workflow: string, node: string, workflowId?: string, data?: any): Promise<boolean>
+export async function interactionWorkflow(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<boolean>
 {
     let provider = getAppDataProvider()
     if (!provider) throw "No App data provider"

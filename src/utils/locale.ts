@@ -209,11 +209,11 @@ export const _L = new Proxy(function(key: string) { return currLocale[key] ?? ke
 export function isNullLocalString(value: string | ILocaleString | null | undefined) {
     if (isNull(value)) return true
     if (typeof(value) === "string") return isNull(value)
-    if (typeof(value) === "object") return isNull(value.key)
+    if (typeof(value) === "object" && value) return isNull(value.key)
     return false
 }
 
-export function combineLocaleString(locale: string | ILocaleString | null | undefined, other)
+export function combineLocaleString(locale: string | ILocaleString | null | undefined, other: any)
 {
     return _LS(isNullLocalString(locale) ? other : locale)
 }
@@ -246,7 +246,7 @@ export function localeStringToString(value: ILocaleString | string | null | unde
                 if (schema) {
                     if (!isNull(field) && schema.type === SchemaType.Struct && schema.struct?.fields?.length) {
                         const f = schema.struct.fields.find(f => f.name === field)
-                        return f?.display?.key ? localeStringToString(f.display) : _L(f.name)
+                        return f?.display?.key ? localeStringToString(f.display) : _L(f?.name || field)
                     }
                     return schema.display?.key ? localeStringToString(schema.display) : _L(schema.name)
                 }
@@ -265,7 +265,7 @@ export function localeStringToString(value: ILocaleString | string | null | unde
                 if (schema) {
                     if (!isNull(field) && schema.fields?.length) {
                         const f = schema.fields.find(f => f.name === field)
-                        return f?.display?.key ? localeStringToString(f.display) : _L(f.name)
+                        return f?.display?.key ? localeStringToString(f.display) : _L(f?.name || field)
                     }
                     return schema.display?.key ? localeStringToString(schema.display) : _L(schema.name)
                 }

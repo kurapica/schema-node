@@ -1,7 +1,7 @@
-import { DataCombineTypeValue } from "../enum/dataCombineType"
-import { ILocaleString } from "../utils/locale"
-import { IDataCombine } from "./arraySchema"
-import { IPolicyItem } from "./policySchema"
+import { type DataCombineTypeValue } from "../enum/dataCombineType"
+import { type ILocaleString } from "../utils/locale"
+import { type IDataCombine } from "./arraySchema"
+import { type IPolicyItem } from "./policySchema"
 
 /**
  * The application field scehma

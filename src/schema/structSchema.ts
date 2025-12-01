@@ -1,9 +1,9 @@
-import { RelationTypeValue } from "../enum/relationType"
-import { ISchemaConfig } from "../config/schemaConfig"
-import { IFunctionCallArgument } from "./functionSchema"
-import { IScalarConfig } from "../config/scalarConfig"
-import { IEnumConfig } from "../config/enumConfig"
-import { IArrayConfig } from "../config/arrayConfig"
+import { type RelationTypeValue } from "../enum/relationType"
+import { type ISchemaConfig } from "../config/schemaConfig"
+import { type IFunctionCallArgument } from "./functionSchema"
+import { type IScalarConfig } from "../config/scalarConfig"
+import { type IEnumConfig } from "../config/enumConfig"
+import { type IArrayConfig } from "../config/arrayConfig"
 
 /**
  * The struct schema.

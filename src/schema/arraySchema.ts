@@ -1,5 +1,5 @@
-import { DataCombineTypeValue } from "../enum/dataCombineType"
-import { IStructFieldRelation } from "./structSchema"
+import { type DataCombineTypeValue } from "../enum/dataCombineType"
+import { type IStructFieldRelation } from "./structSchema"
 
 /**
  * The array schema.

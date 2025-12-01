@@ -1,13 +1,13 @@
-import { ISchemaConfig } from "../config/schemaConfig"
-import { RelationType, RelationTypeValue } from "../enum/relationType"
+import { type ISchemaConfig } from "../config/schemaConfig"
+import { RelationType, type RelationTypeValue } from "../enum/relationType"
 import { SchemaType } from "../enum/schemaType"
 import { AppNode } from "../node/appNode"
 import { ArrayNode } from "../node/arrayNode"
 import { EnumNode } from "../node/enumNode"
 import { ScalarNode } from "../node/scalarNode"
-import { AnySchemaNode } from "../node/schemaNode"
+import { type AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
-import { INodeSchema } from "../schema/nodeSchema"
+import { type INodeSchema } from "../schema/nodeSchema"
 import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { clearDebounce, debounce, deepClone, generateGuid, isEqual, isNull } from "../utils/toolset"
@@ -103,7 +103,7 @@ export class RuleSchema {
     /**
      * Gets the child rule schema
      */
-    getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
+    getChildRuleSchema(_: AnySchemaNode): RuleSchema | null
     {
         return null
     }
@@ -232,6 +232,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     if (!isNull(res) && typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
                     {
                         getSchema(res).then(schema => {
+                            if (!schema) return
                             // replace the node
                             (node.parent as StructNode).rebuildField(node.name, schema.name)
                         })
@@ -384,8 +385,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             }
             else if (node instanceof ArrayNode && node.enumNode){
                 handler = (res: any) => {
-                    node.enumNode.rule.root = res
-                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
+                    node.enumNode!.rule.root = res
+                    node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
                 }
             }
             break
@@ -401,8 +402,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumNode.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
+                    node.enumNode!.rule.blackList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
                 }
             }
             break
@@ -418,8 +419,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumNode.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
-                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
+                    node.enumNode!.rule.whiteList = Array.isArray(res) ? res.filter(r => !isNull(res)) : res
+                    node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
                 }
             }
             break
@@ -435,8 +436,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumNode.rule.anyLevel = res
-                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
+                    node.enumNode!.rule.anyLevel = res
+                    node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
                 }
             }
             break
@@ -452,8 +453,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             else if (node instanceof ArrayNode && node.enumNode)
             {
                 handler = (res: any) => {
-                    node.enumNode.rule.cascade = res
-                    node.enumNode.validation().finally(() => node.enumNode.notifyState())
+                    node.enumNode!.rule.cascade = res
+                    node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
                 }
             }
             break
@@ -553,7 +554,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         node.rule._activePushes.push(push)
 
         args.filter(a => a.node).forEach(a => {
-            a.node!.activeRule()
+            if (!a.node) return
+            a.node.activeRule()
             if (a.node.parent instanceof StructNode)
             {
                 const name = a.node.name
@@ -563,8 +565,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     a.node.parent.subscribeMemberChange((n: string) => {
                         if (n !== name) return
                         handler()
-                        a.node = (a.node.parent as StructNode).getField(name)
-                        handler = a.node.subscribe(push)
+                        a.node = (a.node!.parent as StructNode).getField(name)
+                        handler = a.node!.subscribe(push)
                     })
                 }
             }

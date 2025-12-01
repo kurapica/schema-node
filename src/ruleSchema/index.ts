@@ -1,5 +1,5 @@
+export { ARRAY_ITSELF, ARRAY_ELEMENT, NODE_SELF, RuleSchema } from "./ruleSchema"
 export { ArrayRuleSchema } from "./arrayRuleSchema"
 export { EnumRulechema } from "./enumRuleSchema"
-export { ARRAY_ITSELF, ARRAY_ELEMENT, NODE_SELF, RuleSchema } from "./ruleSchema"
 export { ScalarRuleSchema } from "./scalarRuleSchema"
 export { StructRuleSchema } from "./structRuleSchema"

@@ -1,5 +1,5 @@
-import { EnumValueType, EnumValueTypeValue } from "../enum/enumValueType"
-import { ILocaleString } from "../utils/locale"
+import { EnumValueType, type EnumValueTypeValue } from "../enum/enumValueType"
+import { type ILocaleString } from "../utils/locale"
 
 /**
  * The enum type schema

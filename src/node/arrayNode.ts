@@ -1,11 +1,11 @@
 import { SchemaType } from '../enum/schemaType'
-import { IArrayConfig } from '../config/arrayConfig'
-import { IEnumConfig } from '../config/enumConfig'
-import { ISchemaConfig } from '../config/schemaConfig'
-import { INodeSchema } from '../schema/nodeSchema'
+import { type IArrayConfig } from '../config/arrayConfig'
+import { type IEnumConfig } from '../config/enumConfig'
+import { type ISchemaConfig } from '../config/schemaConfig'
+import { type INodeSchema } from '../schema/nodeSchema'
 import { getCachedSchema, validateSchemaValue } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
-import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
+import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
@@ -14,7 +14,7 @@ import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
-import { IAppDataFieldInfo, IAppDataQueryOrder } from '../schema/appSchema'
+import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSchema'
 
 /**
  * The array schema data node
@@ -45,7 +45,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     get fullerror(): any {
         if (this._enode) return this._enode.fullerror
         if (this.asSingle) return this._valid ? this._errfld : undefined
-        const errs = {}
+        const errs: any = {}
         let hasErr = false
         this._elements.forEach((e, i) => {
             if (!e.valid) {
@@ -104,7 +104,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     /**
      * The order by info
      */
-    get orderBy(): IAppDataQueryOrder[] { return deepClone(this._fieldInfo.orderBy) || [] }
+    get orderBy(): IAppDataQueryOrder[] { return deepClone(this._fieldInfo?.orderBy) || [] }
 
     /**
      * Set the array data
@@ -144,6 +144,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             for (let i = this._elements.length; i < data.length; i++)
             {
                 const eleNode = this.newElement(data[i])
+                if (!eleNode) continue
                 this._elements.push(eleNode)
                 this._data[i] = eleNode.rawData
                 if (this._rule._actived) eleNode.activeRule()
@@ -442,7 +443,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             for(let i = 0; i < primarys.length; i++)
             {
                 let k = primarys[i]
-                const v = node.getField(k).rawData
+                const v = node.getField(k)?.rawData
                 if (isNull(v)) return undefined
                 keys.push(`${v}`)
             }
@@ -471,7 +472,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         
         // auto query the data with primary key without date scalar field
         const primarys = this.schema.array?.primary
-        if (!primarys.length) return row
+        if (!primarys?.length) return row
 
         const fields = this._eschema.struct?.fields?.filter(f => primarys.includes(f.name))
         if (!fields?.length || fields.find(f => {
@@ -485,10 +486,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         // load data with primary key
         let prevkey = ""
         const loadRowData = async() => {
-            const query = {}
+            const query:any = {}
             let key = ""
             for (let i = 0; i < primarys.length; i++) {
-                const d = row.getField(primarys[i]).data
+                const d = row.getField(primarys[i])?.data
                 if (isNull(d)) return
                 query[primarys[i]] = d
                 key += `.${d instanceof Date ? d.toISOString() : d}`
@@ -518,6 +519,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
 
         primarys.forEach(p => {
             const node = row.getField(p)
+            if (!node) return
             row.watch(node, loadRowData)
         })
 
@@ -539,7 +541,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         for (let i = 0; i < primarys.length; i++)
         {
             const node = row.getField(primarys[i])
-            if (isNull(node?.rawData) || !node.valid) return false
+            if (!node || isNull(node?.rawData) || !node.valid) return false
             if (node.changed) isnew = true
         }
 
@@ -560,7 +562,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 if (isnew)
                 {
                     // query match check
-                    if (this._fieldInfo.filter)
+                    if (this._fieldInfo?.filter)
                     {
                         for (let k in this._fieldInfo.filter)
                         {
@@ -570,17 +572,17 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                     }
 
                     // jump to the new record
-                    if (this._fieldInfo.descend)
+                    if (this._fieldInfo?.descend)
                     {
                         await this.setPage(0)
                     }
                     else
                     {
-                        const count = this._fieldInfo.take || 10
-                        await this.setPage(Math.floor((this._fieldInfo.total || 0) / count), count, false)
+                        const count = this._fieldInfo?.take || 10
+                        await this.setPage(Math.floor((this._fieldInfo?.total || 0) / count), count, false)
                     }
                 }
-                else
+                else if (key)
                 {
                     delete this._tracker[key]
                     const ele = this._elements.find(e => this.getPrimaryKey(e) === key)
@@ -596,7 +598,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             }
         }
         // save to tracker
-        else
+        else if (key)
         {
             this._tracker[key] ||= {}
             this._tracker[key].update = row.data
@@ -637,7 +639,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             {
                 const ele = this._elements[i]
                 const key = this.getPrimaryKey(ele)
-                if (!this._tracker[key]?.delete)
+                if (key && !this._tracker[key]?.delete)
                 {
                     this._tracker[key] ||= {}
                     this._tracker[key].delete = true
@@ -664,7 +666,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         {
             const ele = this._elements[i]
             const key = this.getPrimaryKey(ele)
-            if (this._tracker[key]?.delete)
+            if (key && this._tracker[key]?.delete)
             {
                 this._tracker[key].delete = undefined
                 ele.notifyState()
@@ -704,8 +706,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
     async setPage(page: number, count?: number, descend?: boolean, filter?: { [key:string]: any }, orderBy?: IAppDataQueryOrder[])
     {
         //if (!this.incrUpdate) return
-        count ||= this._fieldInfo.take || 10 // default should be provided by server
-        if (isNull(descend)) descend = this._fieldInfo.descend
+        count ||= this._fieldInfo?.take || 10 // default should be provided by server
+        if (isNull(descend)) descend = this._fieldInfo?.descend
         const appNode = this.parent
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return
 
@@ -713,7 +715,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         const fields = this._eschema.struct?.fields
         if (filter)
         {
-            const temp = {}
+            const temp: any = {}
             let hasQuery = false
             for (let k in filter)
             {
@@ -730,7 +732,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         else
         {
-            filter = this._fieldInfo.filter
+            filter = this._fieldInfo?.filter
         }
 
         if (orderBy)
@@ -744,7 +746,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
         }
         else
         {
-            orderBy = this._fieldInfo.orderBy
+            orderBy = this._fieldInfo?.orderBy
         }
 
         try
@@ -796,10 +798,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 // load new page
                 for (let i = 0; i < data.length; i++)
                 {
-                    let eleNode: AnySchemaNode
+                    let eleNode: AnySchemaNode | null
                     if (this._elements.length <= i)
                     {
                         eleNode = this.newElement(data[i])
+                        if (!eleNode) continue
                         this._elements.push(eleNode)
                         this._data[i] = eleNode.rawData
                     }
@@ -819,7 +822,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
                 }
 
                 for (let i = this._elements.length - 1; i >= data.length; i--)
-                    this._elements.pop().dispose()
+                    this._elements.pop()?.dispose()
             }
             else
             {
@@ -889,6 +892,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRu
             for (let i = 0; i < data.length; i++)
             {
                 const eleNode = this.newElement(data[i])
+                if (!eleNode) continue
                 this._elements.push(eleNode)
                 this._data[i] = eleNode.rawData
             }

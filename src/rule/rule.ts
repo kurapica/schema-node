@@ -2,7 +2,7 @@ export abstract class Rule {
     /**
      * The node type
      */
-    type: string
+    type: string = ""
     
     /**
      * The default value

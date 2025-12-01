@@ -1,4 +1,4 @@
-import { _L, ILocaleString } from "./locale"
+import { _L, type ILocaleString } from "./locale"
 
 /**
  * is null

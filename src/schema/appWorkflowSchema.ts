@@ -1,6 +1,6 @@
-import { ILocaleString } from "../utils/locale"
-import { IFunctionCallArgument } from "./functionSchema"
-import { IPolicyItem } from "./policySchema"
+import { type ILocaleString } from "../utils/locale"
+import { type IFunctionCallArgument } from "./functionSchema"
+import { type IPolicyItem } from "./policySchema"
 
 /**
  * The application workflow schema

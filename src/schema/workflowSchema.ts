@@ -1,5 +1,5 @@
-import { WorkflowModeValue } from "../enum/workflowMode";
-import { IFunctionArgumentInfo } from "./functionSchema";
+import { type WorkflowModeValue } from "../enum/workflowMode";
+import { type IFunctionArgumentInfo } from "./functionSchema";
 
 /**
  * Interface representing the schema of a workflow.

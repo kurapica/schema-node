@@ -1,8 +1,8 @@
 import { EnumValueType } from '../enum/enumValueType'
 import { SchemaType } from '../enum/schemaType'
-import { IEnumConfig } from '../config/enumConfig'
-import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
-import { ISchemaConfig } from '../config/schemaConfig'
+import { type IEnumConfig } from '../config/enumConfig'
+import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
+import { type ISchemaConfig } from '../config/schemaConfig'
 import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
@@ -158,12 +158,12 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
     /**
      * Gets the enum white list
      */
-    get whiteList(): string[] | number[]  { return this.rule.whiteList?.length ? this.rule.whiteList : this._config.whiteList }
+    get whiteList(): any  { return this.rule.whiteList?.length ? this.rule.whiteList : this._config.whiteList }
 
     /**
      * Gets the black list
      */
-    get blackList(): string[] | number[] { return this.rule.blackList?.length ? this.rule.blackList : this._config.blackList }
+    get blackList(): any { return this.rule.blackList?.length ? this.rule.blackList : this._config.blackList }
 
     /**
      * Allow use enum value in any level
@@ -197,10 +197,10 @@ export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
         if (this.cascade && access.length > this.cascade) return false
         
         // check the black list
-        if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex(b => `${a.value}` === `${b}`) >= 0) >= 0) return false
+        if (this.blackList?.length && access.findIndex(a => this.blackList!.findIndex((b:any) => `${a.value}` === `${b}`) >= 0) >= 0) return false
         
         // check the white list - the sub enum value of the allowed enum value also allowed, also their parent if any level
-        if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex(b => `${a.value}` === `${b}`) >= 0) < 0)
+        if (this.whiteList?.length && access.findIndex(a => this.whiteList!.findIndex((b:any) => `${a.value}` === `${b}`) >= 0) < 0)
         {
             if (!this.anyLevel || this.cascadeLevel === 1) return false
             for(let i = 0; i < this.whiteList.length; i++)

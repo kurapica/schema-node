@@ -1,19 +1,19 @@
 import { SchemaType } from "../enum/schemaType"
-import { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import type { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isEmpty, isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
 import { EnumNode } from "./enumNode"
 import { ScalarNode } from "./scalarNode"
-import { AnySchemaNode, SchemaNode } from "./schemaNode"
+import { type AnySchemaNode, SchemaNode } from "./schemaNode"
 import { StructNode } from "./structNode"
-import { ISchemaConfig } from "../config/schemaConfig"
+import { type ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
 import { StructRuleSchema } from "../ruleSchema"
-import { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
+import type { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
-import { INodeSchema } from "../schema/nodeSchema"
-import { DataCombineType, DataCombineTypeValue } from "../enum/dataCombineType"
+import { type INodeSchema } from "../schema/nodeSchema"
+import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
 
 
 //#region Inner Type
@@ -49,7 +49,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     get fullerror(): any {
         const errs = this.loadedInputFields.filter(f => !f.valid && !f.invisible).map(f => ({ name: f.name, error: f.fullerror }))
         if (errs.length){
-            const err = {}
+            const err:any = {}
             errs.forEach(e => { err[e.name] = e.error })
             return err
         }
@@ -110,7 +110,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Gets all input fields, excluding readonly input fields(ref | readonly)
      */
-    get inputFields(): AnySchemaNode[] { return this.getFields(null, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    get inputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
     
     /**
      * Gets all loaded input fields for data submit
@@ -125,7 +125,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
     /**
      * Gets all input fields, including all input fields(ref | readonly)
      */
-    get allInputFields(): AnySchemaNode[] { return this.getFields(null, AppFieldNodeState.Push) }
+    get allInputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Push) }
     
     /**
      * Gets all the non-ref push fields
@@ -137,7 +137,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      */
     get sourceApps(): string[] {
         const sourceApps: string[] = []
-        this._appSchema.fields.forEach(f => {
+        this._appSchema.fields!.forEach(f => {
             if (f.sourceApp && !sourceApps.includes(f.sourceApp))
                 sourceApps.push(f.sourceApp)
         })
@@ -207,7 +207,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
 
                     if ((finfo.state & AppFieldNodeState.FrontEnd) && (finfo.state & AppFieldNodeState.Push))
                     {
-                        const fieldSchema = this._appSchema.fields.find(f => f.name === name)
+                        const fieldSchema = this._appSchema.fields!.find(f => f.name === name)
                         if (!fieldSchema || !fieldSchema.func || !fieldSchema.args?.length) 
                         {
                             changed = true
@@ -277,21 +277,22 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 if (processOrder[name] !== processlvl) continue
                 processed = true
 
-                const fieldSchema = this._appSchema.fields.find(f => f.name === name)
+                const fieldSchema = this._appSchema.fields!.find(f => f.name === name)
+                if (fieldSchema == null || !fieldSchema.func) continue
                 
                 // gather arguments
-                const args = fieldSchema.args.map(a => {
+                const args = fieldSchema?.args?.map(a => {
                     const access = a.split(".")
                     let data = this.getField(access[0])?.rawData
                     access.slice(1).forEach(a => data = data && typeof(data) === 'object' ? data[a] : null)
                     return data
-                })
+                }) || []
 
                 // calculate
                 let result: any = null
 
                 // check func arguments
-                const funcSchema = (await getSchema(fieldSchema.func)).func
+                const funcSchema = (await getSchema(fieldSchema.func))?.func
                 if (!funcSchema) throw `unable to find function ${fieldSchema.func}`
 
                 let arrindex = -1
@@ -354,16 +355,16 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                 if (Array.isArray(result))
                 {
                     const retSchema = await getSchema(fieldSchema.type)
-                    if (retSchema.type === SchemaType.Scalar || retSchema.type === SchemaType.Enum)
+                    if (retSchema?.type === SchemaType.Scalar || retSchema?.type === SchemaType.Enum)
                     {
                         result = await combineResult(retSchema, result, fieldSchema.combine)
                     }
-                    else if (retSchema.type === SchemaType.Struct)
+                    else if (retSchema?.type === SchemaType.Struct)
                     {
                         const joinres: any = {}
-                        for (let i = 0; i < retSchema.struct.fields.length; i++)
+                        for (let i = 0; i < retSchema.struct!.fields.length; i++)
                         {
-                            const sfield = retSchema.struct.fields[i]
+                            const sfield = retSchema.struct!.fields[i]
                             joinres[sfield.name] = await combineResult(
                                 sfield.type, 
                                 result.map(r => r[sfield.name]),
@@ -372,7 +373,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                         }
                         result = joinres
                     }
-                    else if (retSchema.type === SchemaType.Array && retSchema.array.element && retSchema.array?.primary?.length)
+                    else if (retSchema?.type === SchemaType.Array && retSchema.array?.element && retSchema.array?.primary?.length)
                     {
                         const primary = retSchema.array.primary
                         const structSchema = await getSchema(retSchema.array.element)
@@ -392,7 +393,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
                                     keyMap[key].push(r)
                                 else 
                                 {
-                                    const com = {}
+                                    const com: any = {}
                                     primary.forEach(p => com[p] = r[p])
                                     combineArray.push(com)
                                     keyMap[key] = [r]
@@ -480,15 +481,15 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructR
      */
     async submit(nodes?: AnySchemaNode[] | string[]): Promise<IAppDataPushResult | undefined> {
         if (!this.target) return undefined
-        const datas = {}
+        const datas: any = {}
 
         const pushNodes: AnySchemaNode[] = []
         if (!nodes?.length) nodes = this.loadedInputFields
         for (let i = 0; i < nodes.length; i++)
         {
             let n = nodes[i]
-            if (typeof(n) === "string") n = this.getField(n)
-            const state = this._fields.find(f => f.node === n)?.state
+            if (typeof(n) === "string") n = this.getField(n)!
+            const state = this._fields.find(f => f.node === n)?.state || AppFieldNodeState.None
             if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly)) && n.changed)
             {
                 const submitData = n.submitData
@@ -616,9 +617,9 @@ export async function getAppNode(query: IAppDataQuery, readonly?: boolean): Prom
 //#region Utility
 
 // combine result for schema
-async function combineResult(schema: INodeSchema | string, result: any[], combine: DataCombineTypeValue = null): Promise<any>
+async function combineResult(schema: INodeSchema | string, result: any[], combine: DataCombineTypeValue | null = null): Promise<any>
 {
-    if (typeof(schema) === "string") schema = await getSchema(schema)
+    if (typeof(schema) === "string") schema = await getSchema(schema) as INodeSchema
     let isnumber = false
     switch (schema.type)
     {
@@ -650,7 +651,7 @@ async function combineResult(schema: INodeSchema | string, result: any[], combin
     }
 }
 
-function calcUniqueKey(primary: string[], res: {}): string
+function calcUniqueKey(primary: string[], res: any): string
 {
     const keys:string[] = []
     for(let i = 0; i < primary.length; i++)

@@ -1,7 +1,7 @@
 import { SchemaType } from '../enum/schemaType'
-import { IScalarConfig } from '../config/scalarConfig'
-import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
-import { ISchemaConfig } from '../config/schemaConfig'
+import { type IScalarConfig } from '../config/scalarConfig'
+import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
+import { type ISchemaConfig } from '../config/schemaConfig'
 import { callSchemaFunction, getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { deepClone, isNull, sformat } from '../utils/toolset'
 import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
@@ -155,7 +155,7 @@ export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, Scal
         if (this._valid && this.rule.error)
         {
             this._valid = false
-            const error = config.error || scalarInfo.error || "ERR_DATA_NOT_VALID"
+            const error = config.error || scalarInfo?.error || "ERR_DATA_NOT_VALID"
             this._error = sformat(error, config.display)
         }
 

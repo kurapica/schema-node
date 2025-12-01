@@ -1,9 +1,9 @@
-import { ILocaleString } from "../utils/locale"
-import { IAppFieldSchema } from "./appFieldSchema"
-import { IAppWorkflowSchema } from "./appWorkflowSchema"
-import { INodeSchema, SchemaLoadState } from "./nodeSchema"
-import { IPolicyItem } from "./policySchema"
-import { IStructFieldRelation } from "./structSchema"
+import { type ILocaleString } from "../utils/locale"
+import { type IAppFieldSchema } from "./appFieldSchema"
+import { type IAppWorkflowSchema } from "./appWorkflowSchema"
+import { type INodeSchema, SchemaLoadState } from "./nodeSchema"
+import { type IPolicyItem } from "./policySchema"
+import { type IStructFieldRelation } from "./structSchema"
 
 /**
  * The application schema

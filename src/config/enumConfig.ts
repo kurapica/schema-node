@@ -1,4 +1,4 @@
-import { ISchemaConfig } from "./schemaConfig"
+import { type ISchemaConfig } from "./schemaConfig"
 
 export interface IEnumConfig extends ISchemaConfig
 {

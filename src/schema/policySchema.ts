@@ -1,6 +1,5 @@
-import { PolicyCombine } from "../enum/policyCombine";
-import { PolicyScope } from "../enum/policyScope";
-import { IFunctionCallArgument } from "./functionSchema";
+import { PolicyCombine } from "../enum/policyCombine"
+import { PolicyScope } from "../enum/policyScope"
 
 /**
  * Interface representing a policy schema.

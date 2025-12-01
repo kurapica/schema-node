@@ -1,14 +1,14 @@
 import { EnumValueType } from "../enum/enumValueType"
-import { ExpressionType, ExpressionTypeValue } from "../enum/expressionType"
+import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
 import { isNull, useQueueQuery } from "./toolset"
-import { IEnumValueAccess, IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
-import { IFunctionSchema } from "../schema/functionSchema"
-import { INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
-import { IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
+import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
+import { type IFunctionSchema } from "../schema/functionSchema"
+import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
+import { type IStructFieldConfig, type IStructScalarFieldConfig } from "../schema/structSchema"
 import { DataChangeWatcher } from "./dataChangeWatcher"
-import { IAppSchema } from "../schema/appSchema"
-import { _L, _LS, combineLocaleString, ILocaleString } from "./locale"
+import { type IAppSchema } from "../schema/appSchema"
+import { _L, _LS, combineLocaleString, type ILocaleString } from "./locale"
 import axios from "axios"
 
 export const NS_SYSTEM = "system"
@@ -304,9 +304,9 @@ export function removeAppSchema(name: string): boolean {
     if (parent)
     {
         const index = parent.apps?.findIndex(s => s.name === schema.name)
-        if (!isNull(index) && index >= 0)
+        if (!isNull(index) && index! >= 0)
         {
-            parent.apps.splice(index, 1)
+            parent.apps?.splice(index!, 1)
         }
     }
     delete appSchemaCache[name]
@@ -332,7 +332,7 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
     // all schema names should be case insensitive
     name = name.toLowerCase()
 
-    let schema = !name ? rootAppSchema : appSchemaCache[name]
+    let schema: IAppSchema | undefined = !name ? rootAppSchema : appSchemaCache[name]
     let provider = getSchemaProvider()
     if (schema?.loaded || !provider) return schema
     if (schema) schema.loaded = true
@@ -533,7 +533,7 @@ export function removeSchema(name: string): boolean
     name = name.toLowerCase()
     const schema = getCachedSchema(name)
     if (!schema) return true
-    if (schema.loadState & SchemaLoadState.System) return false
+    if (schema?.loadState && (schema?.loadState & SchemaLoadState.System)) return false
     if (schema === rootSchema || schemaRefs[name]) return false
     updateSchemaRefs(schema, false)
     
@@ -543,9 +543,9 @@ export function removeSchema(name: string): boolean
     if (parent)
     {
         const index = parent.schemas?.findIndex(s => s.name === schema.name)
-        if (!isNull(index) && index >= 0)
+        if (!isNull(index) && index! >= 0)
         {
-            parent.schemas.splice(index, 1)
+            parent.schemas?.splice(index!, 1)
         }
     }
     delete schemaCache[name]
@@ -677,7 +677,7 @@ export function getGenericParameter(name: string | INodeSchema) : string[] | und
 {
     const schema = typeof name === "string" ? getCachedSchema(name) : name
     if (schema?.type == SchemaType.Array) {
-        if (schema.array.element?.match(REGEX_GENERIC_TYPE)) {
+        if (schema.array?.element?.match(REGEX_GENERIC_TYPE)) {
             return ["T"]
         }
     }
@@ -878,7 +878,7 @@ export async function validateSchemaValue(name: string, value: any): Promise<boo
  */
 export async function isStructFieldIndexable(config: IStructFieldConfig)
 {
-    let schema = await getSchema(config.type)
+    let schema: INodeSchema | null | undefined = await getSchema(config.type)
     if (!schema) return false
     switch (schema.type) {
         case SchemaType.Scalar:
@@ -1131,6 +1131,7 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
                 root.splice(0, 0, ...access[i].subList)
                 match = root.find(r => r.value == access[i].value)
             }
+            if (!match) continue
             
             if (i < access.length - 1) {
                 match.hasSubList = true
@@ -1201,6 +1202,8 @@ export async function getEnumAccessList(name: string, value: any): Promise<IEnum
                 match = root.find(r => r.value == access[i].value)
             }
             
+            if (!match) continue
+
             if (i < access.length - 1) {
                 match.hasSubList = true
                 match.subList ||= []
@@ -1297,7 +1300,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
 
         // avoid repeat call in the same time
         if (pendingCall[token])
-            return await new Promise((resolve, reject) => pendingCall[token].push({ resolve, reject }))
+            return await new Promise((resolve, reject) => pendingCall[token!].push({ resolve, reject }))
 
         // init
         pendingCall[token] = []
@@ -1315,7 +1318,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
         finally {
             delete pendingCall[token]
             if (!funcInfo.nocache && !args.length) // reset
-                setTimeout(() => delete shareFuncCallResult[token], 1000);
+                setTimeout(() => delete shareFuncCallResult[token!], 1000);
         }
     }
     else
@@ -1380,7 +1383,7 @@ export function isSchemaDeletable(name: string)
 {
     const schema = getCachedSchema(name)
     if (!schema) return false
-    if (schema.loadState & SchemaLoadState.System) return false
+    if (schema.loadState && (schema.loadState & SchemaLoadState.System)) return false
     if (schemaRefs[schema.name.toLowerCase()]) return false
     if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
     return !schema.used
@@ -1717,7 +1720,7 @@ function searchEnumValue(values: IEnumValueInfo[], value: any): IEnumValueInfo[]
     return []
 }
 
-function updateRef(name: string, add: boolean)
+function updateRef(name?: string, add?: boolean)
 {
     if (!name) return
     name = name.toLowerCase()
@@ -1894,14 +1897,13 @@ axios.interceptors.request.use(config => {
 // The schema api base url
 if (document.querySelector('meta[name="schema-api-base-url"]'))
 {
-    schemaApiBaseUrl = document.querySelector('meta[name="schema-api-base-url"]').getAttribute('content') || undefined
+    schemaApiBaseUrl = document.querySelector('meta[name="schema-api-base-url"]')?.getAttribute('content') || undefined
 }
 
 // check protocol from meta tag
 let apiProtocol: ISchemaApiProtocolMeta | undefined = undefined
 
 function scanErrorPaths(fields?: Record<string, any>): string[] {
-    let errorPaths: string[] = []
     if (fields)
     {
         for (let field in fields)
@@ -1927,12 +1929,8 @@ function scanErrorPaths(fields?: Record<string, any>): string[] {
 function generateField(url: string, fmt: any): any | undefined
 {
     if (typeof(fmt) !== 'string') return undefined
-
-    let type: string;
-    let format: string | null;
-    let example: string | null;
-
     const match = fmt.match(/^(\w+)\[?(\w*)\]?:?(.*)?$/)
+    if (!match) return undefined
     if (match.length >= 2)
     {
         if (match[1] == "string")
@@ -1985,7 +1983,7 @@ if (document.querySelector('meta[name="schema-api-protocol"]'))
 {
     try
     {
-        let content = document.querySelector('meta[name="schema-api-protocol"]').getAttribute('content') || ''
+        let content = document.querySelector('meta[name="schema-api-protocol"]')?.getAttribute('content') || ''
         if (content) setSchemaApiProtocol(JSON.parse(content))
     }
     catch(ex)
@@ -2020,7 +2018,7 @@ export function getSchemaApiBaseUrl(): string | undefined {
 export async function postSchemaApi(url: string, param: any, noProtocol: boolean = false): Promise<any> {
     try
     {
-        let site: string = schemaApiBaseUrl
+        let site: string = schemaApiBaseUrl || ''
         if (!site) return null
 
         if (site.endsWith("/")) site = site.substring(0, site.length - 1)
@@ -2051,12 +2049,12 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
             }
 
             // build request according to protocol
-            if (apiProtocol.request && apiProtocol.request.wrap)
+            if (apiProtocol?.request && apiProtocol.request.wrap)
             {
                 let requestParam: any = { [apiProtocol.request.wrap]: param }
                 for (let field in apiProtocol.request.fields || {})
                 {
-                    const fieldFmt = apiProtocol.request.fields[field]
+                    const fieldFmt = apiProtocol.request.fields![field]
                     requestParam[field] = generateField(url, fieldFmt)
                 }
                 param = requestParam
@@ -2070,7 +2068,7 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
         let data = result?.data
         
         // unwrap response according to protocol
-        if (!noProtocol && apiProtocol.response && apiProtocol.response.unwrap)
+        if (!noProtocol && apiProtocol?.response && apiProtocol.response.unwrap)
         {
             // check error protocol
             if (apiProtocol.error && apiProtocol.error.length)

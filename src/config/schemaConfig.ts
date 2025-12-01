@@ -1,4 +1,4 @@
-import { ILocaleString } from "../utils/locale"
+import { type ILocaleString } from "../utils/locale"
 
 /**
  * The config of the schema node.

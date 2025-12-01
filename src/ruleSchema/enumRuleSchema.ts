@@ -1,4 +1,4 @@
-import { IEnumConfig } from "../config/enumConfig"
+import { type IEnumConfig } from "../config/enumConfig"
 import { SchemaType } from "../enum/schemaType"
 import { EnumNode } from "../node/enumNode"
 import { regRuleSchema, RuleSchema } from "./ruleSchema"

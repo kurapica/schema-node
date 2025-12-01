@@ -1,4 +1,4 @@
-import { ILocaleString } from "../utils/locale"
+import { type ILocaleString } from "../utils/locale"
 
 /**
  * The schema of the scalar type

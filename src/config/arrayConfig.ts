@@ -1,5 +1,5 @@
-import { IAppDataFieldInfo } from "../schema/appSchema"
-import { ISchemaConfig } from "./schemaConfig"
+import { type IAppDataFieldInfo } from "../schema/appSchema"
+import { type ISchemaConfig } from "./schemaConfig"
 
 export interface IArrayConfig extends ISchemaConfig
 {

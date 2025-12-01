@@ -1,6 +1,6 @@
 import { SchemaType } from '../enum/schemaType'
-import { AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
-import { ISchemaConfig } from '../config/schemaConfig'
+import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
+import { type ISchemaConfig } from '../config/schemaConfig'
 import { getCachedSchema } from '../utils/schemaProvider'
 import { _LS } from '../utils/locale'
 import { clearDebounce, debounce, isNull } from '../utils/toolset'
@@ -36,7 +36,7 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, Stru
     get fullerror(): any {
         const errs = this._fields.filter(f => !f.valid && !f.invisible).map(f => ({ name: f.name, error: f.fullerror }))
         if (errs.length){
-            const err = {}
+            const err: any = {}
             errs.forEach(e => { err[e.name] = e.error })
             return err
         }

@@ -1,9 +1,9 @@
-import { SchemaType, SchemaTypeValue } from "../enum/schemaType"
-import { INodeSchema } from "../schema/nodeSchema"
+import { SchemaType, type SchemaTypeValue } from "../enum/schemaType"
+import { type INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce, generateGuid, sformat, clearDebounce } from "../utils/toolset"
-import { ISchemaConfig } from "../config/schemaConfig"
+import { type ISchemaConfig } from "../config/schemaConfig"
 import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
 import { getRuleSchema } from "../ruleSchema/ruleSchema"
@@ -50,7 +50,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * Gets the name of the field as struct member
      */
-    get name(): string { return this._config["name"] || "" }
+    get name(): string { return (this._config as any)["name"] || "" }
 
     /**
      * The config of the node.
@@ -190,7 +190,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * indexof the sub node
      */
-    indexof(node: AnySchemaNode): number | string | undefined | null { return null }
+    indexof(_: AnySchemaNode): number | string | undefined | null { return null }
 
     /**
      * Common data validation and notify

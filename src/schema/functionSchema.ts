@@ -1,4 +1,4 @@
-import { ExpressionTypeValue } from "../enum/expressionType"
+import { type ExpressionTypeValue } from "../enum/expressionType"
 
 /**
  * The schema of function

@@ -1,8 +1,8 @@
-import { ISchemaConfig } from "../config/schemaConfig"
+import { type ISchemaConfig } from "../config/schemaConfig"
 import { SchemaType } from "../enum/schemaType"
 import { ArrayNode } from "../node/arrayNode"
-import { AnySchemaNode } from "../node/schemaNode"
-import { INodeSchema } from "../schema/nodeSchema"
+import { type AnySchemaNode } from "../node/schemaNode"
+import { type INodeSchema } from "../schema/nodeSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
 import { getRuleSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
 import { StructRuleSchema } from "./structRuleSchema"
@@ -13,7 +13,7 @@ export class ArrayRuleSchema extends RuleSchema
     /**
      * The element rule schema
      */
-    element: RuleSchema
+    element: RuleSchema | undefined
 
     /**
      * Active the rule schema for node
@@ -56,7 +56,7 @@ export class ArrayRuleSchema extends RuleSchema
     /**
      * Gets the child rule schema
      */
-    override getChildRuleSchema(node: AnySchemaNode): RuleSchema | null
+    override getChildRuleSchema(_: AnySchemaNode): RuleSchema | null
     {
         return this.element || this
     }

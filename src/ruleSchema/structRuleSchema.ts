@@ -1,13 +1,13 @@
 import { SchemaType } from "../enum/schemaType"
 import { AppNode } from "../node/appNode"
-import { AnySchemaNode } from "../node/schemaNode"
+import { type AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
-import { INodeSchema } from "../schema/nodeSchema"
-import { IStructFieldConfig, IStructFieldRelation, IStructSchema } from "../schema/structSchema"
+import { type INodeSchema } from "../schema/nodeSchema"
+import { type IStructFieldRelation, type IStructSchema } from "../schema/structSchema"
 import { getCachedSchema } from "../utils/schemaProvider"
 import { isNull } from "../utils/toolset"
 import { ArrayRuleSchema } from "./arrayRuleSchema"
-import { ARRAY_ELEMENT, ARRAY_ITSELF, getRuleSchema, ISchemaNodePushArgSchema, ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
+import { ARRAY_ELEMENT, ARRAY_ITSELF, getRuleSchema, type ISchemaNodePushArgSchema, type ISchemaNodePushSchema, regRuleSchema, RuleSchema } from "./ruleSchema"
 
 @regRuleSchema(SchemaType.Struct)
 export class StructRuleSchema extends RuleSchema
@@ -40,9 +40,11 @@ export class StructRuleSchema extends RuleSchema
             // type changed, rebuild rule schema
             const structInfo = this._schema.struct!
             const f = structInfo.fields.find(d => d.name === name)
+            if (!f) return null
 
             // build rule schema for field
             const schema = getCachedSchema(node.config.type)
+            if (!schema) return null
             ruleSchema = getRuleSchema(schema)
             this.schemas[name] = ruleSchema
             ruleSchema.loadConfig(f)
@@ -55,7 +57,7 @@ export class StructRuleSchema extends RuleSchema
                 if (parent.ruleSchema instanceof ArrayRuleSchema)
                 {
                     const tempRuleSchema = curr === node ? ruleSchema : curr.ruleSchema
-                    if (pschema.array?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
+                    if (pschema?.array?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
                     {
                         pschema.array.relations
                             .filter(f => f.field === name || f.field.startsWith(`${name}.`))
@@ -65,13 +67,13 @@ export class StructRuleSchema extends RuleSchema
                 else if (parent.ruleSchema instanceof StructRuleSchema)
                 {
                     const fldname = curr.name
-                    const fld = pschema.struct?.fields?.find(f => f.name === fldname)
+                    const fld = pschema?.struct?.fields?.find(f => f.name === fldname)
                     if (!fld) break
                     name = curr === node ? name : `${fld.name}.${name}`
                     const tempRuleSchema = parent.ruleSchema
-                    if (pschema.struct?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
+                    if (pschema!.struct?.relations?.length && tempRuleSchema instanceof StructRuleSchema)
                     {
-                        pschema.struct.relations
+                        pschema!.struct.relations
                             .filter(f => f.field === name || f.field.startsWith(`${name}.`))
                             .forEach(r => tempRuleSchema.regRelation(r))
                     }
@@ -98,7 +100,7 @@ export class StructRuleSchema extends RuleSchema
         const rootTypeInfo = this._schema.struct
 
         // locate the target
-        const targetAccessPaths = getAccessPath(this, relation.field!, rootTypeInfo)
+        const targetAccessPaths = getAccessPath(this, relation.field!, rootTypeInfo!)
         if (!targetAccessPaths || targetAccessPaths.length == 0) {
             console.error(`The ${relation.field} can't be locate, please check the realtions in ${this._schema.name} type`)
             return
@@ -109,7 +111,7 @@ export class StructRuleSchema extends RuleSchema
         relation.args.forEach(a => {
             if (a.name) {
                 // access path
-                const accessPaths = getAccessPath(this, a.name, rootTypeInfo)
+                const accessPaths = getAccessPath(this, a.name, rootTypeInfo!)
                 if (accessPaths == null || accessPaths.length == 0 || !isPathAccessable(targetAccessPaths, accessPaths)) {
                     console.error(`The "${relation.field}" can't access path "${a.name}", check the realtions in ${this._schema.name} type`)
                     return
@@ -201,7 +203,7 @@ function getAccessPath(rootSchema: StructRuleSchema, path: string, rootTypeInfo:
     for (let i = 1; i < paths.length; i++) {
         if (fieldType?.type == SchemaType.Array) {
             fieldType = getCachedSchema(fieldType.array!.element)
-            schema = (schema as ArrayRuleSchema).element
+            schema = (schema as ArrayRuleSchema).element!
         }
 
         // for array element

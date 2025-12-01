@@ -3,9 +3,9 @@ import { SchemaType } from "../enum/schemaType"
 import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
-import { INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
-import { IStructEnumFieldConfig, IStructFieldRelation, IStructScalarFieldConfig } from "../schema/structSchema"
-import { IFunctionArgumentInfo } from "../schema/functionSchema"
+import { type INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
+import { type IStructEnumFieldConfig, type IStructFieldRelation, type IStructScalarFieldConfig } from "../schema/structSchema"
+import { type IFunctionArgumentInfo } from "../schema/functionSchema"
 import { EnumValueType } from "../enum/enumValueType"
 import { RelationType } from "../enum/relationType"
 import { ExpressionType } from "../enum/expressionType"
@@ -288,7 +288,7 @@ registerSchema([
                 { name: "decimals", type: NS_SYSTEM_INT, nullable: true }
             ], (x: number, y: number, d?: number) => {
                 const value = new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
-                const remain = Math.pow(10, isNull(d) ? 2 : d)
+                const remain = Math.pow(10, isNull(d) ? 2 : d!)
                 return remain > 0 ? Math.round(remain * value) / remain : value
             }, NS_SYSTEM_NUMBER),
 
@@ -540,7 +540,7 @@ registerSchema([
                 { name: "struct", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING },
                 { name: "value", type: "T2" }
-            ], (a: {}, f: string, v: any): {} => isEqual(v, a[f]), NS_SYSTEM_STRUCT),
+            ], (a: any, f: string, v: any): {} => isEqual(v, a[f]), NS_SYSTEM_STRUCT),
 
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
@@ -551,13 +551,13 @@ registerSchema([
             
             newSystemFunc("system.collection.sum", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
-                arr.forEach(v => sum = sum.plus(v))
+                arr.forEach((v: number) => sum = sum.plus(v))
                 return sum.toNumber()
             }, NS_SYSTEM_NUMBER),
 
             newSystemFunc("system.collection.average", "T", [{ name: "array", type: NS_SYSTEM_NUMBERS }], (arr) => {
                 let sum = new BigNumber(0)
-                arr.forEach(v => sum = sum.plus(v))
+                arr.forEach((v: number) => sum = sum.plus(v))
                 if (arr.length === 0) return 0
                 return sum.dividedBy(arr.length).toNumber()
             }, NS_SYSTEM_NUMBER),
