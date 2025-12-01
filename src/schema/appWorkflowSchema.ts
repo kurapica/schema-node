@@ -104,4 +104,14 @@ export interface IAppWorkflowNodeSchema
      * The fork key
      */
     forkKey?: string
+
+    /**
+     * Whether the node is un-cancelable when running
+     */
+    unCancelable?: boolean
+
+    /**
+     * Cancel the previous fork branches
+     */
+    cancelPre?: boolean
 }
