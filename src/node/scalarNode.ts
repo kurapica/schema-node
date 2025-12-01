@@ -4,14 +4,13 @@ import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { type ISchemaConfig } from '../config/schemaConfig'
 import { callSchemaFunction, getScalarValueType, ScalarValueType } from '../utils/schemaProvider'
 import { deepClone, isNull, sformat } from '../utils/toolset'
-import { ScalarRuleSchema } from '../ruleSchema/scalarRuleSchema'
 import { ScalarRule } from '../rule/scalarRule'
 
 /**
  * The scalar schema data node
  */
 @regSchemaNode(SchemaType.Scalar)
-export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRuleSchema, ScalarRule> {
+export class ScalarNode extends SchemaNode<IScalarConfig, ScalarRule> {
     //#region Implementation
 
     // override properties

@@ -10,7 +10,6 @@ import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
 import { clearDebounce, debounce, deepClone, isEqual, isNull, sformat } from '../utils/toolset'
-import { ArrayRuleSchema } from '../ruleSchema/arrayRuleSchema'
 import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
@@ -20,7 +19,7 @@ import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSc
  * The array schema data node
  */
 @regSchemaNode(SchemaType.Array)
-export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRuleSchema, ArrayRule> {
+export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     //#region Implementation
 
     // override properties && array properties

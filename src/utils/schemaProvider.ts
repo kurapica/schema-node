@@ -1877,14 +1877,25 @@ export interface ISchemaApiProtocolMeta
 }
 
 let schemaApiHeaders = [] as { key: string, value: string }[]
+let schemaApiHeaderSetter: Function | null = null
 
-export function setSchemaApiHeaders(headers: { key: string, value: string }[]) {
+export function setSchemaApiHeaders(headers: { key: string, value: string }[] | Function ) {
+    if (typeof headers === 'function') {
+        schemaApiHeaderSetter = headers
+        schemaApiHeaders = []
+        return
+    }
     schemaApiHeaders = headers
 }
 
-axios.interceptors.request.use(config => {
+axios.interceptors.request.use(async (config) => {
     // add frontend auth headers
-    if (schemaApiHeaders.length) {
+    if (schemaApiHeaderSetter) {
+       const result =  schemaApiHeaderSetter(config)
+       console.log("setter", config.headers)
+       if (result instanceof Promise) await result
+    }
+    else if (schemaApiHeaders.length) {
         for (const header of schemaApiHeaders) {
             if (header.key && header.value) {
                 config.headers[header.key] = header.value

@@ -7,7 +7,6 @@ import { clearDebounce, debounce, isNull } from '../utils/toolset'
 import { ArrayNode } from './arrayNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
-import { StructRuleSchema } from '../ruleSchema/structRuleSchema'
 import { StructRule } from '../rule/structRule'
 import { DataChangeWatcher } from '../utils/dataChangeWatcher'
 import { RelationType } from '../enum/relationType'
@@ -16,7 +15,7 @@ import { RelationType } from '../enum/relationType'
  * The struct schema data node
  */
 @regSchemaNode(SchemaType.Struct)
-export class StructNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructRule> {
+export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
     //#region Implementation
 
     // override properties

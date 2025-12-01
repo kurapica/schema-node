@@ -6,14 +6,13 @@ import { type ISchemaConfig } from '../config/schemaConfig'
 import { getEnumAccessList, getEnumSubList } from '../utils/schemaProvider'
 import { _L, _LS } from '../utils/locale'
 import { deepClone, isNull, sformat } from '../utils/toolset'
-import { EnumRulechema } from '../ruleSchema/enumRuleSchema'
 import { EnumRule } from '../rule/enumRule'
 
 /**
  * The enum schema data node
  */
 @regSchemaNode(SchemaType.Enum)
-export class EnumNode extends SchemaNode<IEnumConfig, EnumRulechema, EnumRule> {
+export class EnumNode extends SchemaNode<IEnumConfig, EnumRule> {
     //#region Implementation
 
     // override properties

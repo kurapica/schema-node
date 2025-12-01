@@ -4,14 +4,13 @@ import { getCachedSchema, getSchema } from "../utils/schemaProvider"
 import { DataChangeWatcher } from "../utils/dataChangeWatcher"
 import { deepClone, isEqual, isNull, debounce, generateGuid, sformat, clearDebounce } from "../utils/toolset"
 import { type ISchemaConfig } from "../config/schemaConfig"
-import { RuleSchema } from "../ruleSchema"
 import { Rule } from "../rule/rule"
-import { getRuleSchema } from "../ruleSchema/ruleSchema"
+import { getRuleSchema, RuleSchema } from "../ruleSchema/ruleSchema"
 
 /**
  * The abstract schema node.
  */
-export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchema, TR extends Rule>
+export abstract class SchemaNode<TC extends ISchemaConfig, TR extends Rule>
 {
     //#region Properties
 
@@ -131,7 +130,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     /**
      * The schema node rule schema
      */
-    get ruleSchema(): TRS { return this._ruleSchema }
+    get ruleSchema(): RuleSchema { return this._ruleSchema }
 
     /**
      * Gets the display of the node
@@ -325,7 +324,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
     protected _schema: INodeSchema = { name: '', type: SchemaType.Namespace }
     protected _parent?: AnySchemaNode
     protected _rule: TR
-    protected _ruleSchema: TRS
+    protected _ruleSchema: RuleSchema
     protected _config: TC
     protected _error: string | undefined
     protected _valid: boolean = true
@@ -348,7 +347,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
         this._data = isNull(data) ? deepClone(config.default) : data
         this._original = deepClone(data)
         this._rule = {} as any as TR
-        this._ruleSchema = (parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schema)) as any as TRS
+        this._ruleSchema = parent?.ruleSchema?.getChildRuleSchema(this) ?? getRuleSchema(this.schema)
         this._ruleSchema.initNode(this)
 
         setTimeout(() => this.validation(), 10)
@@ -358,7 +357,7 @@ export abstract class SchemaNode<TC extends ISchemaConfig, TRS extends RuleSchem
 /**
  * Any schema node
  */
-export type AnySchemaNode = SchemaNode<ISchemaConfig, RuleSchema, Rule>
+export type AnySchemaNode = SchemaNode<ISchemaConfig, Rule>
 
 
 //#region decorator

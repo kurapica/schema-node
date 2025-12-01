@@ -9,7 +9,6 @@ import { type AnySchemaNode, SchemaNode } from "./schemaNode"
 import { StructNode } from "./structNode"
 import { type ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
-import { StructRuleSchema } from "../ruleSchema"
 import type { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
 import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
 import { type INodeSchema } from "../schema/nodeSchema"
@@ -34,7 +33,7 @@ enum AppFieldNodeState
 /**
  * The application schema node.
  */
-export class AppNode extends SchemaNode<ISchemaConfig, StructRuleSchema, StructRule> 
+export class AppNode extends SchemaNode<ISchemaConfig, StructRule> 
 {
     //#region Implementation
 
