@@ -10,6 +10,7 @@ import { DataChangeWatcher } from "./dataChangeWatcher"
 import { type IAppSchema } from "../schema/appSchema"
 import { _L, _LS, combineLocaleString, type ILocaleString } from "./locale"
 import axios from "axios"
+import { PolicyScope } from "../enum/policyScope"
 
 export const NS_SYSTEM = "system"
 
@@ -124,6 +125,16 @@ export interface ISchemaProvider {
      * @returns the result
      */
     callFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any>
+
+    /**
+     * Authorize the policy for the scope
+     * @param scope The policy scope
+     * @param name The schema type name
+     * @param app The application name
+     * @param field The field name
+     * @param workflow The workflow name
+     */
+    authorize(scope: PolicyScope, name?: string, app?: string, field?: string, workflow?: string): Promise<boolean>
 }
 
 let schemaApiBaseUrl: string | undefined = undefined
@@ -165,6 +176,12 @@ export const defaultSchemaProvider: ISchemaProvider = {
             name, args, generic, target
         }))?.result
     },
+
+    authorize: async (scope: PolicyScope = PolicyScope.DataRead, name?: string, app?: string, field?: string, workflow?: string): Promise<boolean> => {
+        return (await postSchemaApi("/authorize", {
+            name, app, field, workflow, scope   
+        }))?.result
+    }
 }
 
 /**
@@ -1892,7 +1909,6 @@ axios.interceptors.request.use(async (config) => {
     // add frontend auth headers
     if (schemaApiHeaderSetter) {
        const result =  schemaApiHeaderSetter(config)
-       console.log("setter", config.headers)
        if (result instanceof Promise) await result
     }
     else if (schemaApiHeaders.length) {

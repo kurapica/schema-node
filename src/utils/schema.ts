@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
 import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET } from "./schemaProvider"
-import { _LS, SCHEMA_LANGUAGES } from "./locale"
+import { _LS, SCHEMA_LANGUAGES, type ILocaleString } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { type INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { type IStructEnumFieldConfig, type IStructFieldRelation, type IStructScalarFieldConfig } from "../schema/structSchema"
@@ -14,6 +14,7 @@ import { WorkflowMode } from "../enum/workflowMode"
 import { PolicyCombine } from "../enum/policyCombine"
 import { PolicyScope } from "../enum/policyScope"
 import { SchemaNodeStatus } from "../enum/schemaNodeStatus"
+import { WorkflowStatus } from "../enum/workflowStatus"
 
 //#region Utility
 
@@ -234,6 +235,26 @@ registerSchema([
                 { name: "search", type: NS_SYSTEM_STRING },
                 { name: "replace", type: NS_SYSTEM_STRING, nullable: true }
             ], (str: string, search: string, replace: string) => str.split(search).join(replace || "")),
+
+            newSystemFunc("system.str.rectifylocale", NS_SYSTEM_LOCALE_STRING, [
+                { name: "locale", type: NS_SYSTEM_LOCALE_STRING },
+                { name: "defaultLang", type: NS_SYSTEM_LANGUAGE, nullable: true }
+            ], (locale: ILocaleString, defaultLang?: string) => {
+                let key = locale.key
+                if (isNull(key))
+                {
+                    if (defaultLang)
+                    {
+                        defaultLang = defaultLang.toLowerCase()
+                        key = locale.trans?.find(t => t.lang.toLowerCase() === defaultLang)?.tran || ""
+                    }
+                    else
+                    {
+                        key = locale.trans?.length ? locale.trans[0].tran : ""
+                    }
+                }
+                return { key, trans: locale.trans || [] }
+            })
         ]),
 
         // math func
@@ -714,6 +735,7 @@ registerSchema([
             newSystemEnum("system.schema.workflowmode", WorkflowMode),
             newSystemEnum("system.schema.policyscope", PolicyScope),
             newSystemEnum("system.schema.policycombine", PolicyCombine),
+            newSystemEnum("system.schema.workflowstatus", WorkflowStatus),
             newSystemEnum(NS_SYSTEM_SCHEMA_STATUS, SchemaNodeStatus),
 
             // array

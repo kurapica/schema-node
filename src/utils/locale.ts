@@ -225,6 +225,7 @@ export function localeStringToString(value: ILocaleString | string | null | unde
 {
     if (isNull(value)) return ""
     if (typeof(value) === "string") return currLocale[value] !== undefined && currLocale[value] !== null ? currLocale[value] : value
+    if (typeof(value) !== "object") return isNull(value) ? "" : `${value}`
 
     if (!value?.key) return ""
 
