@@ -218,6 +218,7 @@ registerSchema([
                 { name: "labelField", type: NS_SYSTEM_STRING }
             ], (objs: any[], valueField: string, labelField: string) => {
                 if (!objs || objs.length === 0) return []
+                const temp = new Set<string>()
                 return objs.map(o => {
                     let value = o ? o[valueField] : null
                     value = isNull(value) ? "" : `${value}`
@@ -225,7 +226,7 @@ registerSchema([
                         value: o ? value : "",
                         label: _LS(o[labelField] || value)
                     }
-                })
+                }).filter(e => { if (temp.has(e.value)) return false; temp.add(e.value); return true; })
             }),
 
             newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], () => crypto.randomUUID()),
