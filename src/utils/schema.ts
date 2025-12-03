@@ -726,6 +726,7 @@ registerSchema([
             newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
             newSystemScalar("system.schema.appfield", "system.schema.varname"),
             newSystemScalar("system.schema.appworkflow", "system.schema.varname"),
+            newSystemScalar("system.schema.apptarget", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128, asSuggest: true, whiteList: "system.schema.defaultapptargets" }),
 
             // enum
             newSystemEnum("system.schema.schematype", SchemaType),
@@ -742,6 +743,9 @@ registerSchema([
             // array
             newSystemArray("system.schema.policyscopes", "system.schema.policyscope"),
             newSystemArray("system.schema.appworkflows", "system.schema.appworkflow"),
+
+            // function
+            newSystemFunc("system.schema.defaultapptargets", NS_SYSTEM_STRINGS, [], () => ["00000000-0000-0000-0000-000000000000"]),
         ]),
         //#endregion
 

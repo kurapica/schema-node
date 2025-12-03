@@ -24,6 +24,19 @@ export function isEmpty(value: any)
 }
 
 /**
+ * Combine two schema object
+ * @param a The basic
+ * @param b The expansion
+ * @returns The combined object
+ */
+export function combineSchema(a: { [key: string]: any }, b: { [key: string]: any })
+{
+  const res: { [key: string]: any } = { ...b }
+  for (let k in a) if (!isNull(a[k])) res[k] = a[k]
+  return res
+}
+
+/**
  * Gets the value by path
  */
 export function getvaluebypath(value: any, path: string)

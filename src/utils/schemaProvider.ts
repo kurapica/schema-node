@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { isNull, useQueueQuery } from "./toolset"
+import { combineSchema, isNull, useQueueQuery } from "./toolset"
 import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { type IFunctionSchema } from "../schema/functionSchema"
 import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
@@ -414,10 +414,11 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             case SchemaType.Enum:
                 if (schema.enum?.values)
                     prepareEnumValueInfos(schema.enum.type, schema.enum.values)
-                break;
+                break
             case SchemaType.Scalar:
                 if (schema.scalar?.regex)
                     schema.scalar.regex = schema.scalar.regex.replace(/\\\\/g, '\\')
+                break
         }
 
         const exist = schemaCache[name]
@@ -428,7 +429,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
             if (exist.type !== schema.type) continue
 
             exist.display = combineLocaleString(exist.display, schema.display)
-            exist.auth = schema.auth
+            exist.auth = schema.auth || exist.auth
             exist.usedBy = schema.usedBy || exist.usedBy
             exist.usedByApp = schema.usedByApp || exist.usedByApp
 
@@ -466,7 +467,7 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
                     break
 
                 case SchemaType.Scalar:
-                    exist.scalar = schema.scalar || exist.scalar
+                    exist.scalar = combineSchema(schema.scalar, exist.scalar)
                     break
 
                 case SchemaType.Struct:
@@ -1923,9 +1924,7 @@ axios.interceptors.request.use(async (config) => {
 
 // The schema api base url
 if (document.querySelector('meta[name="schema-api-base-url"]'))
-{
     schemaApiBaseUrl = document.querySelector('meta[name="schema-api-base-url"]')?.getAttribute('content') || undefined
-}
 
 // check protocol from meta tag
 let apiProtocol: ISchemaApiProtocolMeta | undefined = undefined

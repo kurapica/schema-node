@@ -499,9 +499,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         let target: string | undefined = undefined
 
         // find the app node
-        if (root instanceof AppNode) {
+        if (root instanceof AppNode)
             target = root.target
-        }
 
         for (let retry = 0; retry < 5; retry++) {
             try {
