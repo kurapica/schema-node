@@ -1324,7 +1324,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
         pendingCall[token] = []
         await new Promise((resolve) => setTimeout(resolve, 50))
         try {
-            const res = await callSchemaFunctionQueue(schema.name, args, generic)
+            const res = await callSchemaFunctionQueue(schema.name, args, generic, target)
             if (!funcInfo.nocache) shareFuncCallResult[token] = res
             pendingCall[token].forEach(c => c.resolve(res))
             return res
@@ -1380,7 +1380,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
 
         try 
         {
-            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), generic)
+            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), generic, target)
             if (res === undefined) res = null
             queue.forEach((c:any) => c.resolve(res))
             return res

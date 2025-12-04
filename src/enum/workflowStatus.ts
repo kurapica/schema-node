@@ -6,11 +6,11 @@ import { WorkflowMode } from "./workflowMode";
 /// </summary>
 export enum WorkflowStatus
 {
-    Waiting,
-    Running,
-    Done,
-    Error,
-    Terminated
+    Waiting = "waiting",
+    Running = "running",
+    Done = "done",
+    Error = "error",
+    Terminated = "terminated"
 }
 
 export type WorkflowModeValue = `${WorkflowMode}`
