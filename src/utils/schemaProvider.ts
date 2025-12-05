@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { combineSchema, isNull, useQueueQuery } from "./toolset"
+import { combineSchema, isEmpty, isNull, useQueueQuery } from "./toolset"
 import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { type IFunctionSchema } from "../schema/functionSchema"
 import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
@@ -59,6 +59,9 @@ export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
 export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"
 
 export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret"
+export const NS_SYSTEM_LOGIC_IFNOT = "system.logic.ifnot"
+export const NS_SYSTEM_LOGIC_IFNULL = "system.logic.ifnull"
+export const NS_SYSTEM_LOGIC_IFEMPTY = "system.logic.ifempty"
 
 //#region Schema Provider
 
@@ -1569,8 +1572,20 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
             }
 
             // special case for ifret
-            if (exp.func.name === NS_SYSTEM_LOGIC_IFRET)
-                if (val[0]) return val[1]
+            switch (exp.func.name) {
+                case NS_SYSTEM_LOGIC_IFRET:
+                    if (val[0]) return val[1]
+                    break
+                case NS_SYSTEM_LOGIC_IFNOT:
+                    if (!val[0]) return val[1]
+                    break
+                case NS_SYSTEM_LOGIC_IFNULL:
+                    if (isNull(val[0])) return val[1]
+                    break
+                case NS_SYSTEM_LOGIC_IFEMPTY:
+                    if (isEmpty(val[0])) return val[1]
+                    break
+            }
 
             // call
             switch (exp.type) {

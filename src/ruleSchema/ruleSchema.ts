@@ -221,6 +221,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
     // define the value handler
     let handler: Function | undefined = undefined
     let type: string = ""
+    let inited = false
 
     switch (pushSchema.type)
     {
@@ -335,6 +336,10 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                         node.data = res
                     node.notifyState()
                 }
+
+                // check display only, they should be handled when batch query, don't work for complex relation now
+                if (node.config.displayOnly && (!isNull(node.data) || pushSchema.source === node.parent.config.type))
+                    inited = true
             }
             break
 
@@ -576,7 +581,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         return
 
     // process
-    push()
+    if (!inited) push()
 }
 
 //#endregion
@@ -601,6 +606,11 @@ export interface ISchemaNodePushSchema {
      * The realtion type
      */
     type: RelationTypeValue
+
+    /**
+     * The schema source
+     */
+    source: string
 }
 
 /**

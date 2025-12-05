@@ -131,7 +131,7 @@ export class StructRuleSchema extends RuleSchema
 
         // register
         const targetSchema = targetAccessPaths[targetAccessPaths.length - 1].schema
-        const pushSchema: ISchemaNodePushSchema = { func: relation.func, args, type: relation.type }
+        const pushSchema: ISchemaNodePushSchema = { func: relation.func, args, type: relation.type, source: this._schema.name }
         targetSchema.pushSchemas = targetSchema.pushSchemas || []
         targetSchema.pushSchemas.push(pushSchema)
     }

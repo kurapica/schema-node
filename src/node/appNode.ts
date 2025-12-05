@@ -441,19 +441,37 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
 
         const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
         if (!nodes?.length) nodes = this.inputFields
-        for (let i = 0; i < nodes.length; i++)
-        {
-            let n = nodes[i]
-            if (typeof(n) === "object") n = n.name
-            n = n.toLowerCase()
 
+        // reload check
+        const checkToQuery = (n: string) => {
+            n = n.toLowerCase()
+            if (isNull(n)) return
             const info = this._fields.find(f => f.node.name.toLowerCase() === n)
-            if (!info) continue
+            if (!info) return
+            if (queryNodes.findIndex(qn => qn.node === info.node) >= 0) return
+
             if (!(info.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.FrontEnd | AppFieldNodeState.Readonly ))
                 && (!onlyNotLoaded || !(info.state & AppFieldNodeState.Loaded)))
             {
                 queryNodes.push(info)
             }
+
+            // auto load depends fields
+            if (onlyNotLoaded)
+            {
+                this._appSchema.relations?.forEach(r => {
+                    if (r.field === info.node.name || r.field.startsWith(info.node.name + "."))
+                        r.args?.forEach(arg => arg.name ? checkToQuery(arg.name.split(".").filter(f => !isNull(f))[0]) : "")
+                })
+            }
+        }
+
+        for (let i = 0; i < nodes.length; i++)
+        {
+            let n = nodes[i]
+            if (typeof(n) === "object") n = n.name
+            n = n.toLowerCase()
+            checkToQuery(n)
         }
         if (!queryNodes.length) return
 
@@ -522,7 +540,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      * @param workflowId The workflow instance id
      * @param data The interaction form data
      */
-    async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any): Promise<boolean> {
+    async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any): Promise<string | undefined> {
         return await interactionWorkflow(this.name, this.target, workflow, node, workflowId, data)
     }
 
