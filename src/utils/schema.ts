@@ -272,10 +272,26 @@ registerSchema([
                 { name: "y", type: "T" }
             ], (x: number, y: number) => new BigNumber(x).plus(y).toNumber()),
 
+            newSystemFunc("system.math.adds", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(0)
+                nums.forEach((v: number) => sum = sum.plus(v))
+                return sum.toNumber()
+            }),
+
             newSystemFunc("system.math.addnull", NS_SYSTEM_NUMBER, [
                 { name: "x", type: "T", nullable: true },
                 { name: "y", type: "T", nullable: true }
             ], (x?: number, y?: number) => new BigNumber(x || 0).plus(y || 0).toNumber()),
+
+            newSystemFunc("system.math.addnulls", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(0)
+                nums.forEach((v: number) => sum = sum.plus(v || 0))
+                return sum.toNumber()
+            }),
 
             newSystemFunc("system.math.divide", "T", [
                 { name: "x", type: "T" },
@@ -292,20 +308,52 @@ registerSchema([
                 { name: "y", type: "T" }
             ], (x: number, y: number) => new BigNumber(x).multipliedBy(y).toNumber()),
 
+            newSystemFunc("system.math.multiplys", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(1)
+                nums.forEach((v: number) => sum = sum.multipliedBy(v))
+                return sum.toNumber()
+            }),
+
             newSystemFunc("system.math.multiplynull", "T", [
                 { name: "x", type: "T", nullable: true },
                 { name: "y", type: "T", nullable: true }
             ], (x?: number, y?: number) => new BigNumber(x || 0).multipliedBy(y || 0).toNumber()),
+
+            newSystemFunc("system.math.multiplynulls", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(1)
+                nums.forEach((v: number) => sum = sum.multipliedBy(v || 0))
+                return sum.toNumber()
+            }),
 
             newSystemFunc("system.math.subtract", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
             ], (x: number, y: number) => new BigNumber(x).minus(y).toNumber()),
 
+            newSystemFunc("system.math.subtracts", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(nums.length > 0 ? nums[0] : 0)
+                for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i])
+                return sum.toNumber()
+            }),
+
             newSystemFunc("system.math.subtractnull", "T", [
                 { name: "x", type: "T", nullable: true },
                 { name: "y", type: "T", nullable: true }
             ], (x?: number, y?: number) => new BigNumber(x || 0).minus(y || 0).toNumber()),
+
+            newSystemFunc("system.math.subtractnulls", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], (...nums: number[]) => {
+                let sum = new BigNumber(nums.length > 0 ? nums[0] : 0)
+                for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i] || 0)
+                return sum.toNumber()
+            }),
 
             newSystemFunc("system.math.percent", "T", [
                 { name: "x", type: "T" },
@@ -334,10 +382,18 @@ registerSchema([
                 { name: "y", type: "T" }
             ], Math.max, NS_SYSTEM_NUMBER),
 
+            newSystemFunc("system.math.maxs", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], Math.max),
+
             newSystemFunc("system.math.min", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
             ], Math.min, NS_SYSTEM_NUMBER),
+
+            newSystemFunc("system.math.mins", "T", [
+                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
+            ], Math.min),
 
             newSystemFunc("system.math.percenttonum", NS_SYSTEM_NUMBER, [
                 { name: "percent", type: NS_SYSTEM_PERCENT, nullable: true }
