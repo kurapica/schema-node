@@ -61,6 +61,11 @@ export interface IFunctionArgumentInfo
    * Whether the argument is nullable
   */
   nullable?: boolean
+
+  /**
+   * The argument is params
+   */
+  params?: boolean
 }
 
 /**

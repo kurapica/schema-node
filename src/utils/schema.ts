@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET, NS_SYSTEM_LOGIC_IFNOT, NS_SYSTEM_LOGIC_IFNULL, NS_SYSTEM_LOGIC_IFEMPTY } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET, NS_SYSTEM_LOGIC_IFNOT, NS_SYSTEM_LOGIC_IFNULL, NS_SYSTEM_LOGIC_IFEMPTY, NS_SYSTEM_OBJECT } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES, type ILocaleString } from "./locale"
 import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
 import { type INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
@@ -80,6 +80,9 @@ export const newSystemFunc = (name: string, returnType: string, args: IFunctionA
  */
 registerSchema([
     newSystemSchema(NS_SYSTEM, [
+        // system.object
+        newSystemScalar(NS_SYSTEM_OBJECT),
+
         //#region base type
         newSystemArray(NS_SYSTEM_ARRAY, ""),
         newSystemArray(NS_SYSTEM_LIST, "T"),
@@ -736,7 +739,6 @@ registerSchema([
             newSystemScalar("system.schema.validfunc", "system.schema.functype"),
             newSystemScalar("system.schema.whitelistfunc", "system.schema.functype"),
             newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 32 }),
-            newSystemScalar("system.schema.anyvalue"),
 
             newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
             newSystemScalar("system.schema.appfield", "system.schema.varname"),

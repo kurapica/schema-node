@@ -17,6 +17,7 @@ export const NS_SYSTEM = "system"
 export const REGEX_GENERIC_TYPE = /^T\d*$/
 export const REGEX_GENERIC_IMPLEMENT = /^([\w\.]+)<(.+)>$/
 
+export const NS_SYSTEM_OBJECT = "system.object"
 export const NS_SYSTEM_ARRAY = "system.array"
 export const NS_SYSTEM_LIST = "system.list"
 export const NS_SYSTEM_STRUCT = "system.struct"
