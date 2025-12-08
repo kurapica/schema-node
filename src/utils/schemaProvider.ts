@@ -981,6 +981,7 @@ function buildGenericType(schema: INodeSchema, genericTypes: string[]): INodeSch
 interface IFieldAccessWhiteListItem {
     value: string,
     label: string,
+    match: boolean,
     children?: IFieldAccessWhiteListItem[]
 }
 
@@ -990,35 +991,32 @@ interface IFieldAccessWhiteListItem {
  * @param fields The fields to be checked
  * @returns The field access white list
  */
-export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false): Promise<IFieldAccessWhiteListItem[]>
+export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false, matchArray: boolean = false): Promise<IFieldAccessWhiteListItem[]>
 {
     const result: IFieldAccessWhiteListItem[] = []
     for(const field of fields)
     {
         const value = prefix ? `${prefix}.${field.name}` : field.name
-        if (!type || await isSchemaCanBeUseAs(field.type, type))
-        {
-            result.push({
-                value: value,
-                label: _L(field.display) || field.name
-            })
+        const res: IFieldAccessWhiteListItem = {
+            value: value,
+            match: false,
+            label: _L(field.display) || field.name
         }
-        else if (!noDepth)
+        if (!type || await isSchemaCanBeUseAs(field.type, type, matchArray))
+        {
+            res.match = true
+        }
+        
+        if (!noDepth && (!res.match || !type))
         {
             const fieldSchema = await getSchema(field.type)
             if (fieldSchema?.type === SchemaType.Struct)
             {
                 const subList = await getFieldAccessWhiteList(type, fieldSchema.struct!.fields, value)
-                if (subList.length)
-                {
-                    result.push({
-                        value: value,
-                        label: _L(field.display) || field.name,
-                        children: subList
-                    })
-                }
+                if (subList.length) res.children = subList
             }
         }
+        if (res.match || (res.children && res.children.length)) result.push(res)
     }
     return result
 }

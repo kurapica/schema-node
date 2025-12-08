@@ -688,14 +688,14 @@ registerSchema([
                 { name: "ret", type: "T" }
             ], (cond: boolean, ret: any) => ret),
 
-            newSystemFunc(NS_SYSTEM_LOGIC_IFNULL, "T2", [
-                { name: "val", type: "T1" },
-                { name: "ret", type: "T2" }
+            newSystemFunc(NS_SYSTEM_LOGIC_IFNULL, "T1", [
+                { name: "val", type: "T2" },
+                { name: "ret", type: "T1" }
             ], (val: any, ret: any) => ret, [ "T1", "T2"]),
 
-            newSystemFunc(NS_SYSTEM_LOGIC_IFEMPTY, "T2", [
-                { name: "val", type: "T1" },
-                { name: "ret", type: "T2" }
+            newSystemFunc(NS_SYSTEM_LOGIC_IFEMPTY, "T1", [
+                { name: "val", type: "T2" },
+                { name: "ret", type: "T1" }
             ], (val: any, ret: any) => ret, [ "T1", "T2"]),
 
             newSystemFunc("system.logic.andalso", NS_SYSTEM_BOOL, [
