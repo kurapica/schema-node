@@ -623,6 +623,36 @@ registerSchema([
                 { name: "value", type: "T2" }
             ], (a: any, f: string, v: any): {} => isEqual(v, a[f]), NS_SYSTEM_STRUCT),
 
+            newSystemFunc("system.collection.fieldnotequal", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: any, f: string, v: any): {} => !isEqual(v, a[f]), NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldgreateequal", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a >= v, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldgreatethan", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a > v, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldlessequal", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a <= v, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldlessthan", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: "T2" }
+            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a < v, NS_SYSTEM_STRUCT),
+
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }
@@ -673,6 +703,36 @@ registerSchema([
                 { name: "array", type: NS_SYSTEM_ARRAY },
                 { name: "value", type: "T" }
             ], (arr: any[], v: any) => { return [...arr, v] }),
+
+            newSystemFunc("system.collection.orderby", NS_SYSTEM_ARRAY, [
+                { name: "array", type: NS_SYSTEM_ARRAY },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "descending", type: NS_SYSTEM_BOOL }
+            ], (arr: any[], field: string, descending: boolean) => {
+                const newArr = [...arr]
+                newArr.sort((a, b) => {
+                    const valA = a[field]
+                    const valB = b[field]
+                    if (isNull(valA) && isNull(valB)) return 0
+                    if (isNull(valA)) return 1
+                    if (isNull(valB)) return -1
+                    if (valA < valB) return -1
+                    if (valA > valB) return 1
+                    return 0
+                })
+                if (descending) newArr.reverse()
+                return newArr
+            }),
+
+            newSystemFunc("system.collection.skip", NS_SYSTEM_ARRAY, [
+                { name: "array", type: NS_SYSTEM_ARRAY },
+                { name: "value", type: NS_SYSTEM_INT }
+            ], (arr: any[], count: number) => { return arr.slice(count) }),
+
+            newSystemFunc("system.collection.take", NS_SYSTEM_ARRAY, [
+                { name: "array", type: NS_SYSTEM_ARRAY },
+                { name: "value", type: NS_SYSTEM_INT }
+            ], (arr: any[], count: number) => { return arr.slice(0, count) }),
         ]),
 
         // logic func
