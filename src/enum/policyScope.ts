@@ -43,16 +43,6 @@ export enum PolicyScope {
      * Function execute
      */
     FuncExecute = "funcExecute",
-    
-    /**
-     * Row access filter
-     */
-    RowAccess = "rowAccess",
-    
-    /**
-     * Column access filter
-     */
-    ColumnAccess = "columnAccess",
 }
 
 export type PolicyScopeValue = `${PolicyScope}`

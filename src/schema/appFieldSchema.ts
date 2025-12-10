@@ -94,20 +94,44 @@ export interface IAppFieldSchema
     auths: IPolicyItem[]
 
     /**
-     * The data authorization policies for the field, normally the colun access policies
+     * Row filter policies
      */
-    fieldAuths?: IFieldPolicy[]
+    rowAuths?: IRowPolicyItem[]
+
+    /**
+     * Column access policies
+     */
+    colAuths?: IColPolicyItem[]
 }
 
-export interface IFieldPolicy
+/**
+ * The row policy item
+ */
+export interface IRowPolicyItem
 {
     /**
-     * The field name in struct
+     * The policy evaluatorm, if true will use the filter
+     */
+    evaluator: string
+
+    /**
+     * The row filter function
+     */
+    filter?: string
+}
+
+/**
+ * The column policy item
+ */
+export interface IColPolicyItem
+{    
+    /**
+     * The struct field name
      */
     name: string
 
     /**
-     * The authorization policies for the field
+     * The column access evaluators
      */
-    Auths: IPolicyItem[]
+    evaluators: string[]
 }

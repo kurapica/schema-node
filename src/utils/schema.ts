@@ -881,6 +881,8 @@ registerSchema([
             newSystemScalar("system.schema.valuetype", NS_SYSTEM_SCHEMA_NS),
             newSystemScalar("system.schema.validfunc", "system.schema.functype"),
             newSystemScalar("system.schema.whitelistfunc", "system.schema.functype"),
+            newSystemScalar("system.schema.predicatefunc", "system.schema.functype"),
+            newSystemScalar("system.schema.evaluatorfunc", "system.schema.functype"),
             newSystemScalar("system.schema.varname", NS_SYSTEM_STRING, undefined, "^[a-zA-Z]\\w*$", { upLimit: 32 }),
 
             newSystemScalar("system.schema.app", NS_SYSTEM_STRING, undefined, undefined, { upLimit: 128 }),
@@ -903,6 +905,7 @@ registerSchema([
             // array
             newSystemArray("system.schema.policyscopes", "system.schema.policyscope"),
             newSystemArray("system.schema.appworkflows", "system.schema.appworkflow"),
+            newSystemArray("system.schema.evaluatorfuncs", "system.schema.evaluatorfunc"),
 
             // function
             newSystemFunc("system.schema.defaultapptargets", NS_SYSTEM_STRINGS, [], () => ["00000000-0000-0000-0000-000000000000"]),
