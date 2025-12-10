@@ -653,6 +653,33 @@ registerSchema([
                 { name: "value", type: "T2" }
             ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a < v, NS_SYSTEM_STRUCT),
 
+            newSystemFunc("system.collection.fieldstartswith", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: NS_SYSTEM_STRING }
+            ], (a: any, f: string, v: string): {} => {
+                const fieldValue = a[f]
+                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.startsWith(v)
+            }, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldendswith", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: NS_SYSTEM_STRING }
+            ], (a: any, f: string, v: string): {} => {
+                const fieldValue = a[f]
+                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.endsWith(v)
+            }, NS_SYSTEM_STRUCT),
+
+            newSystemFunc("system.collection.fieldcontains", NS_SYSTEM_BOOL, [
+                { name: "struct", type: "T1" },
+                { name: "field", type: NS_SYSTEM_STRING },
+                { name: "value", type: NS_SYSTEM_STRING }
+            ], (a: any, f: string, v: string): {} => {
+                const fieldValue = a[f]
+                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.includes(v)
+            }, NS_SYSTEM_STRUCT),
+
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING }

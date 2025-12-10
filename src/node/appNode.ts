@@ -576,7 +576,8 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         for(let i = 0; i < schema.fields?.length; i++)
         {
             const fconf = schema.fields[i]
-            if (fconf.disable) continue
+            const finfo = data?.infos[fconf.name]
+            if (fconf.disable || finfo && !finfo.allowRead) continue
 
             const fschema = getCachedSchema(fconf.type)
             const d = data?.results[fconf.name]
@@ -595,7 +596,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             }
 
             // ref | push field is readonly
-            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly))) ? true : false
+            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.AllowUpdate) ? true : false
 
             switch (fschema?.type)
             {
@@ -610,7 +611,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                     break
                 case SchemaType.Array:
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, fieldInfo: data?.infos[fconf.name] } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this)
                     break
             }
             if (node) this._fields.push({ node, state })

@@ -18,6 +18,11 @@ export enum PolicyScope {
      * Delete Schema
      */
     SchemaDelete = "schemaDelete",
+
+    /**
+     * Create App Data
+     */
+    DataCreate = "dataCreate",
      
     /**
      * Read App Data
@@ -27,7 +32,12 @@ export enum PolicyScope {
     /**
      * Write App Data
      */
-    DataWrite = "dataWrite",
+    DataUpdate = "dataUpdate",
+
+    /**
+     * Delete App Data
+     */
+    DataDelete = "dataDelete",
 
     /**
      * Function execute

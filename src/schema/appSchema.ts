@@ -249,6 +249,31 @@ export interface IAppDataFieldInfo {
      * Use descend order
      */
     descend?: boolean
+
+    /**
+     * Allow create the field data
+     */
+    allowCreate: boolean
+
+    /**
+     * Allow read the field data
+     */
+    allowRead: boolean
+
+    /**
+     * Allow update the field data
+     */
+    AllowUpdate: boolean
+
+    /**
+     * Allow delete the field data
+     */
+    AllowDelete: boolean
+
+    /**
+     * The black columns in the field data
+     */
+    blackColumns?: string[]
 }
 
 export interface IAppDataFieldPushQuery {
