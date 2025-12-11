@@ -81,6 +81,16 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     get incrUpdate(): boolean { return this._config.incrUpdate || false }
 
     /**
+     * Whether allow add new element
+     */
+    get allowAdd(): boolean { return !this.readonly && this._config.fieldInfo?.allowCreate !== false }
+
+    /**
+     * Whether allow delete element
+     */
+    get allowDelete(): boolean { return !this.readonly && this._config.fieldInfo?.allowDelete !== false }
+
+    /**
      * Gets the current page
      */
     get page() { return this._fieldInfo?.take ? Math.floor((this._fieldInfo.skip || 0) / this._fieldInfo.take) : 0 }

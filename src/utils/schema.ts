@@ -714,7 +714,7 @@ registerSchema([
                 return isNull(obj) || !Object.prototype.hasOwnProperty.call(obj, field) || isNull((obj as any)[field])
             }),
 
-            newSystemFunc("system.collection.contains", NS_SYSTEM_INT, [
+            newSystemFunc("system.collection.contains", NS_SYSTEM_BOOL, [
                 { name: "array", type: NS_SYSTEM_ARRAY },
                 { name: "value", type: "T" }
             ], (arr: any[], v: any) => arr.includes(v)),

@@ -13,6 +13,7 @@ import type { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfi
 import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
 import { type INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
+import { IAppFieldSchema } from "../schema/appFieldSchema"
 
 
 //#region Inner Type
@@ -488,7 +489,19 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         {
             const n = queryNodes[i]
             n.state |= AppFieldNodeState.Loaded
+
+            const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
+
+            // update field info
+            const qinfo = result.infos[n.node.name]
+            n.node.config.readonly = (this.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
+
+            if (n.node instanceof ArrayNode)
+                (n.node as ArrayNode).config.fieldInfo = qinfo
+
             n.node.data = result.results[n.node.name]
+            n.node.resetChanges()
+            n.node.notifyState()
         }
     }
 
@@ -596,7 +609,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             }
 
             // ref | push field is readonly
-            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.AllowUpdate) ? true : false
+            const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
 
             switch (fschema?.type)
             {

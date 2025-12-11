@@ -263,12 +263,12 @@ export interface IAppDataFieldInfo {
     /**
      * Allow update the field data
      */
-    AllowUpdate: boolean
+    allowUpdate: boolean
 
     /**
      * Allow delete the field data
      */
-    AllowDelete: boolean
+    allowDelete: boolean
 
     /**
      * The black columns in the field data

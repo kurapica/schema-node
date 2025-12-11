@@ -1451,6 +1451,17 @@ function addSchema(root: INodeSchema, schema: INodeSchema)
     root.schemas.push(schema)
 }
 
+const getExpValue = (name: string, expValues: { [key: string]: any }) => {
+    if (isNull(name)) return null
+    const paths = name.split(".").filter(p => !isNull(p))
+    let val = expValues[paths[0]]
+    for (let i = 1; i < paths.length; i++) {
+        if (isNull(val)) return null
+        val = val[paths[i]]
+    }
+    return val
+}
+
 // build the function schema to function
 async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     // server-side function
@@ -1461,6 +1472,22 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     for (let i = 0; i < funcInfo.args.length; i++) {
         const expSchema = await getSchema(funcInfo.args[i].type, funcInfo.generic)
         if (expSchema) exptypes[funcInfo.args[i].name] = expSchema
+    }
+
+    const getExpType = async (name: string) => {
+        const paths = name.split(".").filter(p => !isNull(p))
+        let schema = exptypes[paths[0]]
+        for (let i = 1; i < paths.length; i++) {
+            if (schema?.type === SchemaType.Struct) {
+                const field = schema.struct!.fields.find(f => f.name === paths[i])
+                if (!field) return undefined
+                schema = await getSchema(field.type)
+            }
+            else {
+                return undefined
+            }
+        }
+        return schema
     }
 
     // build expressions
@@ -1499,9 +1526,10 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
                 let cargSchema = await getSchema(carg.type, generic) // null means any
                 const exp = fexp.args[j]
                 if (exp.name) {
-                    if (exptypes[exp.name]) {
+                    const expschema = await getExpType(exp.name)
+                    if (expschema) {
                         // Check if the exp is array for the arg, no type validation, should be done when define the exp
-                        if (exptypes[exp.name].type === SchemaType.Array && cargSchema?.type !== SchemaType.Array) {
+                        if (expschema.type === SchemaType.Array && cargSchema?.type !== SchemaType.Array) {
                             arrayIndex = j
                         }
                     }
@@ -1532,7 +1560,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
             objFields = retSchema.struct!.fields.map(f => f.name)
         }
     }
-    
+
     // build the function
     const args = funcInfo.args.map(a => a.name)
     funcInfo.func = async function () {
@@ -1553,7 +1581,7 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
 
                 for (let j = 0; j < exp.args.length; j++) {
                     const e = exp.args[j]
-                    const v = e.name ? expValues[e.name] : e.value
+                    const v = e.name ? getExpValue(e.name, expValues) : e.value
 
                     if (isNull(v) && e.require && !(exp.type == ExpressionType.Reduce && j == 1)) {
                         valid = false
@@ -2134,6 +2162,49 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
         console.log(ex)
         throw ex
     }
+}
+
+//#endregion
+
+//#region Mock
+
+/**
+ * Mocks the schema data
+ * @param name The schema name
+ */
+export function mockSchemaData(name: string): any {
+    if (isNull(name)) return null
+    const schema = getCachedSchema(name)
+    if (!schema) return null
+    
+    switch(schema.type) {
+        case SchemaType.Scalar:
+            const valueType = getScalarValueType(name)
+            if (!valueType) return null
+            if (valueType & ScalarValueType.Boolean) return false
+            if (valueType & ScalarValueType.Date) return new Date()
+            if (valueType & ScalarValueType.Integer) return 0
+            if (valueType & ScalarValueType.Number) return 0.0
+            if (valueType & ScalarValueType.String) return schema.name == NS_SYSTEM_GUID ? crypto.randomUUID() : ""
+            return null
+        case SchemaType.Enum:
+            if (schema.enum?.values && schema.enum.values.length)
+                return schema.enum.values[0].value
+            return null
+        case SchemaType.Struct:
+            const obj: any = {}
+            schema.struct?.fields?.forEach(f => {
+                const data = mockSchemaData(f.type!)
+                obj[f.name] = isNull(data) ? (f.display?.key ? _L(f.display.key) : f.name) : data
+            })
+            return obj
+        case SchemaType.Array:
+            if (schema.array?.element) {
+                return [ mockSchemaData(schema.array.element) ]
+            }
+            return []
+    }
+    return null
 }
 
 //#endregion

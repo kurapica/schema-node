@@ -75,10 +75,15 @@ export enum RelationType
    */
   SingleFlag = "singleFlag",
 
-  /**
+  /**s
    * Validate the value
    */
   Validation = "validation",
+
+  /**
+   * App field reference
+   */
+  Reference = "reference",
 }
 
 export type RelationTypeValue = `${RelationType}`
