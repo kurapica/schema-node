@@ -13,7 +13,6 @@ import type { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfi
 import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
 import { type INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
-import { IAppFieldSchema } from "../schema/appFieldSchema"
 
 
 //#region Inner Type
@@ -26,7 +25,8 @@ enum AppFieldNodeState
     Push    = 1 << 1,
     Ref     = 1 << 2,
     FrontEnd= 1 << 3,
-    Readonly= 1 << 4
+    Readonly= 1 << 4,
+    Reference = 1 << 5, // reference field for display only
 }
 
 //#endregion
@@ -110,12 +110,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     /**
      * Gets all input fields, excluding readonly input fields(ref | readonly)
      */
-    get inputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    get inputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Reference | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
     
     /**
      * Gets all loaded input fields for data submit
      */
-    get loadedInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Loaded, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    get loadedInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Loaded, AppFieldNodeState.Reference | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
 
     /**
      * Gets all the ref input fields
@@ -506,6 +506,100 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     }
 
     /**
+     * Load the reference field
+     * @param field 
+     * @param filter 
+     */
+    async loadRefField(field: string, filter: { [key: string]: any }): Promise<ArrayNode> {
+        field = field.toLowerCase()
+        const fconf = this._appSchema.fields?.find(f => f.name.toLowerCase() === field)
+        if (!fconf) throw `field ${field} not found in app ${this.name}`
+
+        const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
+
+        // reload check
+        const checkToQuery = (n: string) => {
+            n = n.toLowerCase()
+            if (isNull(n)) return
+            const info = this._fields.find(f => f.node.name.toLowerCase() === n)
+            if (!info) return
+            if (queryNodes.findIndex(qn => qn.node === info.node) >= 0) return
+
+            if (!(info.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.FrontEnd | AppFieldNodeState.Readonly ))
+                && (n === field || !(info.state & AppFieldNodeState.Loaded)))
+            {
+                queryNodes.push(info)
+            }
+
+            // auto load depends fields
+            this._appSchema.relations?.forEach(r => {
+                if (r.field === info.node.name || r.field.startsWith(info.node.name + "."))
+                    r.args?.forEach(arg => arg.name ? checkToQuery(arg.name.split(".").filter(f => !isNull(f))[0]) : "")
+            })
+        }
+
+        checkToQuery(field)
+        if (!queryNodes.length) return
+
+        const query: IAppDataQuery = {
+            app: this.name,
+            target: this.target,
+            fields: queryNodes.map(n => n.node.name),
+            querys: {
+                [field]: {
+                    filter
+                }
+            }
+        }
+        const result = await queryAppData(query)
+        if (!result) return
+
+        // assign data
+        for (let i = 0; i < queryNodes.length; i++)
+        {
+            const finfo = result?.infos[fconf.name]
+            const d = result?.results[fconf.name]
+            const n = queryNodes[i]
+            if (n.node.name.toLowerCase() === field)
+            {
+                let state = AppFieldNodeState.None
+                if (!isNull(d) || result?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
+                if (fconf.func) state |= AppFieldNodeState.Push
+                if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+                if (fconf.readonly) state |= AppFieldNodeState.Readonly | AppFieldNodeState.Push
+                if (fconf.frontend) {
+                    // front-end field always consider loaded
+                    state |= AppFieldNodeState.FrontEnd
+                    state |= AppFieldNodeState.Loaded
+                }
+                const readonlyField = (this.readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
+
+                // generate the ref array node
+                return new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
+                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this)
+            }
+            else
+            {
+                n.state |= AppFieldNodeState.Loaded
+
+                const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
+
+                // update field info
+                const qinfo = result.infos[n.node.name]
+                n.node.config.readonly = (this.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
+
+                if (n.node instanceof ArrayNode)
+                    (n.node as ArrayNode).config.fieldInfo = qinfo
+
+                n.node.data = result.results[n.node.name]
+                n.node.resetChanges()
+                n.node.notifyState()
+            }
+        }
+        
+    }
+
+    /**
      * Submit all changes
      * @param nodes the submit node fields, default all
      */
@@ -607,6 +701,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                 state |= AppFieldNodeState.FrontEnd
                 state |= AppFieldNodeState.Loaded
             }
+            if (fconf.refLoad) state |= AppFieldNodeState.Reference
 
             // ref | push field is readonly
             const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
@@ -624,7 +719,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                     break
                 case SchemaType.Array:
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this)
+                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo, invisible: fconf.refLoad } as IStructArrayFieldConfig, d, this);
                     break
             }
             if (node) this._fields.push({ node, state })

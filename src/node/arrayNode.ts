@@ -14,6 +14,10 @@ import { ArrayRule } from '../rule/arrayRule'
 import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
 import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSchema'
+import { RelationType } from '../enum/relationType'
+import { resolveAppReference } from '../utils/appReferenceResolve'
+import { IStructFieldRelation } from '../schema/structSchema'
+import { ExpressionType } from '../enum/expressionType'
 
 /**
  * The array schema data node
@@ -849,6 +853,65 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
 
     //#endregion
 
+    //#region Field References
+
+    isReferenceField(field: string): boolean { return this._reffields ? Object.keys(this._reffields).includes(field) : false }
+
+    /**
+     * Gets the reference fields
+     */
+    getReferenceFields(app: string): string[] { return this._reffields ? Object.values(this._reffields).filter(r => r.app == app).map(r => r.field) : [] }
+
+    /**
+     * Query the reference node for a field within a row 
+     */
+    async getReferenceNode(row: AnySchemaNode, field: string) {
+        const refInfo = this._reffields ? this._reffields[field] : undefined
+        if (!refInfo) return undefined
+        const refApp = refInfo.app
+        const refField = refInfo.field
+        const filter = refInfo.filter ? { ...refInfo.filter } : {}
+        let fullMatch = true
+
+        for(let k in filter){
+            let val = filter[k]
+            // replace @xxx -> row[xxx]
+            if (typeof val === "string" && val.startsWith("@")){
+                const paths = val.substring(1).split(".").filter(f => !isNull(f))
+                let node = row
+                for(let i = 0; i < paths.length; i++){
+                    if (node instanceof StructNode){
+                        node = node.getField(paths[i])!
+                    }
+                    else
+                    {
+                        node = undefined
+                        break
+                    }
+                }
+                if (node == null || !node.valid || isNull(node.data)){
+                    fullMatch = false
+                    break
+                }
+                filter[k] = node.data
+            }
+        }
+        if (!fullMatch) return undefined
+        
+        // query & build the reference node
+        if (this.parent instanceof AppNode && this.parent.name === refApp)
+        {
+            return await this.parent.loadRefField(refField, filter)
+        }
+        else
+        {
+            // @TODO: create a temp app node
+            return undefined
+        }
+    }
+
+    //#endregion
+
     //#region Properties
 
     //#endregion
@@ -861,6 +924,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     private _fieldInfo: IAppDataFieldInfo | undefined
     public _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
     private _errfld: AnySchemaNode | undefined
+    private _reffields: { [key: string]: { app: string, field: string, filter: { [key:string]: any } } } | undefined
 
     //#endregion
 
@@ -905,5 +969,87 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
                 this._data[i] = eleNode.rawData
             }
         }
+
+        // reference check
+        if (parent instanceof AppNode && this._eschema.type === SchemaType.Struct && this._eschema.struct?.relations?.length && this._eschema.struct.relations.some(r => r.type === RelationType.Reference))
+        {
+            this._reffields = {}
+            for (let i = 0; i < this._eschema.struct.relations.length; i++)
+            {
+                const rel = this._eschema.struct.relations[i]
+                if (rel.type !== RelationType.Reference) continue
+                this._reffields[rel.field] = resolveAppReference(this._eschema.name, rel) || { app: '', field: '', filter: {}}
+            }
+        }
     }
+}
+
+
+/**
+ * Resolve the app reference field
+ * @param name The struct array type
+ * @param field The ref field
+ * @param refFunc The reference func used to resolve
+ */
+function resolveAppReference(name: string, relation: IStructFieldRelation)
+{
+    if (relation?.type !== RelationType.Reference) return undefined
+
+    // check schema
+    let schema = getCachedSchema(name)
+    if (schema?.type === SchemaType.Array && schema.array?.element)
+        schema = getCachedSchema(schema.array.element)
+    if (schema?.type !== SchemaType.Struct) return undefined
+
+    // check field
+    const field = relation.field.toLowerCase()
+    const f = schema.struct?.fields?.find(f => f.name.toLowerCase() === field)
+    if (!(f && f.displayOnly)) return undefined
+
+    // check func
+    const funcSchema = getCachedSchema(relation.func)
+    if (funcSchema?.type !== SchemaType.Func || funcSchema.func?.return !== f.type || !funcSchema.func?.args?.length) return undefined
+
+    // args
+    const argMap: { [key: string]: any } = {}
+    for (let i = 0; i < funcSchema.func.args.length; i++)
+    {
+        const arg = funcSchema.func.args[i]
+        if (i >= relation.args.length) break
+        argMap[arg.name] = relation.args[i].name ? `@${relation.args[i].name}` : relation.args[i].value
+    }
+
+    // analyze exps for simple, 
+    // @TODO complex case later
+    let app: string | undefined = undefined
+    let appField: string | undefined = undefined
+    let filterMap: { [key: string]: string } = {}
+    let sourceAccessExp: string[] = []
+
+    for (let exp of funcSchema.func.exps)
+    {
+        // get app and app field
+        if (exp.func === "system.data.getdatasource")
+        {
+            app = exp.args[0]?.value
+            appField = exp.args[1]?.value
+            sourceAccessExp.push(exp.name)
+        }
+        else if(exp.func === "system.collection.fieldequal" && exp.type === ExpressionType.Filter && exp.args[0]?.name && sourceAccessExp.includes(exp.args[0]?.name) && exp.args[1]?.value)
+        {
+            filterMap[exp.args[1].value] = exp.args[2]?.name ? argMap[exp.args[2]?.name] : exp.args[2]?.value
+            sourceAccessExp.push(exp.name)
+        }
+    }
+
+    if (app && appField)
+    {
+        return {
+            app: app,
+            field: appField,
+            filter: filterMap
+        }
+    }
+
+    return undefined
 }

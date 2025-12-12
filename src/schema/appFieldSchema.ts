@@ -102,6 +102,11 @@ export interface IAppFieldSchema
      * Column access policies
      */
     colAuths?: IColPolicyItem[]
+
+    /**
+     * The field is reference load, load data on demand
+     */
+    refLoad?: boolean
 }
 
 /**
