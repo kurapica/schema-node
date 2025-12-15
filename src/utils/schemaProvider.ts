@@ -835,27 +835,28 @@ export async function validateSchemaValue(name: string, value: any): Promise<boo
     {
         const valueType = getScalarValueType(name)
         if (!schema.scalar || !valueType) return true
-        if (valueType && ScalarValueType.Boolean)
+        
+        if (valueType & ScalarValueType.Boolean)
         {
             return typeof value === "boolean"
         }
-        else if (valueType && ScalarValueType.Date)
+        else if (valueType & ScalarValueType.Date)
         {
             return value instanceof Date
         }
-        else if (valueType && ScalarValueType.Integer)
+        else if (valueType & ScalarValueType.Integer)
         {
             return typeof value === "number" && Math.floor(value) === value &&
                 (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
                 (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
         }
-        else if (valueType && ScalarValueType.Number)
+        else if (valueType & ScalarValueType.Number)
         {
             return typeof value === "number" &&
                 (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
                 (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
         }
-        else if (valueType && ScalarValueType.String)
+        else if (valueType & ScalarValueType.String)
         {
             return typeof value === "string" &&
                 (isNull(schema.scalar.lowLimit) || value.length >= schema.scalar.lowLimit!) &&

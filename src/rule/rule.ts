@@ -29,5 +29,8 @@ export abstract class Rule {
      */
     _actived?: boolean
 
+    /**
+     * The active pushes
+     */
     _activePushes?: (() => void)[]
 }
