@@ -88,7 +88,7 @@ export class RuleSchema {
         const rule = node.rule
         rule.type = node.schemaName
         rule.default = this.default
-        rule.invisible = this.invisible
+        rule.invisible = this.invisible || this.pushSchemas?.some(p => p.type === RelationType.Visible) || undefined
         rule.disable = this.disable
     }
 

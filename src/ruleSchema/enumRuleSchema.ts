@@ -48,7 +48,7 @@ export class EnumRulechema extends RuleSchema
         rule.blackList = (Array.isArray(this.blackList) ? [...this.blackList] : this.blackList) as any
         rule.whiteList = (Array.isArray(this.whiteList) ? [...this.whiteList] : this.whiteList) as any
         rule.anyLevel = this.anyLevel
-        this.singleFlag = this.singleFlag
+        rule.singleFlag = this.singleFlag
     }
 
     /**

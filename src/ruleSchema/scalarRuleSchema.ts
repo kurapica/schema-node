@@ -99,7 +99,8 @@ export class ScalarRuleSchema extends RuleSchema
                 this.pushSchemas.push({
                     func: schema.scalar.whiteList,
                     type: RelationType.WhiteList,
-                    args: [ { field: NODE_SELF } ]
+                    args: [ { field: NODE_SELF } ],
+                    source: schema.name
                 })
             }
             else

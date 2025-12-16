@@ -26,7 +26,6 @@ enum AppFieldNodeState
     Ref     = 1 << 2,
     FrontEnd= 1 << 3,
     Readonly= 1 << 4,
-    Reference = 1 << 5, // reference field for display only
 }
 
 //#endregion
@@ -110,12 +109,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     /**
      * Gets all input fields, excluding readonly input fields(ref | readonly)
      */
-    get inputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Reference | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    get inputFields(): AnySchemaNode[] { return this.getFields(undefined, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
     
     /**
      * Gets all loaded input fields for data submit
      */
-    get loadedInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Loaded, AppFieldNodeState.Reference | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
+    get loadedInputFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Loaded, AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly) }
 
     /**
      * Gets all the ref input fields
@@ -701,7 +700,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                 state |= AppFieldNodeState.FrontEnd
                 state |= AppFieldNodeState.Loaded
             }
-            if (fconf.refLoad) state |= AppFieldNodeState.Reference
 
             // ref | push field is readonly
             const readonlyField = (readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
@@ -719,7 +717,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                     break
                 case SchemaType.Array:
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo, invisible: fconf.refLoad } as IStructArrayFieldConfig, d, this);
+                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this);
                     break
             }
             if (node) this._fields.push({ node, state })
