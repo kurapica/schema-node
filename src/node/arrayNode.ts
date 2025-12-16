@@ -15,7 +15,7 @@ import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
 import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSchema'
 import { RelationType } from '../enum/relationType'
-import { IStructFieldRelation } from '../schema/structSchema'
+import type { IStructFieldRelation } from '../schema/structSchema'
 import { ExpressionType } from '../enum/expressionType'
 
 /**
