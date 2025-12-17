@@ -172,6 +172,16 @@ export interface IAppDataFieldQuery {
      * Use descend order
      */
     descend?: boolean
+
+    /**
+     * The filter function
+     */
+    filterFunc?: string
+
+    /**
+     * The filter function arguments
+     */
+    filterArgs?: any[]
 }
 
 export interface IBatchQueryAppDataResult {
@@ -249,6 +259,16 @@ export interface IAppDataFieldInfo {
      * Use descend order
      */
     descend?: boolean
+
+    /**
+     * The filter function
+     */
+    filterFunc?: string
+
+    /**
+     * The filter function arguments
+     */
+    filterArgs?: any[]
 
     /**
      * Allow create the field data

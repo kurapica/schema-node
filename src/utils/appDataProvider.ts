@@ -32,7 +32,6 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
      * Get the source app and target for an app target
      */
     getSourceTarget(app: string, target: string, sourceApp: string): Promise<string | undefined>
-
     
     /**
      * Process the interaction workflow request

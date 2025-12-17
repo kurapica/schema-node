@@ -772,7 +772,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
                         skip: page * count,
                         descend,
                         filter,
-                        orderBy
+                        orderBy,
+                        filterFunc: this._fieldInfo?.filterFunc,
+                        filterArgs: this._fieldInfo?.filterArgs
                     }
                 }
             })
