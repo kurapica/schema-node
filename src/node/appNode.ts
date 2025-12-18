@@ -509,11 +509,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      * @param field 
      * @param filter 
      */
-    async loadRefField(field: string, filter: { [key: string]: any }): Promise<ArrayNode> {
+    async loadRefField(field: string, filterFunc: string, filterArgs: any[]): Promise<ArrayNode> {
         field = field.toLowerCase()
         const fconf = this._appSchema.fields?.find(f => f.name.toLowerCase() === field)
         if (!fconf) throw `field ${field} not found in app ${this.name}`
 
+        // relation check
         const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
 
         // reload check
@@ -546,7 +547,8 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             fields: queryNodes.map(n => n.node.name),
             querys: {
                 [field]: {
-                    filter
+                    filterFunc,
+                    filterArgs
                 }
             }
         }

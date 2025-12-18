@@ -990,6 +990,7 @@ interface IFieldAccessWhiteListItem {
  * Gets the field access white list
  * @param type The wanted type
  * @param fields The fields to be checked
+ * @param mapFilter Whether map the filter
  * @returns The field access white list
  */
 export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false, matchArray: boolean = false): Promise<IFieldAccessWhiteListItem[]>
@@ -1010,7 +1011,10 @@ export async function getFieldAccessWhiteList(type: string, fields: { name: stri
         
         if (!noDepth && (!res.match || !type))
         {
-            const fieldSchema = await getSchema(field.type)
+            let fieldSchema = await getSchema(field.type)
+            if (fieldSchema?.type === SchemaType.Array && matchArray && fieldSchema.array?.element)
+                fieldSchema = await getSchema(fieldSchema.array.element)
+
             if (fieldSchema?.type === SchemaType.Struct)
             {
                 const subList = await getFieldAccessWhiteList(type, fieldSchema.struct!.fields, value)

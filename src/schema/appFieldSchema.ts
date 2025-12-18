@@ -54,9 +54,9 @@ export interface IAppFieldSchema
     func?: string
 
     /**
-     * The argument fields to provide input data
+     * The source field that push data to the field with the func
      */
-    args?: string[]
+    arg?: string
 
     /**
      * The field is using increase update, not full-data update
