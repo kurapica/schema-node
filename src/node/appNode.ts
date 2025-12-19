@@ -207,7 +207,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                     if ((finfo.state & AppFieldNodeState.FrontEnd) && (finfo.state & AppFieldNodeState.Push))
                     {
                         const fieldSchema = this._appSchema.fields!.find(f => f.name === name)
-                        if (!fieldSchema || !fieldSchema.func || !fieldSchema.args?.length) 
+                        if (!fieldSchema || !fieldSchema.func || isNull(fieldSchema.arg)) 
                         {
                             changed = true
                             processOrder[name] = -1 // cover case
@@ -217,9 +217,9 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                         // check args
                         let maxLevel = 0
                         let skip = false
-                        for(let i = 0; i < fieldSchema.args.length; i++)
+                        for (let i = 0; i < 1; i++)
                         {
-                            const relf = fieldSchema.args[i].split(".").filter(f => !isNull(f))[0]
+                            const relf = fieldSchema.arg.split(".").filter(f => !isNull(f))[0]
                             if (!relf) {
                                 maxLevel = -1 // skip
                                 break
@@ -280,7 +280,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                 if (fieldSchema == null || !fieldSchema.func) continue
                 
                 // gather arguments
-                const args = fieldSchema?.args?.map(a => {
+                const args = [fieldSchema?.arg].map(a => {
                     const access = a.split(".")
                     let data = this.getField(access[0])?.rawData
                     access.slice(1).forEach(a => data = data && typeof(data) === 'object' ? data[a] : null)
@@ -439,7 +439,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     async reload(nodes?: AnySchemaNode[] | string[], onlyNotLoaded: boolean = false): Promise<void> {
         if (!this.target) return
 
-        const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
+        let queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
         if (!nodes?.length) nodes = this.inputFields
 
         // reload check
@@ -473,49 +473,58 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             n = n.toLowerCase()
             checkToQuery(n)
         }
-        if (!queryNodes.length) return
+        const incrUpdateArrayNodes = queryNodes.filter(n => n.node instanceof ArrayNode && n.node.incrUpdate)
+        queryNodes = queryNodes.filter(n => !incrUpdateArrayNodes.includes(n))
+        
+        if (queryNodes.length){
+            const query: IAppDataQuery = {
+                app: this.name,
+                target: this.target,
+                fields: queryNodes.map(n => n.node.name)
+            }
 
-        const query: IAppDataQuery = {
-            app: this.name,
-            target: this.target,
-            fields: queryNodes.map(n => n.node.name)
+            const result = await queryAppData(query)
+            if (!result) return
+
+            // assign data
+            for (let i = 0; i < queryNodes.length; i++)
+            {
+                const n = queryNodes[i]
+                n.state |= AppFieldNodeState.Loaded
+
+                const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
+
+                // update field info
+                const qinfo = result.infos[n.node.name]
+                n.node.config.readonly = (this.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
+
+                if (n.node instanceof ArrayNode)
+                    n.node.config.fieldInfo = qinfo
+
+                n.node.data = result.results[n.node.name]
+                n.node.resetChanges()
+                n.node.notifyState()
+            }
         }
-        const result = await queryAppData(query)
-        if (!result) return
 
-        // assign data
-        for (let i = 0; i < queryNodes.length; i++)
+        // incr update use set page
+        for (let i = 0; i < incrUpdateArrayNodes.length; i++)
         {
-            const n = queryNodes[i]
-            n.state |= AppFieldNodeState.Loaded
-
-            const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
-
-            // update field info
-            const qinfo = result.infos[n.node.name]
-            n.node.config.readonly = (this.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
-
-            if (n.node instanceof ArrayNode)
-                (n.node as ArrayNode).config.fieldInfo = qinfo
-
-            n.node.data = result.results[n.node.name]
-            n.node.resetChanges()
-            n.node.notifyState()
+            const n = incrUpdateArrayNodes[i];
+            (n.node as ArrayNode).setPage(0)
         }
     }
 
     /**
      * Load the reference field
-     * @param field 
-     * @param filter 
      */
-    async loadRefField(field: string, filterFunc: string, filterArgs: any[]): Promise<ArrayNode> {
+    async loadRefField(parent, config: IStructArrayFieldConfig, field: string, filterFunc: string, filterArgs: any[]): Promise<ArrayNode> {
         field = field.toLowerCase()
         const fconf = this._appSchema.fields?.find(f => f.name.toLowerCase() === field)
         if (!fconf) throw `field ${field} not found in app ${this.name}`
 
         // relation check
-        const queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
+        let queryNodes: {node: AnySchemaNode, state: AppFieldNodeState}[] = []
 
         // reload check
         const checkToQuery = (n: string) => {
@@ -539,65 +548,92 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         }
 
         checkToQuery(field)
-        if (!queryNodes.length) return
+        const incrUpdateArrayNodes = queryNodes.filter(n => n.node instanceof ArrayNode && n.node.incrUpdate)
+        queryNodes = queryNodes.filter(n => !incrUpdateArrayNodes.includes(n))
+        
+        let resultNode: ArrayNode | null = null
+        if (queryNodes.length) {
+            const query: IAppDataQuery = {
+                app: this.name,
+                target: this.target,
+                fields: queryNodes.map(n => n.node.name),
+                querys: {
+                    [field]: {
+                        filterFunc,
+                        filterArgs
+                    }
+                }
+            }
+            const result = await queryAppData(query)
+            if (!result) return
 
-        const query: IAppDataQuery = {
-            app: this.name,
-            target: this.target,
-            fields: queryNodes.map(n => n.node.name),
-            querys: {
-                [field]: {
-                    filterFunc,
-                    filterArgs
+            // assign data
+            for (let i = 0; i < queryNodes.length; i++)
+            {
+                const finfo = result?.infos[fconf.name]
+                const d = result?.results[fconf.name]
+                const n = queryNodes[i]
+                if (n.node.name.toLowerCase() === field)
+                {
+                    let state = AppFieldNodeState.None
+                    if (!isNull(d) || result?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
+                    if (fconf.func) state |= AppFieldNodeState.Push
+                    if (fconf.sourceApp) state |= AppFieldNodeState.Ref
+                    if (fconf.readonly) state |= AppFieldNodeState.Readonly | AppFieldNodeState.Push
+                    if (fconf.frontend) {
+                        // front-end field always consider loaded
+                        state |= AppFieldNodeState.FrontEnd
+                        state |= AppFieldNodeState.Loaded
+                    }
+                    const readonlyField = (this.readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
+
+                    // generate the ref array node
+                    resultNode = new ArrayNode({ name: config.name, type: config.type, display: config.display, desc: config.desc, readonly: readonlyField,
+                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, parent)
+                }
+                else
+                {
+                    n.state |= AppFieldNodeState.Loaded
+
+                    const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
+
+                    // update field info
+                    const qinfo = result.infos[n.node.name]
+                    n.node.config.readonly = (this.readonly || config.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
+
+                    if (n.node instanceof ArrayNode)
+                        (n.node as ArrayNode).config.fieldInfo = qinfo
+
+                    n.node.data = result.results[n.node.name]
+                    n.node.resetChanges()
+                    n.node.notifyState()
                 }
             }
         }
-        const result = await queryAppData(query)
-        if (!result) return
-
-        // assign data
-        for (let i = 0; i < queryNodes.length; i++)
+        // incr update use set page
+        for (let i = 0; i < incrUpdateArrayNodes.length; i++)
         {
-            const finfo = result?.infos[fconf.name]
-            const d = result?.results[fconf.name]
-            const n = queryNodes[i]
+            const n = incrUpdateArrayNodes[i];
             if (n.node.name.toLowerCase() === field)
             {
                 let state = AppFieldNodeState.None
-                if (!isNull(d) || result?.infos[fconf.name]) state |= AppFieldNodeState.Loaded
                 if (fconf.func) state |= AppFieldNodeState.Push
                 if (fconf.sourceApp) state |= AppFieldNodeState.Ref
                 if (fconf.readonly) state |= AppFieldNodeState.Readonly | AppFieldNodeState.Push
-                if (fconf.frontend) {
-                    // front-end field always consider loaded
-                    state |= AppFieldNodeState.FrontEnd
-                    state |= AppFieldNodeState.Loaded
-                }
-                const readonlyField = (this.readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || finfo && !finfo.allowUpdate) ? true : false
+                const readonlyField = (this.readonly || config.readonly || (state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly))) ? true : false
 
                 // generate the ref array node
-                return new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
-                        incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this)
+                resultNode =  new ArrayNode({ name: config.name, type: config.type, display: config.display, desc: config.desc, readonly: readonlyField,
+                    incrUpdate: fconf.incrUpdate, fieldInfo: { filterFunc, filterArgs } } as IStructArrayFieldConfig, [], parent)
+
+                await resultNode.setPage(0)
             }
             else
             {
-                n.state |= AppFieldNodeState.Loaded
-
-                const info = this._fields.find(f => f.node.name.toLowerCase() === n.node.name.toLowerCase())
-
-                // update field info
-                const qinfo = result.infos[n.node.name]
-                n.node.config.readonly = (this.readonly || (n.state & (AppFieldNodeState.Ref | AppFieldNodeState.Push | AppFieldNodeState.Readonly)) || qinfo && !qinfo.allowUpdate) ? true : false
-
-                if (n.node instanceof ArrayNode)
-                    (n.node as ArrayNode).config.fieldInfo = qinfo
-
-                n.node.data = result.results[n.node.name]
-                n.node.resetChanges()
-                n.node.notifyState()
+                (n.node as ArrayNode).setPage(0)
             }
         }
-        
+        return resultNode!
     }
 
     /**

@@ -4,7 +4,7 @@ import { type IEnumConfig } from '../config/enumConfig'
 import { type ISchemaConfig } from '../config/schemaConfig'
 import { type INodeSchema } from '../schema/nodeSchema'
 import { getCachedSchema, validateSchemaValue } from '../utils/schemaProvider'
-import { _LS } from '../utils/locale'
+import { _L, _LS } from '../utils/locale'
 import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
@@ -16,8 +16,7 @@ import { AppNode } from './appNode'
 import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSchema'
 import { RelationType } from '../enum/relationType'
 import type { IStructFieldRelation } from '../schema/structSchema'
-import { ExpressionType } from '../enum/expressionType'
-import { IFunctionCallArgument } from '../schema/functionSchema'
+import type { IFunctionCallArgument } from '../schema/functionSchema'
 
 /**
  * The array schema data node
@@ -87,12 +86,17 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     /**
      * Whether allow add new element
      */
-    get allowAdd(): boolean { return !this.readonly && this._config.fieldInfo?.allowCreate !== false }
+    get allowAdd(): boolean { return !this.readonly && this._fieldInfo?.allowCreate !== false && this._config.fieldInfo?.allowCreate !== false }
 
     /**
      * Whether allow delete element
      */
-    get allowDelete(): boolean { return !this.readonly && this._config.fieldInfo?.allowDelete !== false }
+    get allowDelete(): boolean { return !this.readonly && this._fieldInfo?.allowDelete !== false && this._config.fieldInfo?.allowDelete !== false }
+
+    /**
+     * Whether allow update element
+     */
+    get allowUpdate(): boolean { return !this.readonly && this._fieldInfo?.allowUpdate !== false && this._config.fieldInfo?.allowUpdate !== false }
 
     /**
      * Gets the current page
@@ -138,7 +142,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         }
         else if (this.incrUpdate)
         {
-            throw `Can't set data to ${this.display || this.name}`
+            throw `Can't set data to ${_L(this.display || this.name)}`
         }
         else
         {
@@ -492,9 +496,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
             if (node instanceof ScalarNode) return node.isDate && !node.isYearMonth
         })) return row
 
-        const appNode = this.parent as AppNode
-        if (!appNode.target) return row
-
+        let appNode = this.parent
+        while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
+        if (!(appNode && appNode instanceof AppNode && appNode.target)) return row
+        
         // load data with primary key
         let prevkey = ""
         const loadRowData = async() => {
@@ -561,8 +566,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         const key = this.getPrimaryKey(row)
         if (isnew || forceSave)
         {
-            const appNode = this.parent as AppNode
-            if (!appNode?.target) return false
+            let appNode = this.parent
+            while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
+            if (!(appNode && appNode instanceof AppNode && appNode.target)) return false
         
             const data = row.data
             const res = await pushAppData(appNode.name, appNode.target, {
@@ -720,7 +726,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         //if (!this.incrUpdate) return
         count ||= this._fieldInfo?.take || 10 // default should be provided by server
         if (isNull(descend)) descend = this._fieldInfo?.descend
-        const appNode = this.parent
+        let appNode = this.parent
+        while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return
 
         // validate the keys
@@ -904,9 +911,12 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         if (!fullMatch) return undefined
         
         // query & build the reference node
-        if (this.parent instanceof AppNode && this.parent.name === refApp)
+        let appNode = this.parent
+        while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
+        if (!(appNode && appNode instanceof AppNode && appNode.target)) return undefined
+        if (appNode instanceof AppNode && appNode.name === refApp)
         {
-            return await this.parent.loadRefField(refField, refInfo.func, args)
+            return await appNode.loadRefField(row, this._eschema.struct.fields.find(f => f.name === refField), refField, refInfo.func, args)
         }
         else
         {
@@ -976,7 +986,10 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         }
 
         // reference check
-        if (parent instanceof AppNode && this._eschema.type === SchemaType.Struct && this._eschema.struct?.relations?.length && this._eschema.struct.relations.some(r => r.type === RelationType.Reference))
+        let appNode = parent
+        while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
+        if (!(appNode && appNode instanceof AppNode && appNode.target)) return undefined
+        if (appNode && this._eschema.type === SchemaType.Struct && this._eschema.struct?.relations?.length && this._eschema.struct.relations.some(r => r.type === RelationType.Reference))
         {
             this._reffields = {}
             for (let i = 0; i < this._eschema.struct.relations.length; i++)
