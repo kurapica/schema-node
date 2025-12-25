@@ -10,9 +10,10 @@ import { StructNode } from "./structNode"
 import { type ISchemaConfig } from "../config/schemaConfig"
 import { StructRule } from "../rule/structRule"
 import type { IStructArrayFieldConfig, IStructEnumFieldConfig, IStructFieldConfig, IStructScalarFieldConfig } from "../schema/structSchema"
-import { interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
+import { getWorkflowInfo, interactionWorkflow, pushAppData, queryAppData } from "../utils/appDataProvider"
 import { type INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
+import { WorkflowStatus } from "../enum/workflowStatus"
 
 
 //#region Inner Type
@@ -131,6 +132,8 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      */
     get pushFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Push, AppFieldNodeState.Ref) }
 
+    get loadedPushFields(): AnySchemaNode[] { return this.getFields(AppFieldNodeState.Push | AppFieldNodeState.Loaded, AppFieldNodeState.Ref) }
+
     /**
      * Gets all source apps
      */
@@ -179,7 +182,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     getFields(state: AppFieldNodeState = AppFieldNodeState.None, nostate: AppFieldNodeState = AppFieldNodeState.None): AnySchemaNode[] {
         const fields: AnySchemaNode[] = []
         for (const finfo of this._fields) {
-            if (state && !(finfo.state & state)) continue
+            if (state && (finfo.state & state) !== state) continue
             if (nostate && (finfo.state & nostate)) continue
             fields.push(finfo.node)
         }
@@ -450,8 +453,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             if (!info) return
             if (queryNodes.findIndex(qn => qn.node === info.node) >= 0) return
 
-            if (!(info.state & (AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.FrontEnd | AppFieldNodeState.Readonly ))
-                && (!onlyNotLoaded || !(info.state & AppFieldNodeState.Loaded)))
+            if (!(info.state & (AppFieldNodeState.FrontEnd)) && (!onlyNotLoaded || !(info.state & AppFieldNodeState.Loaded)))
             {
                 queryNodes.push(info)
             }
@@ -511,6 +513,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         for (let i = 0; i < incrUpdateArrayNodes.length; i++)
         {
             const n = incrUpdateArrayNodes[i];
+            n.state |= AppFieldNodeState.Loaded;
             (n.node as ArrayNode).setPage(0)
         }
     }
@@ -614,6 +617,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         for (let i = 0; i < incrUpdateArrayNodes.length; i++)
         {
             const n = incrUpdateArrayNodes[i];
+            n.state |= AppFieldNodeState.Loaded;
             if (n.node.name.toLowerCase() === field)
             {
                 let state = AppFieldNodeState.None
@@ -653,6 +657,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             const state = this._fields.find(f => f.node === n)?.state || AppFieldNodeState.None
             if (!(state & (AppFieldNodeState.FrontEnd | AppFieldNodeState.Push | AppFieldNodeState.Ref | AppFieldNodeState.Readonly)) && n.changed)
             {
+                if (!n.valid) return { result: false, error: `field ${n.name} is invalid` }
                 const submitData = n.submitData
                 const deletes = (n instanceof ArrayNode) ? n.deletes : null
 
@@ -673,6 +678,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
 
         // clear changes
         pushNodes.forEach(n => n.resetChanges())
+        await this.reload(this.loadedPushFields)
 
         return result
     }
@@ -684,8 +690,22 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      * @param workflowId The workflow instance id
      * @param data The interaction form data
      */
-    async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any): Promise<string | undefined> {
-        return await interactionWorkflow(this.name, this.target, workflow, node, workflowId, data)
+    async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any, reload?: boolean): Promise<string | undefined> {
+        const id = await interactionWorkflow(this.name, this.target, workflow, node, workflowId, data)
+        if (reload && id)
+        {
+            for (let i = 0; i < 10; i++)
+            {
+                await new Promise(resolve => setTimeout(resolve, 1000))
+                const status = await getWorkflowInfo(this.name, workflow, id)
+                if (status === WorkflowStatus.Waiting || status === WorkflowStatus.Running)
+                    continue
+
+                await this.reload(this.loadedInputFields)
+                break
+            }
+        }
+        return id
     }
 
     //#endregion

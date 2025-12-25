@@ -45,7 +45,7 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
     interaction(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<string|undefined>
 
     /**
-     * Gets the p
+     * Gets the workflow status info
      * @param app The application
      * @param workflow The workflow
      * @param workflowId The workflow id
@@ -299,6 +299,13 @@ export async function interactionWorkflow(app: string, target: string, workflow:
     let provider = getAppDataProvider()
     if (!provider) throw "No App data provider"
     return await provider.interaction(app, target, workflow, node, workflowId, data)
+}
+
+export async function getWorkflowInfo(app: string, workflow: string, workflowId: string): Promise<WorkflowStatus>
+{
+    let provider = getAppDataProvider()
+    if (!provider) throw "No App data provider"
+    return await provider.workflowInfo(app, workflow, workflowId)
 }
 
 //#endregion

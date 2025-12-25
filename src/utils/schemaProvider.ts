@@ -241,7 +241,7 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
             exist.auths = schema.auths
             exist.hasApps = schema.hasApps
             exist.hasFields = schema.hasFields
-            exist.relations = schema.relations
+            exist.relations =schema.relations?.length ? schema.relations : exist.relations
             exist.fields = schema.fields?.length ? schema.fields : exist.fields
             exist.workflows = schema.workflows?.length ? schema.workflows : exist.workflows
             exist.nodeSchema = undefined
@@ -620,10 +620,7 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
     if (!provider) throw new Error(`Schema provider not provided to get ${name}`)
 
     // load schema from provider
-    const schemas = await provider.loadSchema([name]) || []
-    PrepareServerSchemas(schemas)
-    registerSchema(schemas, SchemaLoadState.Server)
-
+    await loadSchema(name)
     schema = schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
     return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
 }
@@ -676,6 +673,38 @@ export function getCachedSchema(name: string): INodeSchema | undefined {
 
     const schema = !name ? rootSchema : schemaCache[name]
     return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
+}
+
+let schemaCombineQuery: string[] = []
+let schemaQueries: { resolve: Function, reject: Function }[] = []
+let schemaQueryTask: number = 0
+function loadSchema(name: string): Promise<INodeSchema[]> {
+    if (!schemaCombineQuery.includes(name)) 
+        schemaCombineQuery.push(name)
+
+    if (schemaQueryTask > 0) clearTimeout(schemaQueryTask)
+    schemaQueryTask = setTimeout(processLoadSchema, 100)
+    return new Promise<INodeSchema[]>((resolve, reject) => schemaQueries.push({ resolve, reject }))
+}
+
+async function processLoadSchema()
+{
+    const names = schemaCombineQuery
+    const queries = schemaQueries
+    schemaCombineQuery = []
+    schemaQueries = []
+
+    try {
+        const schemas = await getSchemaProvider()!.loadSchema(names)
+        PrepareServerSchemas(schemas)
+        registerSchema(schemas, SchemaLoadState.Server)
+        queries.forEach(c => c.resolve(schemas))
+        return schemas
+    }
+    catch (ex) {
+        queries.forEach(c => c.reject(ex))
+        throw ex
+    }
 }
 
 /**
