@@ -98,6 +98,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
      */
     get allowUpdate(): boolean { return !this.readonly && this._fieldInfo?.allowUpdate !== false && this._config.fieldInfo?.allowUpdate !== false }
 
+    get blackColumns(): string[] { return this._fieldInfo?.blackColumns || this._config.fieldInfo?.blackColumns || [] }
+
     /**
      * Gets the current page
      */
