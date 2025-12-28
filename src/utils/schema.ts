@@ -195,7 +195,7 @@ registerSchema([
                 { name: "suffix", type: NS_SYSTEM_STRING }
             ], (a: string, b: string) => a.endsWith(b)),
 
-            newSystemFunc("system.str.contains", NS_SYSTEM_BOOL, [
+            newSystemFunc("system.str.match", NS_SYSTEM_BOOL, [
                 { name: "str", type: NS_SYSTEM_STRING },
                 { name: "substr", type: NS_SYSTEM_STRING }
             ], (a: string, b: string) => a.includes(b)),
@@ -671,7 +671,7 @@ registerSchema([
                 return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.endsWith(v)
             }, NS_SYSTEM_STRUCT),
 
-            newSystemFunc("system.collection.fieldcontains", NS_SYSTEM_BOOL, [
+            newSystemFunc("system.collection.fieldmatch", NS_SYSTEM_BOOL, [
                 { name: "struct", type: "T1" },
                 { name: "field", type: NS_SYSTEM_STRING },
                 { name: "value", type: NS_SYSTEM_STRING }
