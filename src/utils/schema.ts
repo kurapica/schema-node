@@ -276,7 +276,7 @@ registerSchema([
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
                 let sum = new BigNumber(0)
-                nums.forEach((v: number) => sum = sum.plus(v))
+                nums.forEach((v: number) => sum = sum.plus(v || 0))
                 return sum.toNumber()
             }),
 
@@ -312,7 +312,7 @@ registerSchema([
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
                 let sum = new BigNumber(1)
-                nums.forEach((v: number) => sum = sum.multipliedBy(v))
+                nums.forEach((v: number) => sum = sum.multipliedBy(v || 0))
                 return sum.toNumber()
             }),
 
@@ -338,7 +338,7 @@ registerSchema([
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
                 let sum = new BigNumber(nums.length > 0 ? nums[0] : 0)
-                for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i])
+                for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i] || 0)
                 return sum.toNumber()
             }),
 

@@ -724,7 +724,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     /**
      * Construct an app node.
      */
-    constructor(app: string, target?: string, data?: IAppDataResult, readonly?: boolean)
+    constructor(app: string, target?: string, data?: IAppDataResult, readonly?: boolean, query?: IAppDataQuery)
     {
         // app schema check
         const schema = getAppCachedSchema(app)
@@ -740,7 +740,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         for(let i = 0; i < schema.fields?.length; i++)
         {
             const fconf = schema.fields[i]
-            const finfo = data?.infos[fconf.name]
+            let finfo = data?.infos[fconf.name] // pass paging info for array field
             if (fconf.disable || finfo && !finfo.allowRead) continue
 
             const fschema = getCachedSchema(fconf.type)
@@ -774,6 +774,10 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                     node = new StructNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField } as IStructFieldConfig, d, this)
                     break
                 case SchemaType.Array:
+                    if (fconf.incrUpdate && query?.take && isNull(finfo?.total)){
+                        finfo ??= { allowCreate: true, allowRead: true, allowUpdate: true, allowDelete: true }
+                        finfo.take = query.take
+                    }
                     node = new ArrayNode({ name: fconf.name, type: fconf.type, display: fconf.display, desc: fconf.desc, readonly: readonlyField,
                         incrUpdate: fconf.incrUpdate, fieldInfo: finfo } as IStructArrayFieldConfig, d, this);
                     break
@@ -791,7 +795,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
 export async function getAppNode(query: IAppDataQuery, readonly?: boolean): Promise<AppNode | undefined>
 {
     const result = await queryAppData(query)
-    const node = result ? new AppNode(query.app, query.target, result, readonly) : undefined
+    const node = result ? new AppNode(query.app, query.target, result, readonly, query) : undefined
     node?.resetChanges()
     return node
 }
