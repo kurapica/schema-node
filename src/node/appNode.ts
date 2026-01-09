@@ -222,7 +222,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                         let skip = false
                         for (let i = 0; i < 1; i++)
                         {
-                            const relf = fieldSchema.arg.split(".").filter(f => !isNull(f))[0]
+                            const relf = fieldSchema.arg!.split(".").filter(f => !isNull(f))[0]
                             if (!relf) {
                                 maxLevel = -1 // skip
                                 break
@@ -283,10 +283,10 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
                 if (fieldSchema == null || !fieldSchema.func) continue
                 
                 // gather arguments
-                const args = [fieldSchema?.arg].map(a => {
-                    const access = a.split(".")
+                const args = [fieldSchema?.arg].map((p:any) => {
+                    const access = p.split(".")
                     let data = this.getField(access[0])?.rawData
-                    access.slice(1).forEach(a => data = data && typeof(data) === 'object' ? data[a] : null)
+                    access.slice(1).forEach((a:string) => data = data && typeof(data) === 'object' ? data[a] : null)
                     return data
                 }) || []
 
@@ -521,7 +521,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     /**
      * Load the reference field
      */
-    async loadRefField(parent, config: IStructArrayFieldConfig, field: string, filterFunc: string, filterArgs: any[]): Promise<ArrayNode> {
+    async loadRefField(parent: AnySchemaNode, config: IStructArrayFieldConfig, field: string, filterFunc: string, filterArgs: any[]): Promise<ArrayNode | undefined> {
         field = field.toLowerCase()
         const fconf = this._appSchema.fields?.find(f => f.name.toLowerCase() === field)
         if (!fconf) throw `field ${field} not found in app ${this.name}`

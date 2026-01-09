@@ -8,7 +8,7 @@ import { ScalarNode } from "../node/scalarNode"
 import { type AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
 import { type INodeSchema } from "../schema/nodeSchema"
-import { getSchema, NS_SYSTEM_BOOL, NS_SYSTEM_STRING } from "../utils/schemaProvider"
+import { getArraySchema, getSchema, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { clearDebounce, debounce, deepClone, generateGuid, isEqual, isNull } from "../utils/toolset"
 
@@ -308,6 +308,8 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.Default:
+            type = node.schemaName
+
             if (node instanceof ArrayNode)
             {
                 handler = (res: any) => {
@@ -345,6 +347,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
         case RelationType.Assign:
         case RelationType.InitOnly:
+            type = node.schemaName            
             handler = (res: any) => {
                 node.rule.default = res
                 node.data = res
@@ -352,6 +355,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
         
         case RelationType.LowLimit:
+            type = NS_SYSTEM_NUMBER
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
@@ -362,6 +366,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.UpLimit:
+            type = NS_SYSTEM_NUMBER
             if (node instanceof ScalarNode)
             {
                 handler = (res: any) => {
@@ -383,12 +388,14 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
         case RelationType.Root:
             if (node instanceof EnumNode || node instanceof ScalarNode)
             {
+                type = node.schemaName
                 handler = (res: any) => {
                     node.rule.root = res
                     node.validation().finally(() => node.notifyState())
                 }
             }
             else if (node instanceof ArrayNode && node.enumNode){
+                type = node.enumNode.schemaName
                 handler = (res: any) => {
                     node.enumNode!.rule.root = res
                     node.enumNode!.validation().finally(() => node.enumNode!.notifyState())
@@ -397,6 +404,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.BlackList:
+            type = NS_SYSTEM_ARRAY
             if (node instanceof ScalarNode || node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -414,6 +422,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.WhiteList:
+            type = NS_SYSTEM_ARRAY
             if (node instanceof ScalarNode || node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -431,6 +440,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
         
         case RelationType.AnyLevel:
+            type = NS_SYSTEM_BOOL
             if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -448,6 +458,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.Cascade:
+            type = NS_SYSTEM_INT
             if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -465,6 +476,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.SingleFlag:
+            type = NS_SYSTEM_BOOL
             if (node instanceof EnumNode)
             {
                 handler = (res: any) => {
@@ -475,6 +487,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             break
 
         case RelationType.Validation:
+            type = NS_SYSTEM_BOOL
             if (node instanceof EnumNode || node instanceof ScalarNode)
             {
                 handler = (res: any) => {
@@ -539,7 +552,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                             return a.value
                         }
                     }),
-                    [type],
+                    type,
                     target
                 ))
             }

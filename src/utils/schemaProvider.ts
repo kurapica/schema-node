@@ -124,11 +124,11 @@ export interface ISchemaProvider {
      * Call the function schema from the server with the arguments and type, gets the result
      * @param schemaName the name of the function schema
      * @param args the arguments of the function
-     * @param generic the generic type of the function
+     * @param retType the return type of the function
      * @param target the application target
      * @returns the result
      */
-    callFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any>
+    callFunction(schemaName: string, args: any[], retType?: string, target?: string): Promise<any>
 
     /**
      * Authorize the policy for the scope
@@ -175,9 +175,9 @@ export const defaultSchemaProvider: ISchemaProvider = {
         }))?.access
     },
 
-    callFunction: async (name: string, args: any[], generic?: string | string[], target?: string): Promise<any> => {
+    callFunction: async (name: string, args: any[], retType?: string, target?: string): Promise<any> => {
         return (await postSchemaApi("/call-function", {
-            name, args, generic, target
+            name, args, return: retType, target
         }))?.result
     },
 
@@ -1308,16 +1308,16 @@ const pendingCall: {
 } = {}
 const pendingComplexCall: any = {}
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], generic?: string | string[], target?: string) => getSchemaProvider()!.callFunction(schemaName, args, generic, target))
+const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], retType?: string, target?: string) => getSchemaProvider()!.callFunction(schemaName, args, retType, target))
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
  * @param schemaName The name of the function schema
  * @param args The arguments of the function
- * @param generic The generic type of the function
+ * @param retType The return type of the function
  * @returns The schema information
  */
-export async function callSchemaFunction(schemaName: string, args: any[], generic?: string | string[], target?: string): Promise<any> {
+export async function callSchemaFunction(schemaName: string, args: any[], retType?: string, target?: string): Promise<any> {
     const schema = await getSchema(schemaName)
     if (!schema || schema.type !== SchemaType.Func) throw Error(`${schemaName} is not a function schema`)
     const funcInfo = schema.func!
@@ -1360,7 +1360,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
         pendingCall[token] = []
         await new Promise((resolve) => setTimeout(resolve, 50))
         try {
-            const res = await callSchemaFunctionQueue(schema.name, args, generic, target)
+            const res = await callSchemaFunctionQueue(schema.name, args, retType, target)
             if (!funcInfo.nocache) shareFuncCallResult[token] = res
             pendingCall[token].forEach(c => c.resolve(res))
             return res
@@ -1416,7 +1416,7 @@ export async function callSchemaFunction(schemaName: string, args: any[], generi
 
         try 
         {
-            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), generic, target)
+            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), retType, target)
             if (res === undefined) res = null
             queue.forEach((c:any) => c.resolve(res))
             return res

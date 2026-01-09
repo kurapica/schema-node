@@ -15,7 +15,7 @@ import { pushAppData, queryAppData } from '../utils/appDataProvider'
 import { AppNode } from './appNode'
 import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSchema'
 import { RelationType } from '../enum/relationType'
-import type { IStructFieldRelation } from '../schema/structSchema'
+import type { IStructArrayFieldConfig, IStructFieldRelation } from '../schema/structSchema'
 import type { IFunctionCallArgument } from '../schema/functionSchema'
 
 /**
@@ -887,8 +887,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         for(let i = 0; i < refInfo.args.length; i++){
             if (!isNull(refInfo.args[i].name))
             {
-                const paths = refInfo.args[i].name.split(".").filter(f => !isNull(f))
-                let node = row
+                const paths = refInfo.args[i].name!.split(".").filter(f => !isNull(f))
+                let node: AnySchemaNode | undefined = row
                 for(let i = 0; i < paths.length; i++){
                     if (node instanceof StructNode){
                         node = node.getField(paths[i])!
@@ -918,7 +918,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return undefined
         if (appNode instanceof AppNode && appNode.name === refApp)
         {
-            return await appNode.loadRefField(row, this._eschema.struct.fields.find(f => f.name === refField), refField, refInfo.func, args)
+            return await appNode.loadRefField(row, this._eschema.struct!.fields.find(f => f.name === refField) as IStructArrayFieldConfig, refField, refInfo.func, args)
         }
         else
         {
@@ -975,7 +975,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         else if (!this.schema.array?.single)
         {
             // page info
-            this._fieldInfo = (config as IArrayConfig).fieldInfo ? { ... (config as IArrayConfig).fieldInfo } : undefined
+            this._fieldInfo = (config as IArrayConfig).fieldInfo ? { ... (config as IArrayConfig).fieldInfo } as any : undefined
         
             // init elements
             for (let i = 0; i < data.length; i++)
@@ -990,7 +990,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         // reference check
         let appNode = parent
         while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
-        if (!(appNode && appNode instanceof AppNode && appNode.target)) return undefined
+        if (!(appNode && appNode instanceof AppNode && appNode.target)) return
         if (appNode && this._eschema.type === SchemaType.Struct && this._eschema.struct?.relations?.length && this._eschema.struct.relations.some(r => r.type === RelationType.Reference))
         {
             this._reffields = {}
@@ -998,7 +998,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
             {
                 const rel = this._eschema.struct.relations[i]
                 if (rel.type !== RelationType.Reference) continue
-                this._reffields[rel.field] = resolveAppReference(this._eschema.name, rel)
+                this._reffields[rel.field] = resolveAppReference(this._eschema.name, rel) as any
             }
         }
     }
