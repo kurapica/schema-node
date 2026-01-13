@@ -41,8 +41,9 @@ export interface IAppSchemaDataProvider extends ISchemaProvider
      * @param node The workflow node name
      * @param workflowId The workflow instance id
      * @param data The interaction form data
+     * @param terminate Whether to terminate the workflow after interaction
      */
-    interaction(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<string|undefined>
+    interaction(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any, terminate?: boolean): Promise<string|undefined>
 
     /**
      * Gets the workflow status info
@@ -85,10 +86,10 @@ export const defaultAppSchemaProvider: IAppSchemaDataProvider = {
         }))?.target
     },
 
-    interaction: async function(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<string|undefined>
+    interaction: async function(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any, terminate?: boolean): Promise<string|undefined>
     {
         return (await postSchemaApi("/interaction", {
-            app, target, workflow, node, workflowId, data
+            app, target, workflow, node, workflowId, data, terminate
         }))?.workflowId
     },
 
@@ -131,7 +132,7 @@ export function queryAppData(query: IAppDataQuery): Promise<IAppDataResult>
     const cacheSchema = getAppCachedSchema(query.app)
 
     // check
-    if (isNull(query.target) || query.schemaOnly)
+    if (!query.workflow && (isNull(query.target) || query.schemaOnly))
     {
         if (cacheSchema)
             return new Promise((resolve, _) => resolve({
@@ -213,6 +214,7 @@ const processAppDataQueryQueue = debounce(() => {
             if (isNull(exist.descend)) exist.descend = q.query.descend
             exist.schemaOnly = exist.schemaOnly && q.query.schemaOnly
             exist.noSchema = exist.noSchema && q.query.noSchema
+            exist.workflow = exist.workflow || q.query.workflow
         }
         else
         {

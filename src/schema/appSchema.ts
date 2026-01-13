@@ -139,6 +139,11 @@ export interface IAppDataQuery {
      * Don't include the type schema
      */
     noSchema?: boolean
+
+    /**
+     * Query interaction workflow data
+     */
+    workflow?: boolean
 }
 
 /**
@@ -224,6 +229,11 @@ export interface IAppDataResult {
      * The additional field data info
      */
     infos: { [key:string]: IAppDataFieldInfo }
+
+    /**
+     * The workflow states for interaction workflow data
+     */
+    workflows?: IAppWorkflowState[]
 }
 
 /**
@@ -329,4 +339,13 @@ export interface IAppDataPushResult {
 export interface IAppDataQueryOrder {
     field: string
     desc: boolean
+}
+
+/**
+ * The app workflow state
+ */
+export interface IAppWorkflowState {
+    name: string
+    togglable: boolean
+    workflowId?: string
 }

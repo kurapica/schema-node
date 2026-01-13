@@ -55,6 +55,8 @@ export const NS_SYSTEM_SCHEMA = "system.schema"
 export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
 
 export const NS_SYSTEM_WORKFLOW = "system.workflow"
+export const NS_SYSTEM_WORKFLOW_ID = "system.workflow.id"
+export const NS_SYSTEM_WORKFLOW_CRON = "system.workflow.cron"
 export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
 
 export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"

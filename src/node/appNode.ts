@@ -1,5 +1,5 @@
 import { SchemaType } from "../enum/schemaType"
-import type { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema } from "../schema/appSchema"
+import type { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppSchema, IAppWorkflowState } from "../schema/appSchema"
 import { callSchemaFunction, getAppCachedSchema, getAppStructSchemaName, getCachedSchema, getScalarValueType, getSchema, ScalarValueType } from "../utils/schemaProvider"
 import { isEmpty, isNull } from "../utils/toolset"
 import { ArrayNode } from "./arrayNode"
@@ -145,6 +145,11 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         })
         return sourceApps
     }
+
+    /**
+     * Gets the workflow states
+     */
+    get workflowStates(): IAppWorkflowState[] { return this._workflowStates }
 
     //#endregion
 
@@ -718,6 +723,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     }[]
     protected _appSchema: IAppSchema
     protected _target: string
+    protected _workflowStates: IAppWorkflowState[]
 
     //#endregion
 
@@ -736,6 +742,7 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         this._appSchema = schema
         this._target = target || ""
         this._fields = []
+        this._workflowStates = data?.workflows || []
 
         for(let i = 0; i < schema.fields?.length; i++)
         {
