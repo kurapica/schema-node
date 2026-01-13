@@ -115,3 +115,16 @@ export interface IAppWorkflowNodeSchema
      */
     cancelPre?: boolean
 }
+
+export interface IAppInteractionWorkflow extends IAppWorkflowSchema
+{
+    /**
+     * Whether the workflow can be toggled on/off
+     */
+    togglable: boolean
+
+    /**
+     * The workflow identifier to be turned off
+     */
+    workflowId?: string
+}

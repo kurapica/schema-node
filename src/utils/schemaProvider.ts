@@ -817,6 +817,8 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
 
             // number can be coverted
             if (schema?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true
+
+            return true
         }
         // Scalar > Array Element
         else if (tarSchemInfo.type === SchemaType.Array && array) {

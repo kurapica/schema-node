@@ -296,11 +296,11 @@ export async function pushAppData(app: string, target: string, datas: { [key:str
 /**
  * Active interaction request
  */
-export async function interactionWorkflow(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any): Promise<string|undefined>
+export async function interactionWorkflow(app: string, target: string, workflow: string, node?: string, workflowId?: string, data?: any, terminate?: boolean): Promise<string|undefined>
 {
     let provider = getAppDataProvider()
     if (!provider) throw "No App data provider"
-    return await provider.interaction(app, target, workflow, node, workflowId, data)
+    return await provider.interaction(app, target, workflow, node, workflowId, data, terminate)
 }
 
 export async function getWorkflowInfo(app: string, workflow: string, workflowId: string): Promise<WorkflowStatus>

@@ -66,6 +66,10 @@ export default {
 
     "system.context": "Request Context",
 
+    "system.workflow.control.schedule.start": "Scheduled Start Time",
+    "system.workflow.control.schedule.end": "Scheduled End Time",
+    "system.workflow.control.schedule.cron": "Cron Expression",
+
     //#endregion
 
     //#region Message

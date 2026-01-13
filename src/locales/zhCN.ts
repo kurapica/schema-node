@@ -67,6 +67,10 @@ export default {
 
     "system.context": "请求上下文",
 
+    "system.workflow.control.schedule.start": "计划启动时间",
+    "system.workflow.control.schedule.end": "计划结束时间",
+    "system.workflow.control.schedule.cron": "Cron表达式",
+
     //#endregion
 
     //#region Message

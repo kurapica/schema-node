@@ -14,6 +14,7 @@ import { getWorkflowInfo, interactionWorkflow, pushAppData, queryAppData } from 
 import { type INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
 import { WorkflowStatus } from "../enum/workflowStatus"
+import { IAppInteractionWorkflow } from "../schema/appWorkflowSchema"
 
 
 //#region Inner Type
@@ -689,6 +690,26 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
     }
 
     /**
+     * Gets the interaction workflows
+     */
+    get interactionWorkflows(): IAppInteractionWorkflow[] {
+        const workflows: IAppInteractionWorkflow[] = []
+        for (let i = 0; i < this._appSchema.workflows?.length; i++)
+        {
+            const wf = this._appSchema.workflows[i]
+            const state = this._workflowStates.find(w => w.name === wf.name)
+            if (state){
+                workflows.push({
+                    ...wf,
+                    workflowId: state.workflowId,
+                    togglable: state.togglable
+                })
+            }
+        }
+        return workflows
+    }
+
+    /**
      * Active the workflow interaction node
      * @param workflow The workflow name
      * @param node The workflow node name
@@ -711,6 +732,16 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
             }
         }
         return id
+    }
+
+    /**
+     * Turn off the workflow
+     */
+    async turnOffWorkflow(workflow: string): Promise<void> {
+        const state = this._workflowStates.find(w => w.name === workflow)
+        if (!state || isNull(state.workflowId)) return
+        await interactionWorkflow(this.name, this.target, workflow, undefined, state.workflowId, undefined, true)
+        state.workflowId = undefined
     }
 
     //#endregion
