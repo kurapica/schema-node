@@ -156,14 +156,4 @@ export interface IFieldFilter
      * The filter mode
      */
     mode: FieldFilterModeValue
-
-    /**
-     * The function used for filter when mode is Function
-     */
-    func?: string
-
-    /**
-     * The other app field as filter argument
-     */
-    args?: string[]
 }
