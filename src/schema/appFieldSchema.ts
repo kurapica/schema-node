@@ -1,4 +1,5 @@
 import { type DataCombineTypeValue } from "../enum/dataCombineType"
+import { FieldFilterModeValue } from "../enum/fieldFilterMode"
 import { type ILocaleString } from "../utils/locale"
 import { type IDataCombine } from "./arraySchema"
 import { type IPolicyItem } from "./policySchema"
@@ -102,6 +103,11 @@ export interface IAppFieldSchema
      * Column access policies
      */
     colAuths?: IColPolicyItem[]
+
+    /**
+     * The field filters
+     */
+    filters?: IFieldFilter[]
 }
 
 /**
@@ -134,4 +140,30 @@ export interface IColPolicyItem
      * The column access evaluators
      */
     evaluators: string[]
+}
+
+/**
+ * The field filter
+ */
+export interface IFieldFilter
+{
+    /**
+     * The struct field name
+     */
+    field: string
+
+    /**
+     * The filter mode
+     */
+    mode: FieldFilterModeValue
+
+    /**
+     * The function used for filter when mode is Function
+     */
+    func?: string
+
+    /**
+     * The other app field as filter argument
+     */
+    args?: string[]
 }

@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { combineSchema, isEmpty, isNull, useQueueQuery } from "./toolset"
+import { combineSchema, generateGuid, isEmpty, isNull, useQueueQuery } from "./toolset"
 import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { type IFunctionSchema } from "../schema/functionSchema"
 import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
@@ -2043,7 +2043,7 @@ function generateField(url: string, fmt: any): any | undefined
         {
             if (match[2] == "uuid")
             {
-                return crypto.randomUUID()
+                return generateGuid()
             }
             else if(match[2] == "timestamp")
             {
@@ -2223,7 +2223,7 @@ export function mockSchemaData(name: string): any {
             if (valueType & ScalarValueType.Date) return new Date()
             if (valueType & ScalarValueType.Integer) return 0
             if (valueType & ScalarValueType.Number) return 0.0
-            if (valueType & ScalarValueType.String) return schema.name == NS_SYSTEM_GUID ? crypto.randomUUID() : ""
+            if (valueType & ScalarValueType.String) return schema.name == NS_SYSTEM_GUID ? generateGuid() : ""
             return null
         case SchemaType.Enum:
             if (schema.enum?.values && schema.enum.values.length)

@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
 import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET, NS_SYSTEM_LOGIC_IFNOT, NS_SYSTEM_LOGIC_IFNULL, NS_SYSTEM_LOGIC_IFEMPTY, NS_SYSTEM_OBJECT, NS_SYSTEM_WORKFLOW_ID, NS_SYSTEM_WORKFLOW_CRON } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES, type ILocaleString } from "./locale"
-import { deepClone, isEmpty, isEqual, isNull } from "./toolset"
+import { deepClone, generateGuid, isEmpty, isEqual, isNull } from "./toolset"
 import { type INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
 import { type IStructEnumFieldConfig, type IStructFieldRelation, type IStructScalarFieldConfig } from "../schema/structSchema"
 import { type IFunctionArgumentInfo } from "../schema/functionSchema"
@@ -15,6 +15,7 @@ import { PolicyCombine } from "../enum/policyCombine"
 import { PolicyScope } from "../enum/policyScope"
 import { SchemaNodeStatus } from "../enum/schemaNodeStatus"
 import { WorkflowStatus } from "../enum/workflowStatus"
+import { FieldFilterMode } from "../enum/fieldFilterMode"
 
 //#region Utility
 
@@ -232,7 +233,7 @@ registerSchema([
                 }).filter(e => { if (temp.has(e.value)) return false; temp.add(e.value); return true; })
             }),
 
-            newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], () => crypto.randomUUID()),
+            newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], generateGuid),
 
             newSystemFunc("system.str.replace", NS_SYSTEM_STRING, [
                 { name: "str", type: NS_SYSTEM_STRING },
@@ -900,6 +901,7 @@ registerSchema([
             newSystemEnum("system.schema.policyscope", PolicyScope),
             newSystemEnum("system.schema.policycombine", PolicyCombine),
             newSystemEnum("system.schema.workflowstatus", WorkflowStatus),
+            newSystemEnum("system.schema.fieldfiltermode", FieldFilterMode),
             newSystemEnum(NS_SYSTEM_SCHEMA_STATUS, SchemaNodeStatus),
 
             // array

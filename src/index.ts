@@ -7,6 +7,7 @@ export * from './enum/workflowMode'
 export * from './enum/policyScope'
 export * from './enum/policyCombine'
 export * from './enum/schemaNodeStatus'
+export * from './enum/fieldFilterMode'
 
 export * from './schema/nodeSchema'
 export * from './schema/scalarSchema'

@@ -14,7 +14,7 @@ import { getWorkflowInfo, interactionWorkflow, pushAppData, queryAppData } from 
 import { type INodeSchema } from "../schema/nodeSchema"
 import { DataCombineType, type DataCombineTypeValue } from "../enum/dataCombineType"
 import { WorkflowStatus } from "../enum/workflowStatus"
-import { IAppInteractionWorkflow } from "../schema/appWorkflowSchema"
+import { type IAppInteractionWorkflow } from "../schema/appWorkflowSchema"
 
 
 //#region Inner Type
@@ -146,11 +146,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
         })
         return sourceApps
     }
-
-    /**
-     * Gets the workflow states
-     */
-    get workflowStates(): IAppWorkflowState[] { return this._workflowStates }
 
     //#endregion
 
@@ -694,9 +689,10 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      */
     get interactionWorkflows(): IAppInteractionWorkflow[] {
         const workflows: IAppInteractionWorkflow[] = []
-        for (let i = 0; i < this._appSchema.workflows?.length; i++)
+        console.log("app node workflow states", this._workflowStates, this._appSchema?.workflows);
+        for (let i = 0; i < (this._appSchema?.workflows?.length || 0); i++)
         {
-            const wf = this._appSchema.workflows[i]
+            const wf = this._appSchema!.workflows![i]
             const state = this._workflowStates.find(w => w.name === wf.name)
             if (state){
                 workflows.push({
@@ -718,6 +714,12 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      */
     async activeWorkflow(workflow: string, node?: string, workflowId?: string, data?: any, reload?: boolean): Promise<string | undefined> {
         const id = await interactionWorkflow(this.name, this.target, workflow, node, workflowId, data)
+        const state = this._workflowStates.find(w => w.name === workflow)
+        if (state.togglable && id)
+        {
+            state.workflowId = id
+            return id
+        }
         if (reload && id)
         {
             for (let i = 0; i < 10; i++)
