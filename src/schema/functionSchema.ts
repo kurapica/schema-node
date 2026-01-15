@@ -1,4 +1,5 @@
 import { type ExpressionTypeValue } from "../enum/expressionType"
+import { ILocaleString } from "../utils/locale"
 
 /**
  * The schema of function
@@ -61,6 +62,11 @@ export interface IFunctionArgumentInfo
    * Whether the argument is nullable
   */
   nullable?: boolean
+
+  /**
+   * The schema description
+   */
+  display?: ILocaleString
 
   /**
    * The argument is params

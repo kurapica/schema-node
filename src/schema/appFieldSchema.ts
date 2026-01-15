@@ -148,9 +148,9 @@ export interface IColPolicyItem
 export interface IFieldFilter
 {
     /**
-     * The struct field name
+     * The field name or filter function
      */
-    field: string
+    filter: string
 
     /**
      * The filter mode

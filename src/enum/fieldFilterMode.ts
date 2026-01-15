@@ -7,6 +7,7 @@ export enum FieldFilterMode
     Prefix = "prefix",
     Suffix = "suffix",
     Contains = "contains",
+    Filter = "filter",
 }
 
 export type FieldFilterModeValue = `${FieldFilterMode}`
