@@ -1,5 +1,5 @@
 import { type DataCombineTypeValue } from "../enum/dataCombineType"
-import { FieldFilterModeValue } from "../enum/fieldFilterMode"
+import { type FieldFilterModeValue } from "../enum/fieldFilterMode"
 import { type ILocaleString } from "../utils/locale"
 import { type IDataCombine } from "./arraySchema"
 import { type IPolicyItem } from "./policySchema"
