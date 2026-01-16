@@ -32,6 +32,21 @@ export enum ExpressionType
      * Filter the array elements by the function
      */
     Filter = "filter",
+
+    /**
+     * Count the array elements matched by the function
+     */
+    Count = "count",
+
+    /**
+     * All elements must match the function
+     */
+    All = "all",
+
+    /**
+     * Any element match the function
+     */
+    Any = "any",
 }
 
 export type ExpressionTypeValue = `${ExpressionType}`

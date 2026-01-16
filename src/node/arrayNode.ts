@@ -3,9 +3,9 @@ import { type IArrayConfig } from '../config/arrayConfig'
 import { type IEnumConfig } from '../config/enumConfig'
 import { type ISchemaConfig } from '../config/schemaConfig'
 import { type INodeSchema } from '../schema/nodeSchema'
-import { getCachedSchema, validateSchemaValue } from '../utils/schemaProvider'
-import { _L, _LS } from '../utils/locale'
-import { type AnySchemaNode, regSchemaNode, SchemaNode } from './schemaNode'
+import { getAppCachedSchema, getAppSchema, getCachedSchema, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from '../utils/schemaProvider'
+import { _L, _LS, ILocaleString } from '../utils/locale'
+import { type AnySchemaNode, getSchemaNode, getSchemaNodeType, regSchemaNode, SchemaNode } from './schemaNode'
 import { EnumNode } from './enumNode'
 import { ScalarNode } from './scalarNode'
 import { StructNode } from './structNode'
@@ -17,6 +17,7 @@ import {type  IAppDataFieldInfo, type IAppDataQueryOrder } from '../schema/appSc
 import { RelationType } from '../enum/relationType'
 import type { IStructArrayFieldConfig, IStructFieldRelation } from '../schema/structSchema'
 import type { IFunctionCallArgument } from '../schema/functionSchema'
+import { FieldFilterMode, FieldFilterModeValue } from '../enum/fieldFilterMode'
 
 /**
  * The array schema data node
@@ -280,6 +281,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         }
     }
 
+    /**
+     * Gets the array field filters
+     */
+    get filters() { return this._appFieldFilter || [] }
+
     // override methods
     
     /**
@@ -367,6 +373,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     }
 
     override dispose(): void {
+        this._appFieldFilter?.forEach(f => f.nodes?.forEach(n => n.dispose()))
         this._enode?.dispose()
         this._elements.forEach(e => e.dispose())
         this._elements = []
@@ -745,6 +752,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
                     temp[k] = filter[k]
                     hasQuery = true
                 }
+                else if (this._appFieldFilter?.find(f => f.filter.toLowerCase() === k.toLowerCase()))
+                {
+                    temp[k] = filter[k]
+                    hasQuery = true
+                }
             }
             if (hasQuery)
                 filter = temp
@@ -927,6 +939,64 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         }
     }
 
+    /**
+     * Process the filter from filter nodes
+     */
+    async processFilter() {
+        if (!this._appFieldFilter?.length) return
+
+        const filter: {[key:string]: any} = {}
+        this._appFieldFilter?.forEach(f => {
+            if (f.mode === FieldFilterMode.Filter)
+            {
+                const funcSchema = getCachedSchema(f.filter)
+                if (funcSchema && funcSchema.type === SchemaType.Func)
+                {
+                    const args: any[] = []
+                    for (let i = 0; i < f.nodes.length; i++)
+                    {
+                        const data = f.nodes[i].data
+                        if (isNull(data) && funcSchema.func?.args && !funcSchema.func.args[i + 1]?.nullable) return
+                        args.push(data)
+                    }
+                    console.log(f.filter, args)
+                    filter[f.filter] = args
+                }
+            }
+            else
+            {
+                const data = f.nodes && f.nodes.length ? f.nodes[0].data : undefined
+                if (isNull(data)) return
+                filter[f.filter] = data
+            }
+        })
+        
+        await this.setPage(0, this._fieldInfo?.take, this._fieldInfo?.descend, filter).catch(console.log)
+    }
+
+    /**
+     * Enable or disable auto filter when filter nodes changed
+     * @param enable Whether enable auto filter when filter nodes changed
+     */
+    enableAutoFilter(enable: boolean, delay: number = 300) {
+        if (!this._appFieldFilter?.length) return
+        
+        // clear previous
+        this._appFieldFilter?.forEach(f => f.handlers?.forEach(h => h()))
+
+        if (enable)
+        {
+            const loadFilter = debounce(() => {
+                this.processFilter().catch(console.log)
+            }, delay)
+
+            this._appFieldFilter?.forEach(f => {
+                f.handlers = []
+                f.nodes.forEach(n => f.handlers!.push(n.subscribe(loadFilter)))
+            })
+        }
+    }
+
     //#endregion
 
     //#region Properties
@@ -942,6 +1012,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     public _tracker: { [key:string]: { origin?: {}, update?: {}, delete?: boolean }} = {}
     private _errfld: AnySchemaNode | undefined
     private _reffields: { [key: string]: { app: string, field: string, func: string, args: IFunctionCallArgument[] }} | undefined
+    private _appFieldFilter: IArrayFieldFilter[] | undefined
 
     //#endregion
 
@@ -991,6 +1062,84 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
         let appNode = parent
         while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent
         if (!(appNode && appNode instanceof AppNode && appNode.target)) return
+
+        const appSchema = getAppCachedSchema(appNode.name)
+        const appField = appSchema?.fields.find(f => f.name === this.name)
+        if (appField?.filters?.length && this._eschema.type === SchemaType.Struct)
+        {
+            this._appFieldFilter = []
+            let filterRow: StructNode | undefined = undefined
+
+            appField.filters.forEach(f => {
+                // filter function, use args for filter(skip the first arg which is field type)
+                if (f.mode == FieldFilterMode.Filter)
+                {
+                    const filterFunc = getCachedSchema(f.filter)
+                    if (filterFunc && filterFunc.type === SchemaType.Func && filterFunc.func?.args?.length > 1)
+                    {
+                        const nodes: AnySchemaNode[] = []
+                        let allValid = true
+                        for (let i = 1; i < filterFunc.func.args.length; i++)
+                        {
+                            const arg = filterFunc.func.args[i]
+                            const argType = arg.type ? getCachedSchema(arg.type!) : undefined
+                            if (!argType) {
+                                allValid = false
+                                break
+                            }
+                            
+                            const schemaType = getSchemaNodeType(argType.type)
+                            const node = new schemaType({ type: argType.name, display: arg.display || argType.display || _LS(arg.name) }, undefined, undefined)
+                            nodes.push(node)
+                        }
+                        if (allValid && nodes.length)
+                        {
+                            this._appFieldFilter!.push({
+                                mode: f.mode,
+                                filter: f.filter,
+                                nodes: nodes // use as filter input in the front
+                            })
+                        }
+                    }
+                }
+                // light fitler, use the data field in the struct
+                else
+                {
+                    const fld = this._eschema.struct?.fields.find(sf => sf.name.toLowerCase() === f.filter.toLowerCase())
+                    if (fld)
+                    {
+                        if (fld.type === NS_SYSTEM_LOCALE_STRING)
+                        {
+                            const schemaType = getSchemaNodeType(SchemaType.Scalar)
+                            const node = new schemaType({ type: NS_SYSTEM_STRING, display: fld.display || _LS(fld.name) }, undefined, undefined)
+                            
+                            this._appFieldFilter!.push({
+                                mode: f.mode,
+                                filter: fld.name,
+                                nodes: [node] // use as filter input in the front with whitelist and etc
+                            })
+                        }
+                        else
+                        {
+                            if (!filterRow)
+                            {
+                                filterRow = this.newElement({}) as StructNode
+                                filterRow.activeRule(true)
+                            }
+                            const node = filterRow.getField(fld.name)
+                            if (!node) return
+
+                            this._appFieldFilter!.push({
+                                mode: f.mode,
+                                filter: fld.name,
+                                nodes: [node] // use as filter input in the front with whitelist and etc
+                            })
+                        }
+                    }
+                }
+            })
+        }
+
         if (appNode && this._eschema.type === SchemaType.Struct && this._eschema.struct?.relations?.length && this._eschema.struct.relations.some(r => r.type === RelationType.Reference))
         {
             this._reffields = {}
@@ -1056,4 +1205,29 @@ function resolveAppReference(name: string, relation: IStructFieldRelation)
     }
 
     return undefined
+}
+
+/**
+ * The array field filter
+ */
+export interface IArrayFieldFilter {
+    /**
+     * The filter mode
+     */
+    mode: FieldFilterModeValue
+
+    /**
+     * The filter key
+     */
+    filter: string
+    
+    /**
+     * The filter nodes
+     */
+    nodes?: AnySchemaNode[]
+
+    /**
+     * The node change handlers
+     */
+    handlers?: Function[]
 }

@@ -689,7 +689,6 @@ export class AppNode extends SchemaNode<ISchemaConfig, StructRule>
      */
     get interactionWorkflows(): IAppInteractionWorkflow[] {
         const workflows: IAppInteractionWorkflow[] = []
-        console.log("app node workflow states", this._workflowStates, this._appSchema?.workflows);
         for (let i = 0; i < (this._appSchema?.workflows?.length || 0); i++)
         {
             const wf = this._appSchema!.workflows![i]

@@ -110,6 +110,7 @@ export default {
     "CONFIRM": "Confirm",
     "ACTIVE": "Active",
     "DEACTIVE": "Deactive",
+    "QUERY": "Query",
 
     //#endregion
 }

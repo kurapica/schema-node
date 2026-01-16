@@ -110,6 +110,7 @@ export default {
     "CONFIRM": "确认",
     "ACTIVE": "激活",
     "DEACTIVE": "停用",
+    "QUERY": "查询",
 
     //#endregion
 }

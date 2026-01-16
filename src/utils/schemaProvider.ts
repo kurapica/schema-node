@@ -831,7 +831,7 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
             tarSchemInfo = await getSchema(tarSchemInfo.array!.element)
 
         // The target must be struct
-        if (tarSchemInfo?.type !== SchemaType.Struct) return false
+        if (tarSchemInfo?.type !== SchemaType.Struct) return name == NS_SYSTEM_LOCALE_STRING && await isSchemaCanBeUseAs(NS_SYSTEM_STRING, target)
         if (schema.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
 
         // Compare the field
@@ -1730,6 +1730,52 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
                                 result.push(array[j])
                         }
                         expValues[exp.name] = result
+                    }
+                    break
+
+                // count
+                case ExpressionType.Count:
+                    {
+                        let count = 0
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            if (await callFunc(exp.func, val))
+                                count++
+                        }
+                        expValues[exp.name] = count
+                    }
+                    break
+
+                // all
+                case ExpressionType.All:
+                    {
+                        let all = true
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            if (!await callFunc(exp.func, val)) {
+                                all = false
+                                break
+                            }
+                        }
+                        expValues[exp.name] = all
+                    }
+                    break
+
+                // any
+                case ExpressionType.Any:
+                    {
+                        let any = false
+                        const array = val[exp.arrIndex]
+                        for (let j = 0; j < array.length; j++) {
+                            val[exp.arrIndex] = array[j]
+                            if (await callFunc(exp.func, val)) {
+                                any = true
+                                break
+                            }
+                        }
+                        expValues[exp.name] = any
                     }
                     break
             }
