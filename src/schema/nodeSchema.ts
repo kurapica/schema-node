@@ -77,6 +77,11 @@ export interface INodeSchema
     auth?: string
 
     /**
+     * The compatible schema conversions
+     */
+    compatibles?: { to: string, convert: string }[]
+
+    /**
      * The sub schemas of of the namespace
      */
     schemas?: INodeSchema[]
@@ -115,6 +120,8 @@ export interface INodeSchema
      * The schema is used by applications
      */
     usedByApp?: string[]
+
+
 }
 
 /**

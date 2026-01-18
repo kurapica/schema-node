@@ -271,22 +271,9 @@ registerSchema([
             newSystemFunc("system.math.add", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: number, y: number) => new BigNumber(x).plus(y).toNumber()),
+            ], (x: number, y: number) => new BigNumber(x || 0).plus(y || 0).toNumber()),
 
             newSystemFunc("system.math.adds", "T", [
-                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
-            ], (...nums: number[]) => {
-                let sum = new BigNumber(0)
-                nums.forEach((v: number) => sum = sum.plus(v || 0))
-                return sum.toNumber()
-            }),
-
-            newSystemFunc("system.math.addnull", NS_SYSTEM_NUMBER, [
-                { name: "x", type: "T", nullable: true },
-                { name: "y", type: "T", nullable: true }
-            ], (x?: number, y?: number) => new BigNumber(x || 0).plus(y || 0).toNumber()),
-
-            newSystemFunc("system.math.addnulls", "T", [
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
                 let sum = new BigNumber(0)
@@ -297,32 +284,19 @@ registerSchema([
             newSystemFunc("system.math.divide", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: number, y: number) => new BigNumber(x).dividedBy(y).toNumber()),
+            ], (x: number, y: number) => !y ? 0 : new BigNumber(x || 0).dividedBy(y).toNumber()),
 
             newSystemFunc("system.math.modulo", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: number, y: number) => new BigNumber(x).modulo(y).toNumber()),
+            ], (x: number, y: number) => !y ? 0 : new BigNumber(x || 0).modulo(y).toNumber()),
 
             newSystemFunc("system.math.multiply", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: number, y: number) => new BigNumber(x).multipliedBy(y).toNumber()),
+            ], (x: number, y: number) => new BigNumber(x || 0).multipliedBy(y || 0).toNumber()),
 
             newSystemFunc("system.math.multiplys", "T", [
-                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
-            ], (...nums: number[]) => {
-                let sum = new BigNumber(1)
-                nums.forEach((v: number) => sum = sum.multipliedBy(v || 0))
-                return sum.toNumber()
-            }),
-
-            newSystemFunc("system.math.multiplynull", "T", [
-                { name: "x", type: "T", nullable: true },
-                { name: "y", type: "T", nullable: true }
-            ], (x?: number, y?: number) => new BigNumber(x || 0).multipliedBy(y || 0).toNumber()),
-
-            newSystemFunc("system.math.multiplynulls", "T", [
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
                 let sum = new BigNumber(1)
@@ -333,25 +307,12 @@ registerSchema([
             newSystemFunc("system.math.subtract", "T", [
                 { name: "x", type: "T" },
                 { name: "y", type: "T" }
-            ], (x: number, y: number) => new BigNumber(x).minus(y).toNumber()),
+            ], (x: number, y: number) => new BigNumber(x || 0).minus(y || 0).toNumber()),
 
             newSystemFunc("system.math.subtracts", "T", [
                 { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
             ], (...nums: number[]) => {
-                let sum = new BigNumber(nums.length > 0 ? nums[0] : 0)
-                for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i] || 0)
-                return sum.toNumber()
-            }),
-
-            newSystemFunc("system.math.subtractnull", "T", [
-                { name: "x", type: "T", nullable: true },
-                { name: "y", type: "T", nullable: true }
-            ], (x?: number, y?: number) => new BigNumber(x || 0).minus(y || 0).toNumber()),
-
-            newSystemFunc("system.math.subtractnulls", "T", [
-                { name: "numbers", type: NS_SYSTEM_NUMBER, params: true }
-            ], (...nums: number[]) => {
-                let sum = new BigNumber(nums.length > 0 ? nums[0] : 0)
+                let sum = new BigNumber(nums[0] || 0)
                 for(let i = 1; i < nums.length; i++) sum = sum.minus(nums[i] || 0)
                 return sum.toNumber()
             }),
@@ -361,12 +322,13 @@ registerSchema([
                 { name: "y", type: "T" },
                 { name: "decimals", type: NS_SYSTEM_INT, nullable: true }
             ], (x: number, y: number, d?: number) => {
-                const value = new BigNumber(x).dividedBy(y).multipliedBy(100).toNumber()
+                if (!y) return 0
+                const value = new BigNumber(x || 0).dividedBy(y).multipliedBy(100).toNumber()
                 const remain = Math.pow(10, isNull(d) ? 2 : d!)
                 return remain > 0 ? Math.round(remain * value) / remain : value
             }, NS_SYSTEM_NUMBER),
 
-            newSystemFunc("system.math.abs", "T", [{ name: "x", type: "T" }], (x: number) => new BigNumber(x).abs().toNumber(), NS_SYSTEM_NUMBER),
+            newSystemFunc("system.math.abs", "T", [{ name: "x", type: "T" }], (x: number) => new BigNumber(x || 0).abs().toNumber(), NS_SYSTEM_NUMBER),
 
             newSystemFunc("system.math.ceiling", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_NUMBER }], Math.ceil),
 
@@ -374,7 +336,7 @@ registerSchema([
                 { name: "x", type: "T" },
                 { name: "min", type: "T" },
                 { name: "max", type: "T" }
-            ], (x: number, min: number, max: number) => Math.max(min, Math.min(max, x)), NS_SYSTEM_NUMBER),
+            ], (x: number, min: number, max: number) => Math.max(min || 0, Math.min(max || 0, x || 0)), NS_SYSTEM_NUMBER),
 
             newSystemFunc("system.math.floor", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_NUMBER }], Math.floor),
 
@@ -403,7 +365,7 @@ registerSchema([
             newSystemFunc("system.math.round", NS_SYSTEM_NUMBER, [
                 { name: "x", type: NS_SYSTEM_NUMBER },
                 { name: "decimals", type: NS_SYSTEM_INT, nullable: true }
-            ], (x: number, d?: number) => Math.round(x * 1.0 * Math.pow(10, d || 0)) / Math.pow(10, d || 0)),
+            ], (x: number, d?: number) => Math.round((x || 0) * 1.0 * Math.pow(10, d || 0)) / Math.pow(10, d || 0)),
 
             newSystemFunc("system.math.todecimal", NS_SYSTEM_NUMBER, [{ name: "x", type: NS_SYSTEM_NUMBER }], (x: number) => x),
 
@@ -451,17 +413,16 @@ registerSchema([
 
             newSystemFunc("system.math.pow", NS_SYSTEM_NUMBER, [{ name: "x", type: NS_SYSTEM_NUMBER }], Math.pow),
 
-            newSystemFunc("system.math.bitand", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => x & y),
+            newSystemFunc("system.math.bitand", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => (x || 0) & (y || 0)),
 
-            newSystemFunc("system.math.bitleftshift", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => x << y),
+            newSystemFunc("system.math.bitleftshift", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => (x || 0) << (y || 0)),
 
-            newSystemFunc("system.math.bitor", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => x | y),
+            newSystemFunc("system.math.bitor", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => (x || 0) | (y || 0)),
+            newSystemFunc("system.math.bitrightshift", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => (x || 0) >> (y || 0)),
 
-            newSystemFunc("system.math.bitrightshift", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => x >> y),
+            newSystemFunc("system.math.bitunary", NS_SYSTEM_INT, [{ name: "input", type: NS_SYSTEM_INT }], (x: number) => ~(x || 0)),
 
-            newSystemFunc("system.math.bitunary", NS_SYSTEM_INT, [{ name: "input", type: NS_SYSTEM_INT }], (x: number) => ~x),
-
-            newSystemFunc("system.math.bitxor", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => x ^ y)
+            newSystemFunc("system.math.bitxor", NS_SYSTEM_INT, [{ name: "x", type: NS_SYSTEM_INT }, { name: "y", type: NS_SYSTEM_INT }], (x: number, y: number) => (x || 0) ^ (y || 0))
         ]),
 
         // datetime func
@@ -617,69 +578,6 @@ registerSchema([
                 { name: "struct", type: "T" },
                 { name: "field", type: NS_SYSTEM_STRING }
             ], (a: {}, f: string): {} => ({ ...a, [f]: undefined }), NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldequal", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => isEqual(v, a[f]), NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldnotequal", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => !isEqual(v, a[f]), NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldgreateequal", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a >= v, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldgreatethan", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a > v, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldlessequal", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a <= v, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldlessthan", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: "T2" }
-            ], (a: any, f: string, v: any): {} => !isNull(a[f]) && a < v, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldstartswith", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: NS_SYSTEM_STRING }
-            ], (a: any, f: string, v: string): {} => {
-                const fieldValue = a[f]
-                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.startsWith(v)
-            }, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldendswith", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: NS_SYSTEM_STRING }
-            ], (a: any, f: string, v: string): {} => {
-                const fieldValue = a[f]
-                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.endsWith(v)
-            }, NS_SYSTEM_STRUCT),
-
-            newSystemFunc("system.collection.fieldmatch", NS_SYSTEM_BOOL, [
-                { name: "struct", type: "T1" },
-                { name: "field", type: NS_SYSTEM_STRING },
-                { name: "value", type: NS_SYSTEM_STRING }
-            ], (a: any, f: string, v: string): {} => {
-                const fieldValue = a[f]
-                return !isNull(fieldValue) && typeof fieldValue === "string" && fieldValue.includes(v)
-            }, NS_SYSTEM_STRUCT),
 
             newSystemFunc("system.collection.getfields", "T2", [
                 { name: "array", type: "T1" },
