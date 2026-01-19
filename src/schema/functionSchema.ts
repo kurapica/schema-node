@@ -1,125 +1,123 @@
-import { type ExpressionTypeValue } from "../enum/expressionType"
-import { ILocaleString } from "../utils/locale"
+import { type ExpressionTypeValue } from "../enum/expressionType";
+import { type ILocaleString } from "../utils/locale";
 
 /**
  * The schema of function
  */
-export interface IFunctionSchema
-{
+export interface IFunctionSchema {
   /**
    * The return type of the function, T T1 T2 means the generic type
    */
-  return: string
+  return: string;
 
   /**
    * The function arguments
    */
-  args: IFunctionArgumentInfo[]
+  args: IFunctionArgumentInfo[];
 
   /**
    * The function expressions
    */
-  exps: IFunctionExpression[]
+  exps: IFunctionExpression[];
 
   /**
-   * The basic type of generic types, provided to T(single generic type), 
+   * The basic type of generic types, provided to T(single generic type),
    * T1, T2(for multi generic type)
    */
-  generic?: string | string[]
+  generic?: string | string[];
 
   /**
    * Call server if server provided
    */
-  server?: boolean
+  server?: boolean;
 
   /**
    * The client should not cache the result
    */
-  nocache?: boolean
+  nocache?: boolean;
 
   /**
    * The function registered by the frontend
    */
-  func?: Function
+  func?: Function;
 }
 
 /**
  * The function argument information
  */
-export interface IFunctionArgumentInfo
-{
+export interface IFunctionArgumentInfo {
   /**
    * The argument name
-  */
-  name: string
+   */
+  name: string;
 
   /**
    * The argument type, T T1 T2 means the generic type
-  */
-  type: string
+   */
+  type: string;
 
   /**
    * Whether the argument is nullable
-  */
-  nullable?: boolean
+   */
+  nullable?: boolean;
 
   /**
    * The schema description
    */
-  display?: ILocaleString
+  display?: ILocaleString;
 
   /**
    * The argument is params
    */
-  params?: boolean
+  params?: boolean;
 }
 
 /**
  * The function expressions
-*/
+ */
 export interface IFunctionExpression {
   /**
    * The expression name
-  */
-  name: string
+   */
+  name: string;
 
   /**
    * The call function
-  */
-  func: string
+   */
+  func: string;
 
   /**
    * The calling type
    */
-  type: ExpressionTypeValue
+  type: ExpressionTypeValue;
 
   /**
    * The expression type
-  */
-  return: string
+   */
+  return: string;
 
   /**
    * The argument list, should be exp name or argument name.
-  */
-  args: IFunctionCallArgument[]
+   */
+  args: IFunctionCallArgument[];
 }
-  
+
 /**
  * The function call argument
-*/
+ */
 export interface IFunctionCallArgument {
   /**
    * The argument name or expression name
-  */
-  name?: string
+   */
+  name?: string;
 
   /**
    * The const value
-  */
-  value?: any
+   */
+  value?: any;
 
   /**
    * The argument type
    */
-  type?: string
+  type?: string;
 }
