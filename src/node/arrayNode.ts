@@ -3,74 +3,32 @@ import { type IArrayConfig } from "../config/arrayConfig";
 import { type IEnumConfig } from "../config/enumConfig";
 import { type ISchemaConfig } from "../config/schemaConfig";
 import { type INodeSchema } from "../schema/nodeSchema";
-import {
-  getAppCachedSchema,
-  getCachedSchema,
-  NS_SYSTEM_LOCALE_STRING,
-  NS_SYSTEM_STRING,
-  validateSchemaValue,
-} from "../utils/schemaProvider";
+import { getAppCachedSchema, getCachedSchema, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from "../utils/schemaProvider";
 import { _L, _LS } from "../utils/locale";
-import {
-  type AnySchemaNode,
-  getSchemaNodeType,
-  regSchemaNode,
-  SchemaNode,
-} from "./schemaNode";
+import { type AnySchemaNode, getSchemaNodeType, regSchemaNode, SchemaNode } from "./schemaNode";
 import { EnumNode } from "./enumNode";
 import { ScalarNode } from "./scalarNode";
 import { StructNode } from "./structNode";
-import {
-  clearDebounce,
-  debounce,
-  deepClone,
-  isEqual,
-  isNull,
-  sformat,
-} from "../utils/toolset";
+import { clearDebounce, debounce, deepClone, isEqual, isNull, sformat } from "../utils/toolset";
 import { ArrayRule } from "../rule/arrayRule";
 import { pushAppData, queryAppData } from "../utils/appDataProvider";
 import { AppNode } from "./appNode";
-import {
-  type IAppDataFieldInfo,
-  type IAppDataQueryOrder,
-} from "../schema/appSchema";
+import type { IAppDataFieldInfo, IAppDataQueryOrder } from "../schema/appSchema";
 import { RelationType } from "../enum/relationType";
-import type {
-  IStructArrayFieldConfig,
-  IStructFieldRelation,
-} from "../schema/structSchema";
+import type { IStructArrayFieldConfig, IStructFieldRelation } from "../schema/structSchema";
 import type { IFunctionCallArgument } from "../schema/functionSchema";
-import {
-  FieldFilterMode,
-  type FieldFilterModeValue,
-} from "../enum/fieldFilterMode";
+import { FieldFilterMode, type FieldFilterModeValue} from "../enum/fieldFilterMode";
 
 /**
  * The array schema data node
  */
 @regSchemaNode(SchemaType.Array)
-export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
-  //#region Implementation
+export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region Implementation
 
   // override properties && array properties
-  get schemaType(): SchemaType {
-    return SchemaType.Array;
-  }
-  get valid(): boolean {
-    return this._enode
-      ? this._enode.valid
-      : this.asSingle
-      ? this._valid
-      : this._elements.findIndex((e) => !e.valid) < 0;
-  }
-  get error(): any {
-    return this._enode
-      ? this._enode.error
-      : this.asSingle
-      ? this._error
-      : this._elements.find((e) => !e.valid)?.error;
-  }
+  get schemaType(): SchemaType { return SchemaType.Array }
+  get valid(): boolean { return this._enode ? this._enode.valid : this.asSingle ? this._valid : this._elements.findIndex((e) => !e.valid) < 0}
+  get error(): any { return this._enode ? this._enode.error : this.asSingle ? this._error : this._elements.find((e) => !e.valid)?.error }
   get changed(): boolean {
     if (this._enode) return this._enode.changed;
     if (this.asSingle) return !isEqual(this._data, this._original);
@@ -86,19 +44,9 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     }
     return false;
   }
-  get rawData() {
-    return this._enode ? this._enode.rawData : this._data;
-  }
-  get original() {
-    return this._enode ? this._enode.original : deepClone(this._original);
-  }
-  get isEmpty() {
-    return this._enode
-      ? this._enode.isEmpty
-      : Array.isArray(this._data)
-      ? this._data.length === 0
-      : true;
-  }
+  get rawData() { return this._enode ? this._enode.rawData : this._data }
+  get original() { return this._enode ? this._enode.original : deepClone(this._original) }
+  get isEmpty() { return this._enode ? this._enode.isEmpty : Array.isArray(this._data) ? this._data.length === 0 : true }
 
   get fullerror(): any {
     if (this._enode) return this._enode.fullerror;
@@ -522,10 +470,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
   // refresh raw data
   private refreshRawData = debounce(() => {
     if (Array.isArray(this._data))
-      this._data.splice(
-        0,
-        this._data.length,
-        ...this._elements.map((e) => e.rawData)
+      this._data.splice(0, this._data.length, ...this._elements.map((e) => e.rawData)
       );
     else this._data = this._elements.map((e) => e.rawData);
 
@@ -1081,6 +1026,19 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
   }
 
   /**
+   * Reset the fitler
+   */
+  async resetFilter(load: boolean = false) {
+    if (!this._appFieldFilter?.length) return;
+
+    this._appFieldFilter?.forEach((f) => {
+      f.nodes.forEach((n) => n.data = null)
+    });
+
+    if (load) await this.processFilter().catch(console.log);
+  }
+
+  /**
    * Enable or disable auto filter when filter nodes changed
    * @param enable Whether enable auto filter when filter nodes changed
    */
@@ -1102,6 +1060,18 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     }
   }
 
+  /**
+   * Gets the template node for field
+   */
+  getTemplateNode(name: string): AnySchemaNode | undefined {
+    if (!this._templateRow){
+      this._templateRow = this.newElement({}) as StructNode;
+      this._templateRow.resetChanges();
+      this._templateRow.activeRule(true);
+    }
+    return this._templateRow.getField(name);
+  }
+
   //#endregion
 
   //#region Properties
@@ -1114,21 +1084,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
   private _elements: AnySchemaNode[] = [];
   private _enode: EnumNode | undefined;
   private _fieldInfo: IAppDataFieldInfo | undefined;
-  public _tracker: {
-    [key: string]: { origin?: {}; update?: {}; delete?: boolean };
-  } = {};
+  public _tracker: {[key: string]: { origin?: {}; update?: {}; delete?: boolean }} = {};
   private _errfld: AnySchemaNode | undefined;
-  private _reffields:
-    | {
-        [key: string]: {
-          app: string;
-          field: string;
-          func: string;
-          args: IFunctionCallArgument[];
-        };
-      }
-    | undefined;
+  private _reffields: { [key: string]: { app: string; field: string; func: string; args: IFunctionCallArgument[]}} | undefined;
   private _appFieldFilter: IArrayFieldFilter[] | undefined;
+  private _templateRow: StructNode | undefined;
 
   //#endregion
 
@@ -1190,7 +1150,6 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
     const appField = appSchema?.fields.find((f) => f.name === this.name);
     if (appField?.filters?.length && this._eschema.type === SchemaType.Struct) {
       this._appFieldFilter = [];
-      let filterRow: StructNode | undefined = undefined;
 
       appField.filters.forEach((f) => {
         // filter function, use args for filter(skip the first arg which is field type)
@@ -1249,6 +1208,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
                 undefined,
                 undefined
               );
+              node.resetChanges();
 
               this._appFieldFilter!.push({
                 mode: f.mode,
@@ -1256,11 +1216,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> {
                 nodes: [node], // use as filter input in the front with whitelist and etc
               });
             } else {
-              if (!filterRow) {
-                filterRow = this.newElement({}) as StructNode;
-                filterRow.activeRule(true);
-              }
-              const node = filterRow.getField(fld.name);
+              const node = this.getTemplateNode(fld.name);
               if (!node) return;
 
               node.config.require = false;

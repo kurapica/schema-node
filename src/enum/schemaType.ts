@@ -32,6 +32,7 @@ export enum SchemaType
      * The json node
      */
     Json = "json",
+    
     /**
      * The event node
      */

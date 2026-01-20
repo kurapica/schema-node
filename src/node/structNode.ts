@@ -10,6 +10,7 @@ import { ScalarNode } from './scalarNode'
 import { StructRule } from '../rule/structRule'
 import { DataChangeWatcher } from '../utils/dataChangeWatcher'
 import { RelationType } from '../enum/relationType'
+import { JsonNode } from './jsonNode'
 
 /**
  * The struct schema data node
@@ -146,8 +147,9 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
      * rebuild the field with the given type
      */
     rebuildField(name: string, type: string) {
-        const fconf = this._schema.struct!.fields.find(f => f.name === name)
+        let fconf = this._schema.struct!.fields.find(f => f.name === name)
         if (!fconf) return
+        fconf = {...fconf} // clone
 
         const existed = this._fields.findIndex(f => f.name.toLowerCase() === name.toLowerCase())
         
@@ -167,6 +169,9 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
                 break
             case SchemaType.Array:
                 field = new ArrayNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
+                break
+            case SchemaType.Json:
+                field = new JsonNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
                 break
         }
         if (field)
@@ -242,6 +247,9 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
                     break
                 case SchemaType.Array:
                     field = new ArrayNode({...fconf, readonly: config.readonly || fconf.readonly || fconf.displayOnly}, data[fconf.name], this)
+                    break
+                case SchemaType.Json:
+                    field = new JsonNode({...fconf, readonly: config.readonly || fconf.readonly || fconf.displayOnly}, data[fconf.name], this)
                     break
             }
             if (field)

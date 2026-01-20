@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { SchemaType } from "../enum/schemaType"
-import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET, NS_SYSTEM_LOGIC_IFNOT, NS_SYSTEM_LOGIC_IFNULL, NS_SYSTEM_LOGIC_IFEMPTY, NS_SYSTEM_OBJECT, NS_SYSTEM_WORKFLOW_ID, NS_SYSTEM_WORKFLOW_CRON } from "./schemaProvider"
+import { registerSchema, NS_SYSTEM, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_DATE, NS_SYSTEM_FULLDATE, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, NS_SYSTEM_STRUCT, NS_SYSTEM_YEAR, NS_SYSTEM_YEARMONTH, NS_SYSTEM_DOUBLE, NS_SYSTEM_FLOAT, NS_SYSTEM_INTS, NS_SYSTEM_NUMBERS, NS_SYSTEM_RANGEDATE, NS_SYSTEM_RANGEFULLDATE, NS_SYSTEM_RANGEMONTH, NS_SYSTEM_RANGEYEAR, NS_SYSTEM_STRINGS, NS_SYSTEM_PERCENT, NS_SYSTEM_GUID, NS_SYSTEM_ENTRIES, NS_SYSTEM_ENTRY, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_LANGUAGE, NS_SYSTEM_LOCALE_TRAN, NS_SYSTEM_LOCALE_TRANS, NS_SYSTEM_LOCALE_STRINGS, NS_SYSTEM_JSON, NS_SYSTEM_SCHEMA, NS_SYSTEM_SCHEMA_NS, NS_SYSTEM_WORKFLOW, NS_SYSTEM_WORKFLOW_NODE, NS_SYSTEM_LIST, NS_SYSTEM_SCHEMA_STATUS, NS_SYSTEM_LOGIC_IFRET, NS_SYSTEM_LOGIC_IFNOT, NS_SYSTEM_LOGIC_IFNULL, NS_SYSTEM_LOGIC_IFEMPTY, NS_SYSTEM_OBJECT, NS_SYSTEM_WORKFLOW_ID, NS_SYSTEM_WORKFLOW_CRON, getCachedSchema } from "./schemaProvider"
 import { _LS, SCHEMA_LANGUAGES, type ILocaleString } from "./locale"
 import { deepClone, generateGuid, isEmpty, isEqual, isNull } from "./toolset"
 import { type INodeSchema, SchemaLoadState } from "../schema/nodeSchema"
@@ -75,6 +75,8 @@ export const newSystemFunc = (name: string, returnType: string, args: IFunctionA
 }
 
 //#endregion
+
+const _dynamicStorage: { [key: string]: string } = {}
 
 /**
  * The default schemas
@@ -161,7 +163,25 @@ registerSchema([
                 { name: "default", type: "T" }
             ], (a: any, d: any) => isNull(a) ? d : a),
 
-            newSystemFunc("system.conv.null", "T", [], () => null)
+            newSystemFunc("system.conv.null", "T", [], () => null),
+
+            newSystemFunc("system.conv.toschematype", "system.schema.valuetype", [ { name: "schema", type: NS_SYSTEM_STRUCT } ], (schema: INodeSchema) => {
+                if (isNull(schema.name)) schema.name = `__dynamic.${generateGuid()}`
+                registerSchema([schema], SchemaLoadState.Custom)
+                return schema.name
+            }),
+
+            newSystemFunc("system.conv.tostructtype", "system.schema.valuetype", [ { name: "fields", type: NS_SYSTEM_ARRAY } ], (fields: any[]) => {
+                const token = fields.map(f => `${f.name}|${f.type}|${f.display?.key}`).join("+")
+                if (_dynamicStorage[token]) return _dynamicStorage[token]
+                
+                const schemaName = `__dynamic.${generateGuid()}`
+                const structSchema: INodeSchema = newSystemStruct(schemaName, fields)
+                registerSchema([structSchema], SchemaLoadState.Custom)
+
+                _dynamicStorage[token] = schemaName
+                return schemaName
+            })
         ]),
 
         // string func

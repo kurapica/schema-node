@@ -1,7 +1,7 @@
 import { EnumValueType } from "../enum/enumValueType"
 import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
 import { SchemaType } from "../enum/schemaType"
-import { combineSchema, generateGuid, isEmpty, isNull, useQueueQuery } from "./toolset"
+import { combineSchema, deepClone, generateGuid, isEmpty, isNull, useQueueQuery } from "./toolset"
 import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
 import { type IFunctionSchema } from "../schema/functionSchema"
 import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"

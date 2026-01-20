@@ -1,6 +1,5 @@
 export default {
-
-    "language": "中",
+    language: "中",
     "[LIST.PREFIX]": "",
     "[LIST.SUFFIX]": "列表",
     "[GENERIC]": "泛型",
@@ -8,14 +7,14 @@ export default {
     //#region Namespace
 
     // system
-    "system": "系统命名空间",
+    system: "系统命名空间",
     "system.array": "基础数组",
     "system.list": "通用列表",
     "system.struct": "基础结构体",
     "system.json": "JSON数据",
 
-    "system.bool" : "布尔值",
-    "system.bool.error" :"必须是布尔值。",
+    "system.bool": "布尔值",
+    "system.bool.error": "必须是布尔值。",
     "system.date": "日期",
     "system.date.error": "必须是日期。",
     "system.number": "数值",
@@ -75,42 +74,44 @@ export default {
 
     //#region Message
 
-    "ERR_CANT_BE_NULL": "{0}不能为空",
-    "ERR_LEN_CANT_BE_GREATTHAN" : "{0}长度不能大于{1}","ERR_LEN_CANT_BE_LESSTHAN" : "{0}长度不能小于{1}",
-    "ERR_REGEX_NOT_MATCH" : "{0}格式不正确",
-    "ERR_NOT_IN_ENUMLIST": "{0}必须从列表中选取",
-    "ERR_NOT_NUMBER": "{0}不是有效的数值",
-    "ERR_CANT_BE_GREATTHAN": "{0}不能大于{1}",
-    "ERR_CANT_BE_LESSTHAN": "{0}不能小于{1}",
-    "ERR_NOT_DATE": "{0}不是有效的日期",
-    "ERR_ARRAY_DATA_NOT_VALID": "{0}数据无效",
-    "ERR_ARRAY_PRIMARY_DUPLICATE": "{0}不能重复",
-    "ERR_DATA_NOT_VALID": "{0}数据无效",
+    ERR_CANT_BE_NULL: "{0}不能为空",
+    ERR_LEN_CANT_BE_GREATTHAN: "{0}长度不能大于{1}",
+    ERR_LEN_CANT_BE_LESSTHAN: "{0}长度不能小于{1}",
+    ERR_REGEX_NOT_MATCH: "{0}格式不正确",
+    ERR_NOT_IN_ENUMLIST: "{0}必须从列表中选取",
+    ERR_NOT_NUMBER: "{0}不是有效的数值",
+    ERR_CANT_BE_GREATTHAN: "{0}不能大于{1}",
+    ERR_CANT_BE_LESSTHAN: "{0}不能小于{1}",
+    ERR_NOT_DATE: "{0}不是有效的日期",
+    ERR_ARRAY_DATA_NOT_VALID: "{0}数据无效",
+    ERR_ARRAY_PRIMARY_DUPLICATE: "{0}不能重复",
+    ERR_DATA_NOT_VALID: "{0}数据无效",
 
-    "PLACEHOLDER_INPUT": "请输入{0}",
-    "PLACEHOLDER_SELECT": "请选择{0}",
-
-    //#endregion
-
-    //#region Common 
-
-    "YES": "是",
-    "NO": "否",
-
-    "OPER": "操作",
-    "ADD": "添加",
-    "DEL": "删除",
-
-    "SAVE": "保存",
-    "CANCEL": "取消",
-    "EDIT": "编辑",
-    "VIEW": "查看",
-    "RESUME": "恢复",
-    "MOVETOP": "置顶",
-    "CONFIRM": "确认",
-    "ACTIVE": "激活",
-    "DEACTIVE": "停用",
-    "QUERY": "查询",
+    PLACEHOLDER_INPUT: "请输入{0}",
+    PLACEHOLDER_SELECT: "请选择{0}",
 
     //#endregion
-}
+
+    //#region Common
+
+    YES: "是",
+    NO: "否",
+
+    OPER: "操作",
+    ADD: "添加",
+    DEL: "删除",
+
+    SAVE: "保存",
+    CANCEL: "取消",
+    EDIT: "编辑",
+    VIEW: "查看",
+    RESUME: "恢复",
+    MOVETOP: "置顶",
+    CONFIRM: "确认",
+    ACTIVE: "激活",
+    DEACTIVE: "停用",
+    QUERY: "查询",
+    RESET: "重置",
+
+    //#endregion
+};

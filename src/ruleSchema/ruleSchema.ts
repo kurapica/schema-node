@@ -347,7 +347,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
         case RelationType.Assign:
         case RelationType.InitOnly:
-            type = node.schemaName            
+            type = node.schemaName
             handler = (res: any) => {
                 node.rule.default = res
                 node.data = res
@@ -527,7 +527,7 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
                     pushSchema.func,
                     args.map(a => {
                         if (a.node) {
-                            let value = a.node.rawData
+                            let value = a.node.data
                             if (a.checkArrayNode) {
                                 let n = node
                                 while (n.parent && n.parent !== a.node)
