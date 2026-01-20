@@ -7,8 +7,9 @@ import { EnumNode } from "../node/enumNode"
 import { ScalarNode } from "../node/scalarNode"
 import { type AnySchemaNode } from "../node/schemaNode"
 import { StructNode } from "../node/structNode"
-import { type INodeSchema } from "../schema/nodeSchema"
-import { getArraySchema, getSchema, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_INT, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING } from "../utils/schemaProvider"
+import { SchemaLoadState, type INodeSchema } from "../schema/nodeSchema"
+import { newSystemStruct } from "../utils/schema"
+import { getCachedSchema, getSchema, NS_SYSTEM_ARRAY, NS_SYSTEM_BOOL, NS_SYSTEM_INT, NS_SYSTEM_JSON, NS_SYSTEM_NUMBER, NS_SYSTEM_STRING, registerSchema } from "../utils/schemaProvider"
 import { callSchemaFunction } from "../utils/schemaProvider"
 import { clearDebounce, debounce, deepClone, generateGuid, isEqual, isNull } from "../utils/toolset"
 
@@ -226,11 +227,14 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
     switch (pushSchema.type)
     {
         case RelationType.Type:
-            type = NS_SYSTEM_STRING
             if (node.parent instanceof StructNode)
             {
                 handler = (res: any) => {
-                    if (!isNull(res) && typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
+                    console.log("Type relation called", node.access, res)
+                    if (isNull(res)) return NS_SYSTEM_JSON
+                    if (Array.isArray(res) && res.length)
+                        res = getDynamcicStructType(res)
+                    if (typeof(res) === "string" && res.toLowerCase() !== node.rule.type.toLowerCase())
                     {
                         getSchema(res).then(schema => {
                             if (!schema) return
@@ -595,6 +599,25 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
 
     // process
     if (!inited) push()
+}
+
+/**
+ * generate dynamic struct type
+ */
+const dynamicStruct: { [key: string]: string } = {}
+function getDynamcicStructType(fields: any[]): string {
+    fields = fields.filter(f => f.name && f.type)
+    if (fields.length === 0) return NS_SYSTEM_JSON
+
+    const token = fields.map(f => `${f.name}|${f.type}|${f.display?.key}`).join("+")
+    if (dynamicStruct[token]) return dynamicStruct[token]
+    
+    const schemaName = `__dynamic.${generateGuid()}`
+    const structSchema: INodeSchema = newSystemStruct(schemaName, fields)
+    registerSchema([structSchema], SchemaLoadState.Custom)
+
+    dynamicStruct[token] = schemaName
+    return schemaName
 }
 
 //#endregion

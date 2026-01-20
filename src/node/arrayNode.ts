@@ -18,6 +18,7 @@ import { RelationType } from "../enum/relationType";
 import type { IStructArrayFieldConfig, IStructFieldRelation } from "../schema/structSchema";
 import type { IFunctionCallArgument } from "../schema/functionSchema";
 import { FieldFilterMode, type FieldFilterModeValue} from "../enum/fieldFilterMode";
+import { DataChangeWatcher } from "../utils/dataChangeWatcher";
 
 /**
  * The array schema data node
@@ -1072,6 +1073,18 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
     return this._templateRow.getField(name);
   }
 
+  /**
+   * Subscribe a member change handler
+   *
+   * @param func the change handler
+   * @param immediate whether to call the handler immediately
+   */
+  subscribeLayoutChanged(func: Function, immediate?: boolean): Function {
+      const result = this._layoutChangeWatcher.addWatcher(func) 
+      if (immediate) func()
+      return result
+  }
+  
   //#endregion
 
   //#region Properties
@@ -1089,6 +1102,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   private _reffields: { [key: string]: { app: string; field: string; func: string; args: IFunctionCallArgument[]}} | undefined;
   private _appFieldFilter: IArrayFieldFilter[] | undefined;
   private _templateRow: StructNode | undefined;
+  private _layoutChangeWatcher: DataChangeWatcher = new DataChangeWatcher()
 
   //#endregion
 
@@ -1097,11 +1111,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    * @param parent the parent node of the node.
    * @param config the config of the node.
    */
-  constructor(
-    config: ISchemaConfig,
-    data: any,
-    parent: AnySchemaNode | undefined = undefined
-  ) {
+  constructor(config: ISchemaConfig, data: any, parent: AnySchemaNode | undefined = undefined) {
     super(config, data, parent);
     if (isNull(data) || !Array.isArray(data)) data = [];
 
