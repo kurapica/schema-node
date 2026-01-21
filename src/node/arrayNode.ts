@@ -3,7 +3,7 @@ import { type IArrayConfig } from "../config/arrayConfig";
 import { type IEnumConfig } from "../config/enumConfig";
 import { type ISchemaConfig } from "../config/schemaConfig";
 import { type INodeSchema } from "../schema/nodeSchema";
-import { getAppCachedSchema, getCachedSchema, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from "../utils/schemaProvider";
+import { getAppCachedSchema, getCachedSchema, NS_SYSTEM_JSON, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from "../utils/schemaProvider";
 import { _L, _LS } from "../utils/locale";
 import { type AnySchemaNode, getSchemaNodeType, regSchemaNode, SchemaNode } from "./schemaNode";
 import { EnumNode } from "./enumNode";
@@ -33,11 +33,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   get changed(): boolean {
     if (this._enode) return this._enode.changed;
     if (this.asSingle) return !isEqual(this._data, this._original);
-    if (
-      this._elements.find((e) => e.changed) ||
-      (this._original?.length || 0) !== (this._elements.length || 0)
-    )
-      return true;
+    if (this._elements.find((e) => e.changed) || (this._original?.length || 0) !== (this._elements.length || 0)) return true;
     if (!this.incrUpdate) return false;
     for (let key in this._tracker) {
       const track = this._tracker[key];
@@ -50,131 +46,80 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   get isEmpty() { return this._enode ? this._enode.isEmpty : Array.isArray(this._data) ? this._data.length === 0 : true }
 
   get fullerror(): any {
-    if (this._enode) return this._enode.fullerror;
-    if (this.asSingle) return this._valid ? this._errfld : undefined;
-    const errs: any = {};
-    let hasErr = false;
-    this._elements.forEach((e, i) => {
-      if (!e.valid) {
-        errs[i] = e.fullerror;
-        hasErr = true;
-      }
-    });
-    return hasErr ? errs : undefined;
+    if (this._enode) return this._enode.fullerror
+    if (this.asSingle) return this._valid ? this._errfld : undefined
+    const errs: any = {}
+    let hasErr = false
+    this._elements.forEach((e, i) => { if (!e.valid) { errs[i] = e.fullerror; hasErr = true }})
+    return hasErr ? errs : undefined
   }
 
   /**
    * Gets the schema info of the array element
    */
-  get elementSchema(): INodeSchema {
-    return this._eschema;
-  }
+  get elementSchema(): INodeSchema { return this._eschema }
 
   /**
    * Gets the array elements
    */
-  get elements(): AnySchemaNode[] {
-    return this._elements;
-  }
+  get elements(): AnySchemaNode[] { return this._elements }
 
   /**
    * Gets the enum node if the element is enum schema node
    */
-  get enumNode(): EnumNode | undefined {
-    return this._enode;
-  }
+  get enumNode(): EnumNode | undefined { return this._enode }
 
   /**
    * Whether the array data be treated as single value, like Coordinates
    */
-  get asSingle(): boolean {
-    return this._schema.array?.single || false;
-  }
+  get asSingle(): boolean { return this._schema.array?.single || false }
 
   /**
    * Gets whether the array node is used as an incr update application field
    */
-  get incrUpdate(): boolean {
-    return this._config.incrUpdate || false;
-  }
+  get incrUpdate(): boolean { return this._config.incrUpdate || false }
 
   /**
    * Whether allow add new element
    */
-  get allowAdd(): boolean {
-    return (
-      !this.readonly &&
-      this._fieldInfo?.allowCreate !== false &&
-      this._config.fieldInfo?.allowCreate !== false
-    );
-  }
+  get allowAdd(): boolean { return !this.readonly && this._fieldInfo?.allowCreate !== false && this._config.fieldInfo?.allowCreate !== false }
 
   /**
    * Whether allow delete element
    */
-  get allowDelete(): boolean {
-    return (
-      !this.readonly &&
-      this._fieldInfo?.allowDelete !== false &&
-      this._config.fieldInfo?.allowDelete !== false
-    );
-  }
+  get allowDelete(): boolean { return  !this.readonly && this._fieldInfo?.allowDelete !== false && this._config.fieldInfo?.allowDelete !== false }
 
   /**
    * Whether allow update element
    */
-  get allowUpdate(): boolean {
-    return (
-      !this.readonly &&
-      this._fieldInfo?.allowUpdate !== false &&
-      this._config.fieldInfo?.allowUpdate !== false
-    );
-  }
+  get allowUpdate(): boolean { return  !this.readonly && this._fieldInfo?.allowUpdate !== false && this._config.fieldInfo?.allowUpdate !== false }
 
-  get blackColumns(): string[] {
-    return (
-      this._fieldInfo?.blackColumns ||
-      this._config.fieldInfo?.blackColumns ||
-      []
-    );
-  }
+  get blackColumns(): string[] { return this._fieldInfo?.blackColumns || this._config.fieldInfo?.blackColumns || [] }
 
   /**
    * Gets the current page
    */
-  get page() {
-    return this._fieldInfo?.take
-      ? Math.floor((this._fieldInfo.skip || 0) / this._fieldInfo.take)
-      : 0;
-  }
+  get page() { return this._fieldInfo?.take ? Math.floor((this._fieldInfo.skip || 0) / this._fieldInfo.take) : 0 }
 
   /**
    * Gets the page count
    */
-  get pageCount() {
-    return this._fieldInfo?.take;
-  }
+  get pageCount() { return this._fieldInfo?.take }
 
   /**
    * Gets the total count
    */
-  get total() {
-    return this._fieldInfo?.total ?? this._elements.length;
-  }
+  get total() { return this._fieldInfo?.total ?? this._elements.length }
 
   /**
    * Gets the query data
    */
-  get query() {
-    return this._fieldInfo?.filter ? { ...this._fieldInfo.filter } : undefined;
-  }
+  get query() { return this._fieldInfo?.filter ? { ...this._fieldInfo.filter } : undefined }
 
   /**
    * The order by info
    */
-  get orderBy(): IAppDataQueryOrder[] {
-    return deepClone(this._fieldInfo?.orderBy) || [];
-  }
+  get orderBy(): IAppDataQueryOrder[] { return deepClone(this._fieldInfo?.orderBy) || [] }
 
   /**
    * Set the array data
@@ -186,7 +131,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
     } else if (this.asSingle) {
       if (Array.isArray(this._data))
         this._data.splice(0, this._data.length, ...data.map(deepClone));
-      else this._data = deepClone(data);
+      else 
+        this._data = deepClone(data);
       this.validation().then(this.notify);
     } else if (this.incrUpdate) {
       throw `Can't set data to ${_L(this.display || this.name)}`;
@@ -295,12 +241,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    * Gets the deleted data
    */
   get deletes(): any[] | undefined {
-    if (
-      this.asSingle ||
-      this._enode ||
-      this._eschema.type !== SchemaType.Struct ||
-      !this._schema.array?.primary?.length
-    )
+    if (this.asSingle || this._enode || this._eschema.type !== SchemaType.Struct || !this._schema.array?.primary?.length)
       return undefined;
     if (this.incrUpdate) {
       const deletes: any[] = [];
@@ -351,9 +292,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   /**
    * Gets the array field filters
    */
-  get filters() {
-    return this._appFieldFilter || [];
-  }
+  get filters() { return this._appFieldFilter || [] }
 
   // override methods
 
@@ -410,7 +349,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    */
   override reset(): void {
     if (this._enode) {
-      this._enode.reset();
+      return this._enode.reset();
     } else if (this.incrUpdate) {
       this._elements.forEach((e) => e.reset());
       this._tracker = {}; // reset the tracker
@@ -418,6 +357,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
       this.data = deepClone(this._original) || [];
       this.resetChanges();
     }
+    this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row)
   }
 
   override dispose(): void {
@@ -481,43 +421,45 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   }, 100);
 
   // create new element
-  private newElement(data?: any) {
+  private newElement(data?: any, noDeepWatch?: boolean): AnySchemaNode | null {
     let eleNode: AnySchemaNode | null = null;
     switch (this._eschema.type) {
       case SchemaType.Scalar:
-        eleNode = new ScalarNode(
-          { ...this._config, type: this._eschema.name, require: false },
-          data,
-          this
-        );
-        break;
+        eleNode = new ScalarNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+        break
       case SchemaType.Enum:
-        eleNode = new EnumNode(
-          { ...this._config, type: this._eschema.name, require: false },
-          data,
-          this
-        );
-        break;
+        eleNode = new EnumNode({ ...this._config, type: this._eschema.name, require: false }, data, this)
+        break
       case SchemaType.Struct:
-        eleNode = new StructNode(
-          { ...this._config, type: this._eschema.name, require: false },
-          data,
-          this
-        );
+        eleNode = new StructNode({ ...this._config, type: this._eschema.name, require: false }, data,this)
         if (this.incrUpdate) {
           // make incr update data primary field immutable
-          const structNode = eleNode as StructNode;
+          const structNode = eleNode as StructNode
           this.schema.array?.primary?.forEach((f) => {
-            const fldNode = structNode.getField(f);
-            if (!fldNode) return;
-            fldNode.config.immutable = true;
-            fldNode.notifyState();
-          });
+            const fldNode = structNode.getField(f)
+            if (!fldNode) return
+            fldNode.config.immutable = true
+            fldNode.notifyState()
+          })
         }
-        break;
+
+        if (!noDeepWatch)
+        {
+          const row = eleNode as StructNode
+          let changable = false
+          row.fields.forEach(e => {
+            if (e instanceof ArrayNode)
+              e.subscribeLayoutChanged(type => {if (type == ArrayNodeLayoutChange.Row) this._layoutChangeWatcher.notify(type)})
+            if (row.isFieldChangable(e.name)) changable = true
+          })
+          if (changable)
+            row.subscribeMemberChange(() => this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row))
+        }
+
+        break
     }
-    if (!this.incrUpdate) eleNode?.subscribe(this.refreshRawData);
-    return eleNode;
+    if (!this.incrUpdate) eleNode?.subscribe(this.refreshRawData)
+    return eleNode
   }
 
   // get the unique key combine from primarys
@@ -550,7 +492,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    */
   prepareRow(data?: {}) {
     if (!this.incrUpdate) return undefined;
-    const row = this.newElement(data) as StructNode;
+    const row = this.newElement(data, true) as StructNode;
     row.activeRule(true);
 
     // auto query the data with primary key without date scalar field
@@ -620,10 +562,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    * @param row the prepare row
    * @param forceSave force save even when the row data already exist
    */
-  async savePrepareRow(
-    row: StructNode,
-    forceSave: boolean = false
-  ): Promise<boolean> {
+  async savePrepareRow(row: StructNode, forceSave: boolean = false): Promise<boolean> {
     if (!this.incrUpdate || !row.valid) return false;
     const primarys = this._schema.array?.primary;
     if (!primarys?.length) return false;
@@ -702,7 +641,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
     if (newEle) {
       this._elements.splice(index!, 0, newEle);
       newEle.activeRule(true);
-      this.notify("add", this.elements.length);
+      this.notify("add", this.elements.length); // @deprecated, use layoutChangeWatcher instead
+      this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row)
     }
     return newEle;
   }
@@ -734,7 +674,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
     } else {
       const remove = this._elements.splice(start, count);
       remove.forEach((r) => r.dispose());
-      this.notify("del", this.elements.length);
+      this.notify("del", this.elements.length); // @deprecated, use layoutChangeWatcher instead
+      this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row)
     }
   }
 
@@ -763,7 +704,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
     const temp = this._elements[x];
     this._elements[x] = this._elements[y];
     this._elements[y] = temp;
-    this.notify("swap", x, y);
+    this.notify("swap", x, y); // @deprecated, use layoutChangeWatcher instead
+    this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row)
   }
 
   /**
@@ -784,13 +726,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    * @param filter the query keys, optional
    * @param orderBy the order by info, optional
    */
-  async setPage(
-    page: number,
-    count?: number,
-    descend?: boolean,
-    filter?: { [key: string]: any },
-    orderBy?: IAppDataQueryOrder[]
-  ) {
+  async setPage(page: number, count?: number, descend?: boolean, filter?: { [key: string]: any }, orderBy?: IAppDataQueryOrder[]) {
     //if (!this.incrUpdate) return
     count ||= this._fieldInfo?.take || 10; // default should be provided by server
     if (isNull(descend)) descend = this._fieldInfo?.descend;
@@ -903,7 +839,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
       }
 
       // record query
-      this.notify();
+      this.notify(); // @deprecated, use layoutChangeWatcher instead
+      this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.Row)
     } catch (ex) {
       throw ex;
     }
@@ -1064,13 +1001,13 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   /**
    * Gets the template node for field
    */
-  getTemplateNode(name: string): AnySchemaNode | undefined {
+  getTemplateNode(name: string | undefined = undefined): AnySchemaNode | undefined {
     if (!this._templateRow){
-      this._templateRow = this.newElement({}) as StructNode;
+      this._templateRow = this.newElement({}, true) as StructNode;
       this._templateRow.resetChanges();
       this._templateRow.activeRule(true);
     }
-    return this._templateRow.getField(name);
+    return name ? this._templateRow.getField(name) : this._templateRow;
   }
 
   /**
@@ -1081,7 +1018,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
    */
   subscribeLayoutChanged(func: Function, immediate?: boolean): Function {
       const result = this._layoutChangeWatcher.addWatcher(func) 
-      if (immediate) func()
+      if (immediate) func(ArrayNodeLayoutChange.All)
       return result
   }
   
@@ -1158,6 +1095,8 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
 
     const appSchema = getAppCachedSchema(appNode.name);
     const appField = appSchema?.fields.find((f) => f.name === this.name);
+
+    // field filters
     if (appField?.filters?.length && this._eschema.type === SchemaType.Struct) {
       this._appFieldFilter = [];
 
@@ -1242,6 +1181,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
       });
     }
 
+    // reference fields
     if (
       appNode &&
       this._eschema.type === SchemaType.Struct &&
@@ -1259,6 +1199,15 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
           rel
         ) as any;
       }
+    }
+
+    // Json field check
+    if (this._eschema.type === SchemaType.Struct && this._eschema.struct?.fields.find(f => f.type === NS_SYSTEM_JSON)) {
+        const fldNode = this.getTemplateNode() as StructNode
+        if (!fldNode) return
+
+        // watch json type changes
+        fldNode.subscribeMemberChange(debounce(() => this._layoutChangeWatcher.notify(ArrayNodeLayoutChange.All), 100))
     }
   }
 }
@@ -1340,4 +1289,13 @@ export interface IArrayFieldFilter {
    * The node change handlers
    */
   handlers?: Function[];
+}
+
+/**
+ * The array node layout change type
+ */
+export enum ArrayNodeLayoutChange {
+    Row = "row",
+    Column = "column",
+    All = "all"
 }
