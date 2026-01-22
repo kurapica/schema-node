@@ -230,7 +230,6 @@ function activePushSchema(node: AnySchemaNode, pushSchema: ISchemaNodePushSchema
             if (node.parent instanceof StructNode)
             {
                 handler = (res: any) => {
-                    console.log("Type relation called", node.access, res)
                     if (isNull(res)) return NS_SYSTEM_JSON
                     if (Array.isArray(res) && res.length)
                         res = getDynamcicStructType(res)

@@ -1,159 +1,160 @@
-import { type DataCombineTypeValue } from "../enum/dataCombineType"
-import { type FieldFilterModeValue } from "../enum/fieldFilterMode"
-import { type ILocaleString } from "../utils/locale"
-import { type IDataCombine } from "./arraySchema"
-import { type IPolicyItem } from "./policySchema"
+import { type DataCombineTypeValue } from "../enum/dataCombineType";
+import { type FieldFilterModeValue } from "../enum/fieldFilterMode";
+import { type ILocaleString } from "../utils/locale";
+import { type IDataCombine } from "./arraySchema";
+import { type IPolicyItem } from "./policySchema";
 
 /**
  * The application field scehma
  */
-export interface IAppFieldSchema
-{
-    /**
-     * The application name
-     */
-    app: string
+export interface IAppFieldSchema {
+  /**
+   * The application name
+   */
+  app: string;
 
-    /**
-     * The field name
-     */
-    name: string
+  /**
+   * The field name
+   */
+  name: string;
 
-    /**
-     * The field type
-     */
-    type: string
+  /**
+   * The field type
+   */
+  type: string;
 
-    /**
-     * The display name
-     */
-    display?: ILocaleString
+  /**
+   * The display name
+   */
+  display?: ILocaleString;
 
-    /**
-     * The description
-     */
-    desc?: ILocaleString
+  /**
+   * The description
+   */
+  desc?: ILocaleString;
 
-    /**
-     * The source application
-     */
-    sourceApp?: string
+  /**
+   * The source application
+   */
+  sourceApp?: string;
 
-    /**
-     * The source field
-     */
-    sourceField?: string
+  /**
+   * The source field
+   */
+  sourceField?: string;
 
-    /**
-     * Track the push data to source field
-     */
-    trackPush?: boolean
+  /**
+   * Track the push data to source field
+   */
+  trackPush?: boolean;
 
-    /**
-     * The function used to generate data
-     */
-    func?: string
+  /**
+   * The function used to generate data
+   */
+  func?: string;
 
-    /**
-     * The source field that push data to the field with the func
-     */
-    arg?: string
+  /**
+   * The source field that push data to the field with the func
+   */
+  arg?: string;
 
-    /**
-     * The field is using increase update, not full-data update
-     */
-    incrUpdate?: boolean
+  /**
+   * The field is using increase update, not full-data update
+   */
+  incrUpdate?: boolean;
 
-    /**
-     * The field is front-end only, no need store data
-     */
-    frontend?: boolean
+  /**
+   * The field is front-end only, no need store data
+   */
+  frontend?: boolean;
 
-    /**
-     * The field is disabled
-     */
-    disable?: boolean
+  /**
+   * The field is disabled
+   */
+  disable?: boolean;
 
-    /**
-     * The field is readonly
-     */
-    readonly?: boolean
+  /**
+   * The field is readonly
+   */
+  readonly?: boolean;
 
-    /**
-     * The combine rule if field type is scalar or enum
-     */
-    combine?: DataCombineTypeValue
+  /**
+   * Enable the template download
+   */
+  template?: boolean;
 
-    /**
-     * The combine rule if field type is struct or struct-array
-     */
-    combines?: IDataCombine[]
+  /**
+   * The combine rule if field type is scalar or enum
+   */
+  combine?: DataCombineTypeValue;
 
-    /**
-     * The data authorization policies for the field, normally the row access policies
-     */
-    auths: IPolicyItem[]
+  /**
+   * The combine rule if field type is struct or struct-array
+   */
+  combines?: IDataCombine[];
 
-    /**
-     * Row filter policies
-     */
-    rowAuths?: IRowPolicyItem[]
+  /**
+   * The data authorization policies for the field, normally the row access policies
+   */
+  auths: IPolicyItem[];
 
-    /**
-     * Column access policies
-     */
-    colAuths?: IColPolicyItem[]
+  /**
+   * Row filter policies
+   */
+  rowAuths?: IRowPolicyItem[];
 
-    /**
-     * The field filters
-     */
-    filters?: IFieldFilter[]
+  /**
+   * Column access policies
+   */
+  colAuths?: IColPolicyItem[];
+
+  /**
+   * The field filters
+   */
+  filters?: IFieldFilter[];
 }
 
 /**
  * The row policy item
  */
-export interface IRowPolicyItem
-{
-    /**
-     * The policy evaluatorm, if true will use the filter
-     */
-    evaluator: string
+export interface IRowPolicyItem {
+  /**
+   * The policy evaluatorm, if true will use the filter
+   */
+  evaluator: string;
 
-    /**
-     * The row filter function
-     */
-    filter?: string
+  /**
+   * The row filter function
+   */
+  filter?: string;
 }
 
 /**
  * The column policy item
  */
-export interface IColPolicyItem
-{    
-    /**
-     * The struct field name
-     */
-    name: string
+export interface IColPolicyItem {
+  /**
+   * The struct field name
+   */
+  name: string;
 
-    /**
-     * The column access evaluators
-     */
-    evaluators: string[]
+  /**
+   * The column access evaluators
+   */
+  evaluators: string[];
 }
 
 /**
  * The field filter
  */
-export interface IFieldFilter
-{
-    /**
-     * The field name or filter function
-     */
-    filter: string
+export interface IFieldFilter {
+  /**
+   * The field name or filter function
+   */
+  filter: string;
 
-    /**
-     * The filter mode
-     */
-    mode: FieldFilterModeValue
+  /**
+   * The filter mode
+   */
+  mode: FieldFilterModeValue;
 }

@@ -3,7 +3,7 @@ import { type IArrayConfig } from "../config/arrayConfig";
 import { type IEnumConfig } from "../config/enumConfig";
 import { type ISchemaConfig } from "../config/schemaConfig";
 import { type INodeSchema } from "../schema/nodeSchema";
-import { getAppCachedSchema, getCachedSchema, NS_SYSTEM_JSON, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from "../utils/schemaProvider";
+import { getAppCachedSchema, getCachedSchema, isSchemaPluginEnabled, NS_SYSTEM_JSON, NS_SYSTEM_LOCALE_STRING, NS_SYSTEM_STRING, validateSchemaValue } from "../utils/schemaProvider";
 import { _L, _LS } from "../utils/locale";
 import { type AnySchemaNode, getSchemaNodeType, regSchemaNode, SchemaNode } from "./schemaNode";
 import { EnumNode } from "./enumNode";
@@ -19,6 +19,7 @@ import type { IStructArrayFieldConfig, IStructFieldRelation } from "../schema/st
 import type { IFunctionCallArgument } from "../schema/functionSchema";
 import { FieldFilterMode, type FieldFilterModeValue} from "../enum/fieldFilterMode";
 import { DataChangeWatcher } from "../utils/dataChangeWatcher";
+import { getTemplateProvider, ITemplateRequest, ITemplateUploadResponse } from "../plugin/templateProvider";
 
 /**
  * The array schema data node
@@ -95,6 +96,11 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   get allowUpdate(): boolean { return  !this.readonly && this._fieldInfo?.allowUpdate !== false && this._config.fieldInfo?.allowUpdate !== false }
 
   get blackColumns(): string[] { return this._fieldInfo?.blackColumns || this._config.fieldInfo?.blackColumns || [] }
+
+  /**
+   * Whether enable template download
+   */
+  get enableTemplate(): boolean { return this._template === true }
 
   /**
    * Gets the current page
@@ -1024,6 +1030,108 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   
   //#endregion
 
+  //#region Template
+
+  async downloadTemplate(): Promise<boolean> {
+    const templateProvider = getTemplateProvider();
+    if (!this._template) return false
+
+    // reference check
+    let appNode = this.parent;
+    while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent;
+    if (!(appNode && appNode instanceof AppNode)) return false;
+
+    const request: ITemplateRequest = {
+      app: appNode.name,
+      field: this.name,
+    };
+
+    if (this._eschema.type === SchemaType.Struct) {
+      for (const field of this._eschema.struct?.fields || []) {
+        if (field.displayOnly || field.invisible) continue;
+        const fldNode = this.getTemplateNode(field.name);
+    
+        // dynamic fields
+        if (field.type === NS_SYSTEM_JSON)
+        {
+          const dynamicType = fldNode.rule.type
+          if (dynamicType)
+          {
+            const schema = getCachedSchema(dynamicType)
+            if (schema && schema.type === SchemaType.Struct)
+            {
+              request.dynamicTypes ??= {}
+              request.dynamicTypes[field.name] = deepClone(schema.struct.fields)
+            }
+          }
+        }
+        // entries
+        else if(fldNode instanceof ScalarNode)
+        {
+          if (fldNode.whiteList?.length)
+          {
+            request.entries ??= {}
+            request.entries[field.name] = deepClone(fldNode.whiteList)
+          }
+        }
+      }
+    }
+
+    await templateProvider.downloadTemplate(request);
+    return true;
+  }
+
+  async uploadDataFile(file: File, autoCommit: boolean = false): Promise<ITemplateUploadResponse | undefined> {
+    const templateProvider = getTemplateProvider();
+
+    // reference check
+    let appNode = this.parent;
+    while (appNode && !(appNode instanceof AppNode)) appNode = appNode.parent;
+    if (!(appNode && appNode instanceof AppNode && appNode.target)) return undefined;
+
+    const request: ITemplateRequest = {
+      app: appNode.name,
+      field: this.name,
+      target: appNode.target,
+      save: autoCommit,
+    };
+
+    if (this._eschema.type === SchemaType.Struct) {
+      for (const field of this._eschema.struct?.fields || []) {
+        if (field.displayOnly || field.invisible) continue;
+        const fldNode = this.getTemplateNode(field.name);
+    
+        // dynamic fields
+        if (field.type === NS_SYSTEM_JSON)
+        {
+          const dynamicType = fldNode.rule.type
+          if (dynamicType)
+          {
+            const schema = getCachedSchema(dynamicType)
+            if (schema && schema.type === SchemaType.Struct)
+            {
+              request.dynamicTypes ??= {}
+              request.dynamicTypes[field.name] = deepClone(schema.struct.fields)
+            }
+          }
+        }
+        // entries
+        else if(fldNode instanceof ScalarNode)
+        {
+          if (fldNode.whiteList?.length)
+          {
+            request.entries ??= {}
+            request.entries[field.name] = deepClone(fldNode.whiteList)
+          }
+        }
+      }
+    }
+
+    return await templateProvider.uploadData(request, file);
+  }
+
+  //#endregion
+
   //#region Properties
 
   //#endregion
@@ -1040,6 +1148,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
   private _appFieldFilter: IArrayFieldFilter[] | undefined;
   private _templateRow: StructNode | undefined;
   private _layoutChangeWatcher: DataChangeWatcher = new DataChangeWatcher()
+  private _template?: boolean
 
   //#endregion
 
@@ -1095,6 +1204,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
 
     const appSchema = getAppCachedSchema(appNode.name);
     const appField = appSchema?.fields.find((f) => f.name === this.name);
+    this._template = appField?.template === true && isSchemaPluginEnabled("*_TEMPLATE")
 
     // field filters
     if (appField?.filters?.length && this._eschema.type === SchemaType.Struct) {

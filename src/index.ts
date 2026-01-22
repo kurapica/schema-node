@@ -45,3 +45,5 @@ export * from './node/enumNode'
 export * from './node/structNode'
 export * from './node/arrayNode'
 export * from './node/appNode'
+
+export * from './plugin/templateProvider'

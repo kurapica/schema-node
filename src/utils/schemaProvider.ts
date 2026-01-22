@@ -1,70 +1,91 @@
-import { EnumValueType } from "../enum/enumValueType"
-import { ExpressionType, type ExpressionTypeValue } from "../enum/expressionType"
-import { SchemaType } from "../enum/schemaType"
-import { combineSchema, deepClone, generateGuid, isEmpty, isNull, useQueueQuery } from "./toolset"
-import { type IEnumValueAccess, type IEnumValueInfo, prepareEnumAccesses, prepareEnumValueInfos } from "../schema/enumSchema"
-import { type IFunctionSchema } from "../schema/functionSchema"
-import { type INodeSchema, PrepareServerSchemas, SchemaLoadState } from "../schema/nodeSchema"
-import { type IStructFieldConfig, type IStructScalarFieldConfig } from "../schema/structSchema"
-import { DataChangeWatcher } from "./dataChangeWatcher"
-import { type IAppSchema } from "../schema/appSchema"
-import { _L, _LS, combineLocaleString, type ILocaleString } from "./locale"
-import axios from "axios"
-import { PolicyScope } from "../enum/policyScope"
+import { EnumValueType } from "../enum/enumValueType";
+import {
+  ExpressionType,
+  type ExpressionTypeValue,
+} from "../enum/expressionType";
+import { SchemaType } from "../enum/schemaType";
+import {
+  combineSchema,
+  generateGuid,
+  isEmpty,
+  isNull,
+  useQueueQuery,
+} from "./toolset";
+import {
+  type IEnumValueAccess,
+  type IEnumValueInfo,
+  prepareEnumAccesses,
+  prepareEnumValueInfos,
+} from "../schema/enumSchema";
+import { type IFunctionSchema } from "../schema/functionSchema";
+import {
+  type INodeSchema,
+  PrepareServerSchemas,
+  SchemaLoadState,
+} from "../schema/nodeSchema";
+import {
+  type IStructFieldConfig,
+  type IStructScalarFieldConfig,
+} from "../schema/structSchema";
+import { DataChangeWatcher } from "./dataChangeWatcher";
+import { type IAppSchema } from "../schema/appSchema";
+import { _L, _LS, combineLocaleString, type ILocaleString } from "./locale";
+import axios from "axios";
+import { PolicyScope } from "../enum/policyScope";
 
-export const NS_SYSTEM = "system"
+export const NS_SYSTEM = "system";
 
-export const REGEX_GENERIC_TYPE = /^T\d*$/
-export const REGEX_GENERIC_IMPLEMENT = /^([\w\.]+)<(.+)>$/
+export const REGEX_GENERIC_TYPE = /^T\d*$/;
+export const REGEX_GENERIC_IMPLEMENT = /^([\w\.]+)<(.+)>$/;
 
-export const NS_SYSTEM_OBJECT = "system.object"
-export const NS_SYSTEM_ARRAY = "system.array"
-export const NS_SYSTEM_LIST = "system.list"
-export const NS_SYSTEM_STRUCT = "system.struct"
-export const NS_SYSTEM_JSON = "system.json"
-export const NS_SYSTEM_BOOL = "system.bool"
-export const NS_SYSTEM_DATE = "system.date"
-export const NS_SYSTEM_NUMBER = "system.number"
-export const NS_SYSTEM_DOUBLE = "system.double"
-export const NS_SYSTEM_FLOAT = "system.float"
-export const NS_SYSTEM_PERCENT = "system.percent"
-export const NS_SYSTEM_FULLDATE = "system.fulldate"
-export const NS_SYSTEM_INT = "system.int"
-export const NS_SYSTEM_STRING = "system.string"
-export const NS_SYSTEM_YEAR = "system.year"
-export const NS_SYSTEM_GUID = "system.guid"
-export const NS_SYSTEM_YEARMONTH = "system.yearmonth"
-export const NS_SYSTEM_RANGEDATE = "system.rangedate"
-export const NS_SYSTEM_RANGEFULLDATE = "system.rangefulldate"
-export const NS_SYSTEM_RANGEMONTH = "system.rangemonth"
-export const NS_SYSTEM_RANGEYEAR = "system.rangeyear"
-export const NS_SYSTEM_STRINGS = "system.strings"
-export const NS_SYSTEM_NUMBERS = "system.numbers"
-export const NS_SYSTEM_INTS = "system.ints"
+export const NS_SYSTEM_OBJECT = "system.object";
+export const NS_SYSTEM_ARRAY = "system.array";
+export const NS_SYSTEM_LIST = "system.list";
+export const NS_SYSTEM_STRUCT = "system.struct";
+export const NS_SYSTEM_JSON = "system.json";
+export const NS_SYSTEM_BOOL = "system.bool";
+export const NS_SYSTEM_DATE = "system.date";
+export const NS_SYSTEM_NUMBER = "system.number";
+export const NS_SYSTEM_DOUBLE = "system.double";
+export const NS_SYSTEM_FLOAT = "system.float";
+export const NS_SYSTEM_PERCENT = "system.percent";
+export const NS_SYSTEM_FULLDATE = "system.fulldate";
+export const NS_SYSTEM_INT = "system.int";
+export const NS_SYSTEM_STRING = "system.string";
+export const NS_SYSTEM_YEAR = "system.year";
+export const NS_SYSTEM_GUID = "system.guid";
+export const NS_SYSTEM_YEARMONTH = "system.yearmonth";
+export const NS_SYSTEM_RANGEDATE = "system.rangedate";
+export const NS_SYSTEM_RANGEFULLDATE = "system.rangefulldate";
+export const NS_SYSTEM_RANGEMONTH = "system.rangemonth";
+export const NS_SYSTEM_RANGEYEAR = "system.rangeyear";
+export const NS_SYSTEM_STRINGS = "system.strings";
+export const NS_SYSTEM_NUMBERS = "system.numbers";
+export const NS_SYSTEM_INTS = "system.ints";
 
-export const NS_SYSTEM_LANGUAGE = "system.language"
-export const NS_SYSTEM_LOCALE_STRING = "system.localestring"
-export const NS_SYSTEM_LOCALE_TRAN = "system.localetran"
-export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings"
-export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans"
-export const NS_SYSTEM_ENTRY = "system.entry"
-export const NS_SYSTEM_ENTRIES = "system.entrys"
-export const NS_SYSTEM_CONTEXT = "system.context"
+export const NS_SYSTEM_LANGUAGE = "system.language";
+export const NS_SYSTEM_LOCALE_STRING = "system.localestring";
+export const NS_SYSTEM_LOCALE_TRAN = "system.localetran";
+export const NS_SYSTEM_LOCALE_STRINGS = "system.localestrings";
+export const NS_SYSTEM_LOCALE_TRANS = "system.localetrans";
+export const NS_SYSTEM_ENTRY = "system.entry";
+export const NS_SYSTEM_ENTRIES = "system.entrys";
+export const NS_SYSTEM_CONTEXT = "system.context";
 
-export const NS_SYSTEM_SCHEMA = "system.schema"
-export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace"
+export const NS_SYSTEM_SCHEMA = "system.schema";
+export const NS_SYSTEM_SCHEMA_NS = "system.schema.namespace";
 
-export const NS_SYSTEM_WORKFLOW = "system.workflow"
-export const NS_SYSTEM_WORKFLOW_ID = "system.workflow.id"
-export const NS_SYSTEM_WORKFLOW_CRON = "system.workflow.cron"
-export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node"
+export const NS_SYSTEM_WORKFLOW = "system.workflow";
+export const NS_SYSTEM_WORKFLOW_ID = "system.workflow.id";
+export const NS_SYSTEM_WORKFLOW_CRON = "system.workflow.cron";
+export const NS_SYSTEM_WORKFLOW_NODE = "system.workflow.node";
 
-export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status"
+export const NS_SYSTEM_SCHEMA_STATUS = "system.schema.status";
 
-export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret"
-export const NS_SYSTEM_LOGIC_IFNOT = "system.logic.ifnot"
-export const NS_SYSTEM_LOGIC_IFNULL = "system.logic.ifnull"
-export const NS_SYSTEM_LOGIC_IFEMPTY = "system.logic.ifempty"
+export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret";
+export const NS_SYSTEM_LOGIC_IFNOT = "system.logic.ifnot";
+export const NS_SYSTEM_LOGIC_IFNULL = "system.logic.ifnull";
+export const NS_SYSTEM_LOGIC_IFEMPTY = "system.logic.ifempty";
 
 //#region Schema Provider
 
@@ -84,230 +105,300 @@ export const NS_SYSTEM_LOGIC_IFEMPTY = "system.logic.ifempty"
  * by a server.
  */
 export interface ISchemaProvider {
-    /**
-     * Get the schema api protocol information
-     */
-    protocol(): Promise<ISchemaApiProtocolMeta | undefined>
+  /**
+   * Get the schema api protocol information
+   */
+  protocol(): Promise<ISchemaApiProtocolMeta | undefined>;
 
-    /**
-     * Load the schema information
-     * @param names The names of the schema
-     * @returns The schema informations
-     */
-    loadSchema(names: string[]): Promise<INodeSchema[]>
+  /**
+   * Load the schema information
+   * @param names The names of the schema
+   * @returns The schema informations
+   */
+  loadSchema(names: string[]): Promise<INodeSchema[]>;
 
-    /**
-     * Load the application schema information
-     * @param app the name of the application
-     * @return the application schema
-     */
-    loadAppSchema(app: string, includeTypes?: boolean): Promise<IAppSchema | undefined>
+  /**
+   * Load the application schema information
+   * @param app the name of the application
+   * @return the application schema
+   */
+  loadAppSchema(
+    app: string,
+    includeTypes?: boolean,
+  ): Promise<IAppSchema | undefined>;
 
-    /**
-     * Load the enum value sub list from the server
-     * @param schemaName The name of the enum schema
-     * @param value The root enum value if provided
-     * @param fullList Whether load the full list of enum values
-     * @return the enum sub list
-     */
-    loadEnumSubList(schemaName: string, value?: any, fullList?: boolean): Promise<IEnumValueInfo[]>
+  /**
+   * Load the enum value sub list from the server
+   * @param schemaName The name of the enum schema
+   * @param value The root enum value if provided
+   * @param fullList Whether load the full list of enum values
+   * @return the enum sub list
+   */
+  loadEnumSubList(
+    schemaName: string,
+    value?: any,
+    fullList?: boolean,
+  ): Promise<IEnumValueInfo[]>;
 
-    /**
-     * Load enum enum value access list from the server
-     * @param schemaName the name of the enum schema
-     * @param value the enum value to be queried
-     * @param noSubList no sub list should be loaded
-     * @param withSubList with the value's sub list if existed
-     * @return the enum access list
-     */
-    loadEnumAccessList(schemaName: string, value: any, noSubList?: boolean, withSubList?: boolean): Promise<IEnumValueAccess[]>
+  /**
+   * Load enum enum value access list from the server
+   * @param schemaName the name of the enum schema
+   * @param value the enum value to be queried
+   * @param noSubList no sub list should be loaded
+   * @param withSubList with the value's sub list if existed
+   * @return the enum access list
+   */
+  loadEnumAccessList(
+    schemaName: string,
+    value: any,
+    noSubList?: boolean,
+    withSubList?: boolean,
+  ): Promise<IEnumValueAccess[]>;
 
-    /**
-     * Call the function schema from the server with the arguments and type, gets the result
-     * @param schemaName the name of the function schema
-     * @param args the arguments of the function
-     * @param retType the return type of the function
-     * @param target the application target
-     * @returns the result
-     */
-    callFunction(schemaName: string, args: any[], retType?: string, target?: string): Promise<any>
+  /**
+   * Call the function schema from the server with the arguments and type, gets the result
+   * @param schemaName the name of the function schema
+   * @param args the arguments of the function
+   * @param retType the return type of the function
+   * @param target the application target
+   * @returns the result
+   */
+  callFunction(
+    schemaName: string,
+    args: any[],
+    retType?: string,
+    target?: string,
+  ): Promise<any>;
 
-    /**
-     * Authorize the policy for the scope
-     * @param scope The policy scope
-     * @param name The schema type name
-     * @param app The application name
-     * @param field The field name
-     * @param workflow The workflow name
-     */
-    authorize(scope: PolicyScope, name?: string, app?: string, field?: string, workflow?: string): Promise<boolean>
+  /**
+   * Authorize the policy for the scope
+   * @param scope The policy scope
+   * @param name The schema type name
+   * @param app The application name
+   * @param field The field name
+   * @param workflow The workflow name
+   */
+  authorize(
+    scope: PolicyScope,
+    name?: string,
+    app?: string,
+    field?: string,
+    workflow?: string,
+  ): Promise<boolean>;
 }
 
-let schemaApiBaseUrl: string | undefined = undefined
-let schemaProvider: ISchemaProvider | null = null
+let schemaApiBaseUrl: string | undefined = undefined;
+let schemaProvider: ISchemaProvider | null = null;
 
 // default schema provider
 export const defaultSchemaProvider: ISchemaProvider = {
-    protocol: async (): Promise<ISchemaApiProtocolMeta | undefined> => {
-        return (await postSchemaApi("/protocol", {}, true)) || undefined
-    },
-    
-    loadSchema: async (names: string[]): Promise<INodeSchema[]> => {
-        return (await postSchemaApi("/load-schema", {
-            names: names
-        }))?.schemas || []
-    },
+  protocol: async (): Promise<ISchemaApiProtocolMeta | undefined> => {
+    return (await postSchemaApi("/protocol", {}, true)) || undefined;
+  },
 
-    loadAppSchema: async (app: string, includeTypes?: boolean): Promise<IAppSchema | undefined> => {
-        return (await postSchemaApi("/load-app-schema", {
-            name: app,
-            includeTypes
-        }))?.schema
-    },
+  loadSchema: async (names: string[]): Promise<INodeSchema[]> => {
+    return (
+      (
+        await postSchemaApi("/load-schema", {
+          names: names,
+        })
+      )?.schemas || []
+    );
+  },
 
-    loadEnumSubList: async (name: string, value?: any, fullList?: boolean): Promise<IEnumValueInfo[]> => {
-        return (await postSchemaApi("/load-enum-sub-list", {
-            name, value, fullList
-        }))?.values
-    },
+  loadAppSchema: async (
+    app: string,
+    includeTypes?: boolean,
+  ): Promise<IAppSchema | undefined> => {
+    return (
+      await postSchemaApi("/load-app-schema", {
+        name: app,
+        includeTypes,
+      })
+    )?.schema;
+  },
 
-    loadEnumAccessList: async (name: string, value: any, noSubList?: boolean, withSubList?: boolean): Promise<IEnumValueAccess[]> => {
-        return (await postSchemaApi("/load-enum-access-list", {
-            name, value, noSubList, withSubList
-        }))?.access
-    },
+  loadEnumSubList: async (
+    name: string,
+    value?: any,
+    fullList?: boolean,
+  ): Promise<IEnumValueInfo[]> => {
+    return (
+      await postSchemaApi("/load-enum-sub-list", {
+        name,
+        value,
+        fullList,
+      })
+    )?.values;
+  },
 
-    callFunction: async (name: string, args: any[], retType?: string, target?: string): Promise<any> => {
-        return (await postSchemaApi("/call-function", {
-            name, args, return: retType, target
-        }))?.result
-    },
+  loadEnumAccessList: async (
+    name: string,
+    value: any,
+    noSubList?: boolean,
+    withSubList?: boolean,
+  ): Promise<IEnumValueAccess[]> => {
+    return (
+      await postSchemaApi("/load-enum-access-list", {
+        name,
+        value,
+        noSubList,
+        withSubList,
+      })
+    )?.access;
+  },
 
-    authorize: async (scope: PolicyScope = PolicyScope.DataRead, name?: string, app?: string, field?: string, workflow?: string): Promise<boolean> => {
-        return (await postSchemaApi("/authorize", {
-            name, app, field, workflow, scope   
-        }))?.result
-    }
-}
+  callFunction: async (
+    name: string,
+    args: any[],
+    retType?: string,
+    target?: string,
+  ): Promise<any> => {
+    return (
+      await postSchemaApi("/call-function", {
+        name,
+        args,
+        return: retType,
+        target,
+      })
+    )?.result;
+  },
+
+  authorize: async (
+    scope: PolicyScope = PolicyScope.DataRead,
+    name?: string,
+    app?: string,
+    field?: string,
+    workflow?: string,
+  ): Promise<boolean> => {
+    return (
+      await postSchemaApi("/authorize", {
+        name,
+        app,
+        field,
+        workflow,
+        scope,
+      })
+    )?.result;
+  },
+};
 
 /**
  * Sets the schema provider
  */
 export function useSchemaProvider(provider: ISchemaProvider): void {
-    schemaProvider = provider
+  schemaProvider = provider;
 }
 
 /**
  * Gets the schema provider
  */
 export function getSchemaProvider(): ISchemaProvider | null {
-    return schemaProvider ?? (schemaApiBaseUrl ? defaultSchemaProvider : null)
+  return schemaProvider ?? (schemaApiBaseUrl ? defaultSchemaProvider : null);
 }
 
 //#endregion
 
 //#region Application Schema
 
-const appSchemaCache: { [key: string]: IAppSchema } = {}
-const rootAppSchema: IAppSchema = { name: "", apps: [] }
-const appSchemaChangeWatcher = new DataChangeWatcher()
-const appStructSchemaRoot = "__app_struct"
+const appSchemaCache: { [key: string]: IAppSchema } = {};
+const rootAppSchema: IAppSchema = { name: "", apps: [] };
+const appSchemaChangeWatcher = new DataChangeWatcher();
+const appStructSchemaRoot = "__app_struct";
 
 /**
  * Register the application schemas
  * @param schemas The application schemas
  */
-export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
-    for (const schema of schemas) {
-        const name = schema.name.toLowerCase()
-        schema.loadState = (schema.loadState || 0) | loadState
+export function registerAppSchema(
+  schemas: IAppSchema[],
+  loadState: SchemaLoadState = SchemaLoadState.Custom,
+): void {
+  for (const schema of schemas) {
+    const name = schema.name.toLowerCase();
+    schema.loadState = (schema.loadState || 0) | loadState;
 
-        // for root application without name
-        if (isNull(name)) {
-            registerAppSchema(schema.apps || [], loadState)
-            continue
-        }
-
-        const exist = appSchemaCache[name]
-
-        // combine
-        if (exist)
-        {
-            exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
-
-            updateAppSchemaRefs(schema, false)
-
-            exist.display = combineLocaleString(exist.display, schema.display)
-            exist.desc = combineLocaleString(exist.desc, schema.desc)
-            exist.auth = schema.auth
-            exist.auths = schema.auths
-            exist.hasApps = schema.hasApps
-            exist.hasFields = schema.hasFields
-            exist.relations =schema.relations?.length ? schema.relations : exist.relations
-            exist.fields = schema.fields?.length ? schema.fields : exist.fields
-            exist.workflows = schema.workflows?.length ? schema.workflows : exist.workflows
-            exist.nodeSchema = undefined
-
-            if (schema.hasFields || schema.fields?.length)
-            {
-                delete exist.apps
-                schema.fields?.forEach(f => f.app = exist.name)
-            }
-            else if(schema.apps?.length)
-                registerAppSchema(schema.apps, loadState)
-
-            updateAppSchemaRefs(schema, true)
-
-            // register type schema
-            if (schema.nodeSchemas) registerSchema(schema.nodeSchemas, loadState)
-            continue
-        }
-        
-        // root namespace
-        const paths = name.split(".").filter(n => !isNull(n))
-        let root: IAppSchema = rootAppSchema
-        for (let i = 0; i < paths.length - 1; i++)
-        {
-            const p = paths.slice(0, i + 1).join(".")
-            let app = appSchemaCache[p]
-            if (!app)
-            {
-                app = {
-                    name: p,
-                    apps: []
-                }
-                appSchemaCache[p] = app
-                root.apps = root.apps || []
-                root.apps.push(app)
-            }
-            root = app
-        }
-        
-        schema.nodeSchema = undefined
-        appSchemaCache[name] = schema
-        root.apps ||= []
-        root.apps.push(schema)
-
-        if (schema.hasFields || schema.fields?.length)
-        {
-            delete schema.apps
-            schema.fields?.forEach(f => f.app = schema.name)
-            updateAppSchemaRefs(schema, true)
-        }
-        else if(schema.apps?.length)
-        {
-            const apps = schema.apps
-            schema.apps = []
-            registerAppSchema(apps, loadState)
-        }
-
-        // register type schema
-        if (schema.nodeSchemas) {
-            registerSchema(schema.nodeSchemas, loadState)
-            schema.nodeSchemas = undefined
-        }
+    // for root application without name
+    if (isNull(name)) {
+      registerAppSchema(schema.apps || [], loadState);
+      continue;
     }
-    appSchemaChangeWatcher.notify(schemas.map(s => s.name))
+
+    const exist = appSchemaCache[name];
+
+    // combine
+    if (exist) {
+      exist.loadState = (exist.loadState || 0) | schema.loadState | loadState;
+
+      updateAppSchemaRefs(schema, false);
+
+      exist.display = combineLocaleString(exist.display, schema.display);
+      exist.desc = combineLocaleString(exist.desc, schema.desc);
+      exist.auth = schema.auth;
+      exist.auths = schema.auths;
+      exist.hasApps = schema.hasApps;
+      exist.hasFields = schema.hasFields;
+      exist.relations = schema.relations?.length
+        ? schema.relations
+        : exist.relations;
+      exist.fields = schema.fields?.length ? schema.fields : exist.fields;
+      exist.workflows = schema.workflows?.length
+        ? schema.workflows
+        : exist.workflows;
+      exist.nodeSchema = undefined;
+
+      if (schema.hasFields || schema.fields?.length) {
+        delete exist.apps;
+        schema.fields?.forEach((f) => (f.app = exist.name));
+      } else if (schema.apps?.length) registerAppSchema(schema.apps, loadState);
+
+      updateAppSchemaRefs(schema, true);
+
+      // register type schema
+      if (schema.nodeSchemas) registerSchema(schema.nodeSchemas, loadState);
+      continue;
+    }
+
+    // root namespace
+    const paths = name.split(".").filter((n) => !isNull(n));
+    let root: IAppSchema = rootAppSchema;
+    for (let i = 0; i < paths.length - 1; i++) {
+      const p = paths.slice(0, i + 1).join(".");
+      let app = appSchemaCache[p];
+      if (!app) {
+        app = {
+          name: p,
+          apps: [],
+        };
+        appSchemaCache[p] = app;
+        root.apps = root.apps || [];
+        root.apps.push(app);
+      }
+      root = app;
+    }
+
+    schema.nodeSchema = undefined;
+    appSchemaCache[name] = schema;
+    root.apps ||= [];
+    root.apps.push(schema);
+
+    if (schema.hasFields || schema.fields?.length) {
+      delete schema.apps;
+      schema.fields?.forEach((f) => (f.app = schema.name));
+      updateAppSchemaRefs(schema, true);
+    } else if (schema.apps?.length) {
+      const apps = schema.apps;
+      schema.apps = [];
+      registerAppSchema(apps, loadState);
+    }
+
+    // register type schema
+    if (schema.nodeSchemas) {
+      registerSchema(schema.nodeSchemas, loadState);
+      schema.nodeSchemas = undefined;
+    }
+  }
+  appSchemaChangeWatcher.notify(schemas.map((s) => s.name));
 }
 
 /**
@@ -315,34 +406,31 @@ export function registerAppSchema(schemas: IAppSchema[], loadState: SchemaLoadSt
  * @param name The application name
  */
 export function removeAppSchema(name: string): boolean {
-    name = name.toLowerCase()
-    const schema = appSchemaCache[name]
-    if (!schema) return true
-    if (schema === rootSchema) return false
-    updateAppSchemaRefs(schema, false)
-    
-    const paths = name.split(".")
-    const pname = paths.slice(0, paths.length - 1).join(".")
-    const parent = pname ? appSchemaCache[pname] : rootAppSchema
-    if (parent)
-    {
-        const index = parent.apps?.findIndex(s => s.name === schema.name)
-        if (!isNull(index) && index! >= 0)
-        {
-            parent.apps?.splice(index!, 1)
-        }
+  name = name.toLowerCase();
+  const schema = appSchemaCache[name];
+  if (!schema) return true;
+  if (schema === rootSchema) return false;
+  updateAppSchemaRefs(schema, false);
+
+  const paths = name.split(".");
+  const pname = paths.slice(0, paths.length - 1).join(".");
+  const parent = pname ? appSchemaCache[pname] : rootAppSchema;
+  if (parent) {
+    const index = parent.apps?.findIndex((s) => s.name === schema.name);
+    if (!isNull(index) && index! >= 0) {
+      parent.apps?.splice(index!, 1);
     }
-    delete appSchemaCache[name]
-    appSchemaChangeWatcher.notify([name])
-    return true
+  }
+  delete appSchemaCache[name];
+  appSchemaChangeWatcher.notify([name]);
+  return true;
 }
 
 /**
  * Subscribe application schema change
  */
-export function subscribeAppSchemaChange(handler: Function)
-{
-    return appSchemaChangeWatcher.addWatcher(handler)
+export function subscribeAppSchemaChange(handler: Function) {
+  return appSchemaChangeWatcher.addWatcher(handler);
 }
 
 /**
@@ -351,23 +439,27 @@ export function subscribeAppSchemaChange(handler: Function)
  * @param generic the generic types
  * @returns The schema information
  */
-export async function getAppSchema(name: string): Promise<IAppSchema | undefined> {
-    // all schema names should be case insensitive
-    name = name.toLowerCase()
+export async function getAppSchema(
+  name: string,
+): Promise<IAppSchema | undefined> {
+  // all schema names should be case insensitive
+  name = name.toLowerCase();
 
-    let schema: IAppSchema | undefined = !name ? rootAppSchema : appSchemaCache[name]
-    let provider = getSchemaProvider()
-    if (schema?.loaded || !provider) return schema
-    if (schema) schema.loaded = true
+  let schema: IAppSchema | undefined = !name
+    ? rootAppSchema
+    : appSchemaCache[name];
+  let provider = getSchemaProvider();
+  if (schema?.loaded || !provider) return schema;
+  if (schema) schema.loaded = true;
 
-    // load schema from provider
-    schema = await provider.loadAppSchema(name, true)
-    if (schema) {
-        schema.loaded = true
-        if (schema.nodeSchemas) PrepareServerSchemas(schema.nodeSchemas)
-        registerAppSchema([schema], SchemaLoadState.Server)
-    }
-    return !name ? rootAppSchema : appSchemaCache[name]
+  // load schema from provider
+  schema = await provider.loadAppSchema(name, true);
+  if (schema) {
+    schema.loaded = true;
+    if (schema.nodeSchemas) PrepareServerSchemas(schema.nodeSchemas);
+    registerAppSchema([schema], SchemaLoadState.Server);
+  }
+  return !name ? rootAppSchema : appSchemaCache[name];
 }
 
 /**
@@ -376,175 +468,176 @@ export async function getAppSchema(name: string): Promise<IAppSchema | undefined
  * @returns The schema info
  */
 export function getAppCachedSchema(name: string): IAppSchema | undefined {
-    name = name.toLowerCase()
-    return !name ? rootAppSchema : appSchemaCache[name]
+  name = name.toLowerCase();
+  return !name ? rootAppSchema : appSchemaCache[name];
 }
 
 /**
  * Conv app as struct schema
  */
-export function getAppStructSchemaName(name: string)
-{
-    return `${appStructSchemaRoot}.${name}`
+export function getAppStructSchemaName(name: string) {
+  return `${appStructSchemaRoot}.${name}`;
 }
 
 //#endregion
 
 //#region Data Schema
 
-const schemaCache: { [key: string]: INodeSchema } = {}
-const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace }
-const arraySchemaMap: { [key: string]: INodeSchema } = {}
-const serverCallOnly: Set<string> = new Set()
-const schemaRefs: { [key:string]: number } = {}
-const schemaChangeWatcher = new DataChangeWatcher()
+const schemaCache: { [key: string]: INodeSchema } = {};
+const rootSchema: INodeSchema = { name: "", type: SchemaType.Namespace };
+const arraySchemaMap: { [key: string]: INodeSchema } = {};
+const serverCallOnly: Set<string> = new Set();
+const schemaRefs: { [key: string]: number } = {};
+const schemaChangeWatcher = new DataChangeWatcher();
 
 /**
  * Register the frontend schemas
  * @param schemas The schemas to be registered
  */
-export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadState = SchemaLoadState.Custom): void {
-    for (const schema of schemas) {
-        const name = schema.name.toLowerCase()
-        schema.loadState = (schema.loadState || 0) | loadState
+export function registerSchema(
+  schemas: INodeSchema[],
+  loadState: SchemaLoadState = SchemaLoadState.Custom,
+): void {
+  for (const schema of schemas) {
+    const name = schema.name.toLowerCase();
+    schema.loadState = (schema.loadState || 0) | loadState;
 
-        // for root namespace without name
-        if (isNull(name)) {
-            registerSchema(schema.schemas || [], loadState)
-            continue
-        }
-
-        // prepare
-        switch(schema.type)
-        {
-            case SchemaType.Enum:
-                if (schema.enum?.values)
-                    prepareEnumValueInfos(schema.enum.type, schema.enum.values)
-                break
-            case SchemaType.Scalar:
-                if (schema.scalar?.regex)
-                    schema.scalar.regex = schema.scalar.regex.replace(/\\\\/g, '\\')
-                break
-        }
-
-        const exist = schemaCache[name]
-
-        // combine
-        if (exist)
-        {
-            if (exist.type !== schema.type) continue
-
-            exist.display = combineLocaleString(exist.display, schema.display)
-            exist.auth = schema.auth || exist.auth
-            exist.usedBy = schema.usedBy || exist.usedBy
-            exist.usedByApp = schema.usedByApp || exist.usedByApp
-
-            if (schema.type === SchemaType.Namespace)
-            {
-                exist.loadState = (exist.loadState || 0) | (schema.loadState) | loadState
-            }
-            else
-            {
-                if ((exist.loadState || 0) > schema.loadState) continue
-                exist.loadState = schema.loadState
-            }
-
-            // remove refs
-            updateSchemaRefs(exist, false)
-            
-            switch(exist.type)
-            {
-                case SchemaType.Namespace:
-                    if (schema.schemas)
-                        registerSchema(schema.schemas, loadState)
-                    break
-                
-                case SchemaType.Enum:
-                    // keep sublist
-                    if (!schema.enum) continue
-                    if (schema.enum?.values){
-                        for(let i = 0; i < schema.enum.values.length; i++)
-                        {
-                            const value = schema.enum.values[i]
-                            value.subList = value.subList || exist.enum?.values?.find(v => v.value == value.value)?.subList
-                        }
-                    }
-                    exist.enum = schema.enum
-                    break
-
-                case SchemaType.Scalar:
-                    exist.scalar = combineSchema(schema.scalar, exist.scalar)
-                    break
-
-                case SchemaType.Struct:
-                    // since the frontend may define special features that override the backend
-                    if (!(((exist.loadState || 0) & SchemaLoadState.System) && exist.struct?.fields?.length))
-                        exist.struct = schema.struct || exist.struct
-                    break
-
-                case SchemaType.Array:
-                    exist.array = schema.array || exist.array
-                    break
-
-                case SchemaType.Func:
-                    // keep the frontend implementation
-                    if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
-                        exist.func = schema.func || exist.func
-                    break
-
-                case SchemaType.Policy:
-                    exist.policy = schema.policy
-                    break
-            }
-
-            // add refs
-            updateSchemaRefs(exist, true)
-            continue
-        }
-
-        // root namespace
-        const paths = name.split(".").filter(n => !isNull(n))
-        let root: INodeSchema = rootSchema
-        for (let i = 0; i < paths.length - 1; i++)
-        {
-            const p = paths.slice(0, i + 1).join(".")
-            let ns = schemaCache[p]
-            if (!ns)
-            {
-                ns = {
-                    name: p,
-                    type: SchemaType.Namespace,
-                    schemas: [],
-                    loadState: loadState
-                }
-                schemaCache[p] = ns
-                if(root) addSchema(root, ns)
-            }
-            root = ns
-            if (root.type !== SchemaType.Namespace) continue
-        }
-        
-        schemaCache[name] = schema
-
-        // append to the namespace
-        addSchema(root, schema)
-
-        // Only namespace require another load
-        if (schema.type !== SchemaType.Namespace)
-            schema.loaded = true
-
-        if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
-            arraySchemaMap[schema.array!.element.toLowerCase()] = schema
-
-        // add refs
-        updateSchemaRefs(schema, true)
-        
-        if (schema.type === SchemaType.Namespace && schema.schemas)
-        {
-            registerSchema([...schema.schemas], loadState)
-        }
+    // for root namespace without name
+    if (isNull(name)) {
+      registerSchema(schema.schemas || [], loadState);
+      continue;
     }
-    schemaChangeWatcher.notify(schemas.map(s => s.name))
+
+    // prepare
+    switch (schema.type) {
+      case SchemaType.Enum:
+        if (schema.enum?.values)
+          prepareEnumValueInfos(schema.enum.type, schema.enum.values);
+        break;
+      case SchemaType.Scalar:
+        if (schema.scalar?.regex)
+          schema.scalar.regex = schema.scalar.regex.replace(/\\\\/g, "\\");
+        break;
+    }
+
+    const exist = schemaCache[name];
+
+    // combine
+    if (exist) {
+      if (exist.type !== schema.type) continue;
+
+      exist.display = combineLocaleString(exist.display, schema.display);
+      exist.auth = schema.auth || exist.auth;
+      exist.usedBy = schema.usedBy || exist.usedBy;
+      exist.usedByApp = schema.usedByApp || exist.usedByApp;
+
+      if (schema.type === SchemaType.Namespace) {
+        exist.loadState = (exist.loadState || 0) | schema.loadState | loadState;
+      } else {
+        if ((exist.loadState || 0) > schema.loadState) continue;
+        exist.loadState = schema.loadState;
+      }
+
+      // remove refs
+      updateSchemaRefs(exist, false);
+
+      switch (exist.type) {
+        case SchemaType.Namespace:
+          if (schema.schemas) registerSchema(schema.schemas, loadState);
+          break;
+
+        case SchemaType.Enum:
+          // keep sublist
+          if (!schema.enum) continue;
+          if (schema.enum?.values) {
+            for (let i = 0; i < schema.enum.values.length; i++) {
+              const value = schema.enum.values[i];
+              value.subList =
+                value.subList ||
+                exist.enum?.values?.find((v) => v.value == value.value)
+                  ?.subList;
+            }
+          }
+          exist.enum = schema.enum;
+          break;
+
+        case SchemaType.Scalar:
+          exist.scalar = combineSchema(
+            schema.scalar as any,
+            exist.scalar as any,
+          );
+          break;
+
+        case SchemaType.Struct:
+          // since the frontend may define special features that override the backend
+          if (
+            !(
+              (exist.loadState || 0) & SchemaLoadState.System &&
+              exist.struct?.fields?.length
+            )
+          )
+            exist.struct = schema.struct || exist.struct;
+          break;
+
+        case SchemaType.Array:
+          exist.array = schema.array || exist.array;
+          break;
+
+        case SchemaType.Func:
+          // keep the frontend implementation
+          if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
+            exist.func = schema.func || exist.func;
+          break;
+
+        case SchemaType.Policy:
+          exist.policy = schema.policy;
+          break;
+      }
+
+      // add refs
+      updateSchemaRefs(exist, true);
+      continue;
+    }
+
+    // root namespace
+    const paths = name.split(".").filter((n) => !isNull(n));
+    let root: INodeSchema = rootSchema;
+    for (let i = 0; i < paths.length - 1; i++) {
+      const p = paths.slice(0, i + 1).join(".");
+      let ns = schemaCache[p];
+      if (!ns) {
+        ns = {
+          name: p,
+          type: SchemaType.Namespace,
+          schemas: [],
+          loadState: loadState,
+        };
+        schemaCache[p] = ns;
+        if (root) addSchema(root, ns);
+      }
+      root = ns;
+      if (root.type !== SchemaType.Namespace) continue;
+    }
+
+    schemaCache[name] = schema;
+
+    // append to the namespace
+    addSchema(root, schema);
+
+    // Only namespace require another load
+    if (schema.type !== SchemaType.Namespace) schema.loaded = true;
+
+    if (schema.type === SchemaType.Array && !isNull(schema.array?.element))
+      arraySchemaMap[schema.array!.element.toLowerCase()] = schema;
+
+    // add refs
+    updateSchemaRefs(schema, true);
+
+    if (schema.type === SchemaType.Namespace && schema.schemas) {
+      registerSchema([...schema.schemas], loadState);
+    }
+  }
+  schemaChangeWatcher.notify(schemas.map((s) => s.name));
 }
 
 /**
@@ -552,37 +645,34 @@ export function registerSchema(schemas: INodeSchema[], loadState: SchemaLoadStat
  * @param name the schema name
  * @return whether the schema is removed
  */
-export function removeSchema(name: string): boolean
-{
-    name = name.toLowerCase()
-    const schema = getCachedSchema(name)
-    if (!schema) return true
-    if (schema?.loadState && (schema?.loadState & SchemaLoadState.System)) return false
-    if (schema === rootSchema || schemaRefs[name]) return false
-    updateSchemaRefs(schema, false)
-    
-    const paths = name.split(".")
-    const pname = paths.slice(0, paths.length - 1).join(".")
-    const parent = getCachedSchema(pname)
-    if (parent)
-    {
-        const index = parent.schemas?.findIndex(s => s.name === schema.name)
-        if (!isNull(index) && index! >= 0)
-        {
-            parent.schemas?.splice(index!, 1)
-        }
+export function removeSchema(name: string): boolean {
+  name = name.toLowerCase();
+  const schema = getCachedSchema(name);
+  if (!schema) return true;
+  if (schema?.loadState && schema?.loadState & SchemaLoadState.System)
+    return false;
+  if (schema === rootSchema || schemaRefs[name]) return false;
+  updateSchemaRefs(schema, false);
+
+  const paths = name.split(".");
+  const pname = paths.slice(0, paths.length - 1).join(".");
+  const parent = getCachedSchema(pname);
+  if (parent) {
+    const index = parent.schemas?.findIndex((s) => s.name === schema.name);
+    if (!isNull(index) && index! >= 0) {
+      parent.schemas?.splice(index!, 1);
     }
-    delete schemaCache[name]
-    schemaChangeWatcher.notify([name])
-    return true
+  }
+  delete schemaCache[name];
+  schemaChangeWatcher.notify([name]);
+  return true;
 }
 
 /**
  * Subscribe schema change
  */
-export function subscribeSchemaChange(handler: Function)
-{
-    return schemaChangeWatcher.addWatcher(handler)
+export function subscribeSchemaChange(handler: Function) {
+  return schemaChangeWatcher.addWatcher(handler);
 }
 
 /**
@@ -591,40 +681,48 @@ export function subscribeSchemaChange(handler: Function)
  * @param generic the generic types
  * @returns The schema information
  */
-export async function getSchema(name: string, generic?: string | string[]): Promise<INodeSchema | undefined> {
-    // all schema names should be case insensitive
-    name = name.toLowerCase()
+export async function getSchema(
+  name: string,
+  generic?: string | string[],
+): Promise<INodeSchema | undefined> {
+  // all schema names should be case insensitive
+  name = name.toLowerCase();
 
-    // generic type
-    if (/^[tT]\d*$/.test(name)) {
-        const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0
-        if (!generic || Array.isArray(generic) && generic.length <= index) return undefined
-        name = Array.isArray(generic) ? generic[index] : generic
-        if (isNull(name)) return undefined
-    }
+  // generic type
+  if (/^[tT]\d*$/.test(name)) {
+    const index = name.length > 1 ? parseInt(name.substring(1)) - 1 : 0;
+    if (!generic || (Array.isArray(generic) && generic.length <= index))
+      return undefined;
+    name = Array.isArray(generic) ? generic[index] : generic;
+    if (isNull(name)) return undefined;
+  }
 
-    // geneiric implement check
-    const match = name.match(REGEX_GENERIC_IMPLEMENT)
-    let geneiricTypes: string[] = []
-    if (match && match.length >= 3)
-    {
-        geneiricTypes = match[2].split(",").map(t => t.trim())
-        name = match[1]
-    }
+  // geneiric implement check
+  const match = name.match(REGEX_GENERIC_IMPLEMENT);
+  let geneiricTypes: string[] = [];
+  if (match && match.length >= 3) {
+    geneiricTypes = match[2].split(",").map((t) => t.trim());
+    name = match[1];
+  }
 
-    // cache check
-    let schema = !name ? rootSchema : schemaCache[name]
-    let provider = getSchemaProvider()
-    if (schema?.loaded || !provider) return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
+  // cache check
+  let schema = !name ? rootSchema : schemaCache[name];
+  let provider = getSchemaProvider();
+  if (schema?.loaded || !provider)
+    return geneiricTypes.length
+      ? buildGenericType(schema, geneiricTypes)
+      : schema;
 
-    // load schema from provider
-    if(schema) schema.loaded = true
-    if (!provider) throw new Error(`Schema provider not provided to get ${name}`)
+  // load schema from provider
+  if (schema) schema.loaded = true;
+  if (!provider) throw new Error(`Schema provider not provided to get ${name}`);
 
-    // load schema from provider
-    await loadSchema(name)
-    schema = schema?.type === SchemaType.Namespace ? schema : schemaCache[name]
-    return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
+  // load schema from provider
+  await loadSchema(name);
+  schema = schema?.type === SchemaType.Namespace ? schema : schemaCache[name];
+  return geneiricTypes.length
+    ? buildGenericType(schema, geneiricTypes)
+    : schema;
 }
 
 /**
@@ -633,120 +731,123 @@ export async function getSchema(name: string, generic?: string | string[]): Prom
  * @returns The schema info
  */
 export function getCachedSchema(name: string): INodeSchema | undefined {
-    name = name.toLowerCase()
+  name = name.toLowerCase();
 
-    // conv app to struct
-    if (name.startsWith(appStructSchemaRoot))
-    {
-        const appName = name.substring(appStructSchemaRoot.length + 1)
-        const appSchema = getAppCachedSchema(appName)
-        if (appSchema)
-        {
-            if (!appSchema.nodeSchema && appSchema.fields?.length)
-            {
-                appSchema.nodeSchema = {
-                    name,
-                    type: SchemaType.Struct,
-                    display: appSchema.display,
-                    struct: {
-                        fields: appSchema.fields.map(f => ({
-                            name: f.name,
-                            type: f.type,
-                            display: f.display,
-                            desc: f.desc,
-                        })),
-                        relations: appSchema.relations?.map(r => r)
-                    }
-                }
-            }
-            return appSchema.nodeSchema
-        }
-        return
+  // conv app to struct
+  if (name.startsWith(appStructSchemaRoot)) {
+    const appName = name.substring(appStructSchemaRoot.length + 1);
+    const appSchema = getAppCachedSchema(appName);
+    if (appSchema) {
+      if (!appSchema.nodeSchema && appSchema.fields?.length) {
+        appSchema.nodeSchema = {
+          name,
+          type: SchemaType.Struct,
+          display: appSchema.display,
+          struct: {
+            fields: appSchema.fields.map((f) => ({
+              name: f.name,
+              type: f.type,
+              display: f.display,
+              desc: f.desc,
+            })),
+            relations: appSchema.relations?.map((r) => r),
+          },
+        };
+      }
+      return appSchema.nodeSchema;
     }
+    return;
+  }
 
-    // geneiric implement check
-    const match = name.match(REGEX_GENERIC_IMPLEMENT)
-    let geneiricTypes: string[] = []
-    if (match && match.length >= 3)
-    {
-        geneiricTypes = match[2].split(",").map(t => t.trim())
-        name = match[1]
-    }
+  // geneiric implement check
+  const match = name.match(REGEX_GENERIC_IMPLEMENT);
+  let geneiricTypes: string[] = [];
+  if (match && match.length >= 3) {
+    geneiricTypes = match[2].split(",").map((t) => t.trim());
+    name = match[1];
+  }
 
-    const schema = !name ? rootSchema : schemaCache[name]
-    return geneiricTypes.length ? buildGenericType(schema, geneiricTypes) : schema
+  const schema = !name ? rootSchema : schemaCache[name];
+  return geneiricTypes.length
+    ? buildGenericType(schema, geneiricTypes)
+    : schema;
 }
 
-let schemaCombineQuery: string[] = []
-let schemaQueries: { resolve: Function, reject: Function }[] = []
-let schemaQueryTask: number = 0
+let schemaCombineQuery: string[] = [];
+let schemaQueries: { resolve: Function; reject: Function }[] = [];
+let schemaQueryTask: number = 0;
 function loadSchema(name: string): Promise<INodeSchema[]> {
-    if (!schemaCombineQuery.includes(name)) 
-        schemaCombineQuery.push(name)
+  if (!schemaCombineQuery.includes(name)) schemaCombineQuery.push(name);
 
-    if (schemaQueryTask > 0) clearTimeout(schemaQueryTask)
-    schemaQueryTask = setTimeout(processLoadSchema, 100)
-    return new Promise<INodeSchema[]>((resolve, reject) => schemaQueries.push({ resolve, reject }))
+  if (schemaQueryTask > 0) clearTimeout(schemaQueryTask);
+  schemaQueryTask = setTimeout(processLoadSchema, 100);
+  return new Promise<INodeSchema[]>((resolve, reject) =>
+    schemaQueries.push({ resolve, reject }),
+  );
 }
 
-async function processLoadSchema()
-{
-    const names = schemaCombineQuery
-    const queries = schemaQueries
-    schemaCombineQuery = []
-    schemaQueries = []
+async function processLoadSchema() {
+  const names = schemaCombineQuery;
+  const queries = schemaQueries;
+  schemaCombineQuery = [];
+  schemaQueries = [];
 
-    try {
-        const schemas = await getSchemaProvider()!.loadSchema(names)
-        PrepareServerSchemas(schemas)
-        registerSchema(schemas, SchemaLoadState.Server)
-        queries.forEach(c => c.resolve(schemas))
-        return schemas
-    }
-    catch (ex) {
-        queries.forEach(c => c.reject(ex))
-        throw ex
-    }
+  try {
+    const schemas = await getSchemaProvider()!.loadSchema(names);
+    PrepareServerSchemas(schemas);
+    registerSchema(schemas, SchemaLoadState.Server);
+    queries.forEach((c) => c.resolve(schemas));
+    return schemas;
+  } catch (ex) {
+    queries.forEach((c) => c.reject(ex));
+    throw ex;
+  }
 }
 
 /**
  * Gets an array schema that use the target as element
  */
-export async function getArraySchema(name: string | INodeSchema, noautocreate: boolean = false): Promise<INodeSchema | undefined> {
-    const schema = typeof name === "string" ? await getSchema(name) : name
-    if (!schema) return undefined
-    if (schema.type === SchemaType.Array) return schema
-    name = schema.name.toLowerCase()
-    if (noautocreate || arraySchemaMap[name]) return arraySchemaMap[name]
+export async function getArraySchema(
+  name: string | INodeSchema,
+  noautocreate: boolean = false,
+): Promise<INodeSchema | undefined> {
+  const schema = typeof name === "string" ? await getSchema(name) : name;
+  if (!schema) return undefined;
+  if (schema.type === SchemaType.Array) return schema;
+  name = schema.name.toLowerCase();
+  if (noautocreate || arraySchemaMap[name]) return arraySchemaMap[name];
 
-    // provide the generic
-    return getCachedSchema(`system.list<${name}>`)
+  // provide the generic
+  return getCachedSchema(`system.list<${name}>`);
 }
 
 /**
  * Gets the generic parameter names of a schema
  */
-export function getGenericParameter(name: string | INodeSchema) : string[] | undefined
-{
-    const schema = typeof name === "string" ? getCachedSchema(name) : name
-    if (schema?.type == SchemaType.Array) {
-        if (schema.array?.element?.match(REGEX_GENERIC_TYPE)) {
-            return ["T"]
-        }
+export function getGenericParameter(
+  name: string | INodeSchema,
+): string[] | undefined {
+  const schema = typeof name === "string" ? getCachedSchema(name) : name;
+  if (schema?.type == SchemaType.Array) {
+    if (schema.array?.element?.match(REGEX_GENERIC_TYPE)) {
+      return ["T"];
     }
-    else if (schema?.type == SchemaType.Struct) {
-        const temp = new Set<string>()
-        const generics = schema.struct?.fields?.filter(f => { 
-            if (f.type.match(REGEX_GENERIC_TYPE)) {
-                if (!temp.has(f.type)) {
-                    temp.add(f.type)
-                    return true
-                }
-            } 
-            return false
-        })?.map(f => f.type) || []
-        return generics.length ? generics : undefined
-    }
+  } else if (schema?.type == SchemaType.Struct) {
+    const temp = new Set<string>();
+    const generics =
+      schema.struct?.fields
+        ?.filter((f) => {
+          if (f.type.match(REGEX_GENERIC_TYPE)) {
+            if (!temp.has(f.type)) {
+              temp.add(f.type);
+              return true;
+            }
+          }
+          return false;
+        })
+        ?.map((f) => f.type) || [];
+    return generics.length ? generics : undefined;
+  }
 }
 
 /**
@@ -755,103 +856,122 @@ export function getGenericParameter(name: string | INodeSchema) : string[] | und
  * @param target the target schema type
  * @param array check the element type if target is array
  */
-export async function isSchemaCanBeUseAs(name: string, target: string, array?: boolean): Promise<boolean> {
-    let schema = await getSchema(name)
-    let tarSchemInfo = await getSchema(target)
-    if (!schema || !tarSchemInfo) return false
-    if (schema === tarSchemInfo) return true
+export async function isSchemaCanBeUseAs(
+  name: string,
+  target: string,
+  array?: boolean,
+): Promise<boolean> {
+  let schema = await getSchema(name);
+  let tarSchemInfo = await getSchema(target);
+  if (!schema || !tarSchemInfo) return false;
+  if (schema === tarSchemInfo) return true;
 
-    // Compares by type
-    if (schema.type === SchemaType.Enum) {
-        // Enum > Scalar
-        if (tarSchemInfo.type === SchemaType.Scalar) {
-            // Enum > string
-            if (schema.enum?.type === EnumValueType.String) {
-                return await isSchemaCanBeUseAs(target, NS_SYSTEM_STRING)
-            }
-            // Enum > number
-            else {
-                return await isSchemaCanBeUseAs(target, NS_SYSTEM_NUMBER)
-            }
-        }
+  // Compares by type
+  if (schema.type === SchemaType.Enum) {
+    // Enum > Scalar
+    if (tarSchemInfo.type === SchemaType.Scalar) {
+      // Enum > string
+      if (schema.enum?.type === EnumValueType.String) {
+        return await isSchemaCanBeUseAs(target, NS_SYSTEM_STRING);
+      }
+      // Enum > number
+      else {
+        return await isSchemaCanBeUseAs(target, NS_SYSTEM_NUMBER);
+      }
     }
-    else if (schema.type === SchemaType.Scalar) {
-        // Scalar > Enum
-        if (tarSchemInfo.type === SchemaType.Enum) {
-            // String > enum
-            if (tarSchemInfo.enum?.type === EnumValueType.String) {
-                return await isSchemaCanBeUseAs(name, NS_SYSTEM_STRING)
-            }
-            // Int > enum
-            else if (tarSchemInfo.enum?.type === EnumValueType.Int || tarSchemInfo.enum?.type === EnumValueType.Flags) {
-                return await isSchemaCanBeUseAs(name, NS_SYSTEM_INT)
-            }
-        }
-        // Scalar > Scalar
-        else if (tarSchemInfo.type === SchemaType.Scalar) {
-            let isInt = false
-            let isTarInt = false
-
-            // Gets the base type
-            while (schema) {
-                if (schema.name === NS_SYSTEM_INT)
-                    isInt = true
-                if (!schema.scalar?.base)
-                    break
-                schema = await getSchema(schema.scalar.base)
-            }
-
-            while (tarSchemInfo) {
-                if (tarSchemInfo.name === NS_SYSTEM_INT)
-                    isInt = true
-                if (!tarSchemInfo.scalar?.base)
-                    break
-                tarSchemInfo = await getSchema(tarSchemInfo.scalar.base)
-            }
-
-            // All can be use as string
-            if (tarSchemInfo?.name === NS_SYSTEM_STRING) return true
-
-            // The root type must be the same
-            if (schema?.name !== tarSchemInfo?.name) return false
-
-            // number can be coverted
-            if (schema?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true
-
-            return true
-        }
-        // Scalar > Array Element
-        else if (tarSchemInfo.type === SchemaType.Array && array) {
-            return await isSchemaCanBeUseAs(name, tarSchemInfo.array!.element)
-        }
+  } else if (schema.type === SchemaType.Scalar) {
+    // Scalar > Enum
+    if (tarSchemInfo.type === SchemaType.Enum) {
+      // String > enum
+      if (tarSchemInfo.enum?.type === EnumValueType.String) {
+        return await isSchemaCanBeUseAs(name, NS_SYSTEM_STRING);
+      }
+      // Int > enum
+      else if (
+        tarSchemInfo.enum?.type === EnumValueType.Int ||
+        tarSchemInfo.enum?.type === EnumValueType.Flags
+      ) {
+        return await isSchemaCanBeUseAs(name, NS_SYSTEM_INT);
+      }
     }
-    else if (schema.type === SchemaType.Struct) {
-        // Array element
-        if (tarSchemInfo.type === SchemaType.Array && array)
-            tarSchemInfo = await getSchema(tarSchemInfo.array!.element)
+    // Scalar > Scalar
+    else if (tarSchemInfo.type === SchemaType.Scalar) {
+      let isInt = false;
+      let isTarInt = false;
 
-        // The target must be struct
-        if (tarSchemInfo?.type !== SchemaType.Struct) return name == NS_SYSTEM_LOCALE_STRING && await isSchemaCanBeUseAs(NS_SYSTEM_STRING, target)
-        if (schema.name === NS_SYSTEM_STRUCT || tarSchemInfo.name === NS_SYSTEM_STRUCT) return true
+      // Gets the base type
+      while (schema) {
+        if (schema.name === NS_SYSTEM_INT) isInt = true;
+        if (!schema.scalar?.base) break;
+        schema = await getSchema(schema.scalar.base);
+      }
 
-        // Compare the field
-        let match = 0;
-        for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
-            const tarfield = tarSchemInfo.struct!.fields[i]
-            const field = schema.struct!.fields.find(f => f.name === tarfield.name)
+      while (tarSchemInfo) {
+        if (tarSchemInfo.name === NS_SYSTEM_INT) isInt = true;
+        if (!tarSchemInfo.scalar?.base) break;
+        tarSchemInfo = await getSchema(tarSchemInfo.scalar.base);
+      }
 
-            if (!field && !tarfield.require) continue // pass require field
-            if (!field || !await isSchemaCanBeUseAs(field.type, tarfield.type)) return false
-            match++;
-        }
-        return match > 1
+      // All can be use as string
+      if (tarSchemInfo?.name === NS_SYSTEM_STRING) return true;
+
+      // The root type must be the same
+      if (schema?.name !== tarSchemInfo?.name) return false;
+
+      // number can be coverted
+      if (schema?.name === NS_SYSTEM_NUMBER) return isTarInt ? isInt : true;
+
+      return true;
     }
-    else if (schema.type === SchemaType.Array) {
-        if (tarSchemInfo.type !== SchemaType.Array) return array ? await isSchemaCanBeUseAs(schema.array!.element, target) : false
-        if (schema.name === NS_SYSTEM_ARRAY || tarSchemInfo.name === NS_SYSTEM_ARRAY) return true
-        return await isSchemaCanBeUseAs(schema.array!.element, tarSchemInfo.array!.element)
+    // Scalar > Array Element
+    else if (tarSchemInfo.type === SchemaType.Array && array) {
+      return await isSchemaCanBeUseAs(name, tarSchemInfo.array!.element);
     }
-    return false
+  } else if (schema.type === SchemaType.Struct) {
+    // Array element
+    if (tarSchemInfo.type === SchemaType.Array && array)
+      tarSchemInfo = await getSchema(tarSchemInfo.array!.element);
+
+    // The target must be struct
+    if (tarSchemInfo?.type !== SchemaType.Struct)
+      return (
+        name == NS_SYSTEM_LOCALE_STRING &&
+        (await isSchemaCanBeUseAs(NS_SYSTEM_STRING, target))
+      );
+    if (
+      schema.name === NS_SYSTEM_STRUCT ||
+      tarSchemInfo.name === NS_SYSTEM_STRUCT
+    )
+      return true;
+
+    // Compare the field
+    let match = 0;
+    for (let i = 0; i < tarSchemInfo.struct!.fields.length; i++) {
+      const tarfield = tarSchemInfo.struct!.fields[i];
+      const field = schema.struct!.fields.find((f) => f.name === tarfield.name);
+
+      if (!field && !tarfield.require) continue; // pass require field
+      if (!field || !(await isSchemaCanBeUseAs(field.type, tarfield.type)))
+        return false;
+      match++;
+    }
+    return match > 1;
+  } else if (schema.type === SchemaType.Array) {
+    if (tarSchemInfo.type !== SchemaType.Array)
+      return array
+        ? await isSchemaCanBeUseAs(schema.array!.element, target)
+        : false;
+    if (
+      schema.name === NS_SYSTEM_ARRAY ||
+      tarSchemInfo.name === NS_SYSTEM_ARRAY
+    )
+      return true;
+    return await isSchemaCanBeUseAs(
+      schema.array!.element,
+      tarSchemInfo.array!.element,
+    );
+  }
+  return false;
 }
 
 /**
@@ -859,164 +979,155 @@ export async function isSchemaCanBeUseAs(name: string, target: string, array?: b
  * @param name the schema type
  * @param value the value to be validation
  */
-export async function validateSchemaValue(name: string, value: any): Promise<boolean>
-{
-    const schema = await getSchema(name)
-    if (!schema) return true
+export async function validateSchemaValue(
+  name: string,
+  value: any,
+): Promise<boolean> {
+  const schema = await getSchema(name);
+  if (!schema) return true;
 
-    if (schema.type === SchemaType.Scalar)
-    {
-        const valueType = getScalarValueType(name)
-        if (!schema.scalar || !valueType) return true
-        
-        if (valueType & ScalarValueType.Boolean)
-        {
-            return typeof value === "boolean"
-        }
-        else if (valueType & ScalarValueType.Date)
-        {
-            return value instanceof Date
-        }
-        else if (valueType & ScalarValueType.Integer)
-        {
-            return typeof value === "number" && Math.floor(value) === value &&
-                (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
-                (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
-        }
-        else if (valueType & ScalarValueType.Number)
-        {
-            return typeof value === "number" &&
-                (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
-                (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
-        }
-        else if (valueType & ScalarValueType.String)
-        {
-            return typeof value === "string" &&
-                (isNull(schema.scalar.lowLimit) || value.length >= schema.scalar.lowLimit!) &&
-                (isNull(schema.scalar.upLimit) || value.length <= schema.scalar.upLimit!)
-        }
+  if (schema.type === SchemaType.Scalar) {
+    const valueType = getScalarValueType(name);
+    if (!schema.scalar || !valueType) return true;
+
+    if (valueType & ScalarValueType.Boolean) {
+      return typeof value === "boolean";
+    } else if (valueType & ScalarValueType.Date) {
+      return value instanceof Date;
+    } else if (valueType & ScalarValueType.Integer) {
+      return (
+        typeof value === "number" &&
+        Math.floor(value) === value &&
+        (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
+        (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
+      );
+    } else if (valueType & ScalarValueType.Number) {
+      return (
+        typeof value === "number" &&
+        (isNull(schema.scalar.lowLimit) || value >= schema.scalar.lowLimit!) &&
+        (isNull(schema.scalar.upLimit) || value <= schema.scalar.upLimit!)
+      );
+    } else if (valueType & ScalarValueType.String) {
+      return (
+        typeof value === "string" &&
+        (isNull(schema.scalar.lowLimit) ||
+          value.length >= schema.scalar.lowLimit!) &&
+        (isNull(schema.scalar.upLimit) ||
+          value.length <= schema.scalar.upLimit!)
+      );
     }
-    else if (schema.type === SchemaType.Enum)
-    {
-        const access = await getEnumAccessList(name, value)
-        return access.length > 0
+  } else if (schema.type === SchemaType.Enum) {
+    const access = await getEnumAccessList(name, value);
+    return access.length > 0;
+  } else if (schema.type === SchemaType.Struct) {
+    if (Array.isArray(value) || typeof value !== "object") return false;
+    for (let i = 0; i < schema.struct!.fields.length; i++) {
+      const field = schema.struct!.fields[i];
+      const val = value[field.name];
+      if (isNull(val)) {
+        if (field.require) return false;
+        continue;
+      }
+      if (!(await validateSchemaValue(field.type, val))) return false;
     }
-    else if(schema.type === SchemaType.Struct)
-    {
-        if (Array.isArray(value) || typeof value !== 'object') return false
-        for(let i = 0; i < schema.struct!.fields.length; i++)
-        {
-            const field = schema.struct!.fields[i]
-            const val = value[field.name]
-            if (isNull(val)) {
-                if (field.require) return false
-                continue
-            }
-            if (!await validateSchemaValue(field.type, val))
-                return false
-        }
+  } else if (schema.type === SchemaType.Array) {
+    if (!Array.isArray(value)) return false;
+    for (let i = 0; i < value.length; i++) {
+      if (!(await validateSchemaValue(schema.array!.element, value[i])))
+        return false;
     }
-    else if(schema.type === SchemaType.Array)
-    {
-        if (!Array.isArray(value)) return false
-        for(let i = 0; i < value.length; i++)
-        {
-            if (!await validateSchemaValue(schema.array!.element, value[i]))
-                return false
-        }
-    }
-    return true
+  }
+  return true;
 }
 
 /**
  * Whether the struct field can be used as index
  * @param config The struct field config
  */
-export async function isStructFieldIndexable(config: IStructFieldConfig)
-{
-    let schema: INodeSchema | null | undefined = await getSchema(config.type)
-    if (!schema) return false
-    switch (schema.type) {
-        case SchemaType.Scalar:
-            const valueType = getScalarValueType(schema.name)
-            if (!valueType) return false
-            if (valueType & ScalarValueType.String) 
-            {
-                let uplimit = (config as IStructScalarFieldConfig).upLimit
-                if (!isNull(uplimit) && uplimit <= 128) return true
+export async function isStructFieldIndexable(config: IStructFieldConfig) {
+  let schema: INodeSchema | null | undefined = await getSchema(config.type);
+  if (!schema) return false;
+  switch (schema.type) {
+    case SchemaType.Scalar:
+      const valueType = getScalarValueType(schema.name);
+      if (!valueType) return false;
+      if (valueType & ScalarValueType.String) {
+        let uplimit = (config as IStructScalarFieldConfig).upLimit;
+        if (!isNull(uplimit) && uplimit <= 128) return true;
 
-                while (schema && schema.name !== NS_SYSTEM_STRING)
-                {
-                    uplimit = schema.scalar?.upLimit
-                    if (!isNull(uplimit) && uplimit <= 128) return true
-                    schema = schema.scalar?.base
-                        ? await getSchema(schema.scalar.base)
-                        : null
-                }
+        while (schema && schema.name !== NS_SYSTEM_STRING) {
+          uplimit = schema.scalar?.upLimit;
+          if (!isNull(uplimit) && uplimit <= 128) return true;
+          schema = schema.scalar?.base
+            ? await getSchema(schema.scalar.base)
+            : null;
+        }
 
-                return false
-            }
-            return (valueType & INDEX_VALUE_TYPE) !== 0
-        case SchemaType.Enum:
-            return true
-        default:
-            return false
-    }
+        return false;
+      }
+      return (valueType & INDEX_VALUE_TYPE) !== 0;
+    case SchemaType.Enum:
+      return true;
+    default:
+      return false;
+  }
 }
 
-const genericSchemaCache: { [key: string]: INodeSchema } = {}
-function buildGenericType(schema: INodeSchema, genericTypes: string[]): INodeSchema | undefined {
-    if (!genericTypes?.length) return undefined
-    const genTypes = getGenericParameter(schema)
-    if (!genTypes || genTypes.length !== genericTypes.length) return undefined
+const genericSchemaCache: { [key: string]: INodeSchema } = {};
+function buildGenericType(
+  schema: INodeSchema,
+  genericTypes: string[],
+): INodeSchema | undefined {
+  if (!genericTypes?.length) return undefined;
+  const genTypes = getGenericParameter(schema);
+  if (!genTypes || genTypes.length !== genericTypes.length) return undefined;
 
-    const genKey = `${schema.name}<${genericTypes.join(",")}>`.toLowerCase()
-    if (genericSchemaCache[genKey]) return genericSchemaCache[genKey]
+  const genKey = `${schema.name}<${genericTypes.join(",")}>`.toLowerCase();
+  if (genericSchemaCache[genKey]) return genericSchemaCache[genKey];
 
-    if (schema.type === SchemaType.Array) {
-        const genSchema: INodeSchema = {
-            name: genKey,
-            type: SchemaType.Array,
-            display: _LS(`{[LIST.PREFIX]}{@${genericTypes[0]}}{[LIST.SUFFIX]}`),
-            loaded: true,
-            loadState: schema.loadState,
-            array: { element: genericTypes[0] }
-        }
-        genericSchemaCache[genKey] = genSchema
-        return genSchema
-    }
-    else if(schema.type === SchemaType.Struct) {
-        const genSchema: INodeSchema = {
-            name: genKey,
-            type: SchemaType.Struct,
-            display: schema.display,
-            loaded: true,
-            loadState: schema.loadState,
-            struct: {
-                fields: schema.struct!.fields.map(f => {
-                    if (f.type.match(REGEX_GENERIC_TYPE)) {
-                        const index = genTypes.indexOf(f.type)
-                        return {
-                            ...f,
-                            type: genericTypes[index]
-                        }
-                    }
-                    return f
-                }),
-                relations: schema.struct?.relations?.map(r => r)
-            }
-        }
-        genericSchemaCache[genKey] = genSchema
-        return genSchema
-    }
-    return undefined
+  if (schema.type === SchemaType.Array) {
+    const genSchema: INodeSchema = {
+      name: genKey,
+      type: SchemaType.Array,
+      display: _LS(`{[LIST.PREFIX]}{@${genericTypes[0]}}{[LIST.SUFFIX]}`),
+      loaded: true,
+      loadState: schema.loadState,
+      array: { element: genericTypes[0] },
+    };
+    genericSchemaCache[genKey] = genSchema;
+    return genSchema;
+  } else if (schema.type === SchemaType.Struct) {
+    const genSchema: INodeSchema = {
+      name: genKey,
+      type: SchemaType.Struct,
+      display: schema.display,
+      loaded: true,
+      loadState: schema.loadState,
+      struct: {
+        fields: schema.struct!.fields.map((f) => {
+          if (f.type.match(REGEX_GENERIC_TYPE)) {
+            const index = genTypes.indexOf(f.type);
+            return {
+              ...f,
+              type: genericTypes[index],
+            };
+          }
+          return f;
+        }),
+        relations: schema.struct?.relations?.map((r) => r),
+      },
+    };
+    genericSchemaCache[genKey] = genSchema;
+    return genSchema;
+  }
+  return undefined;
 }
 
 interface IFieldAccessWhiteListItem {
-    value: string,
-    label: string,
-    match: boolean,
-    children?: IFieldAccessWhiteListItem[]
+  value: string;
+  label: string;
+  match: boolean;
+  children?: IFieldAccessWhiteListItem[];
 }
 
 /**
@@ -1026,94 +1137,104 @@ interface IFieldAccessWhiteListItem {
  * @param mapFilter Whether map the filter
  * @returns The field access white list
  */
-export async function getFieldAccessWhiteList(type: string, fields: { name: string, display?: ILocaleString, type: string }[], prefix: string = "", noDepth: boolean = false, matchArray: boolean = false): Promise<IFieldAccessWhiteListItem[]>
-{
-    const result: IFieldAccessWhiteListItem[] = []
-    for(const field of fields)
-    {
-        const value = prefix ? `${prefix}.${field.name}` : field.name
-        const res: IFieldAccessWhiteListItem = {
-            value: value,
-            match: false,
-            label: _L(field.display) || field.name
-        }
-        if (!type || await isSchemaCanBeUseAs(field.type, type, matchArray))
-        {
-            res.match = true
-        }
-        
-        if (!noDepth && (!res.match || !type))
-        {
-            let fieldSchema = await getSchema(field.type)
-            if (fieldSchema?.type === SchemaType.Array && matchArray && fieldSchema.array?.element)
-                fieldSchema = await getSchema(fieldSchema.array.element)
-
-            if (fieldSchema?.type === SchemaType.Struct)
-            {
-                const subList = await getFieldAccessWhiteList(type, fieldSchema.struct!.fields, value)
-                if (subList.length) res.children = subList
-            }
-        }
-        if (res.match || (res.children && res.children.length)) result.push(res)
+export async function getFieldAccessWhiteList(
+  type: string,
+  fields: { name: string; display?: ILocaleString; type: string }[],
+  prefix: string = "",
+  noDepth: boolean = false,
+  matchArray: boolean = false,
+): Promise<IFieldAccessWhiteListItem[]> {
+  const result: IFieldAccessWhiteListItem[] = [];
+  for (const field of fields) {
+    const value = prefix ? `${prefix}.${field.name}` : field.name;
+    const res: IFieldAccessWhiteListItem = {
+      value: value,
+      match: false,
+      label: _L(field.display) || field.name,
+    };
+    if (!type || (await isSchemaCanBeUseAs(field.type, type, matchArray))) {
+      res.match = true;
     }
-    return result
+
+    if (!noDepth && (!res.match || !type)) {
+      let fieldSchema = await getSchema(field.type);
+      if (
+        fieldSchema?.type === SchemaType.Array &&
+        matchArray &&
+        fieldSchema.array?.element
+      )
+        fieldSchema = await getSchema(fieldSchema.array.element);
+
+      if (fieldSchema?.type === SchemaType.Struct) {
+        const subList = await getFieldAccessWhiteList(
+          type,
+          fieldSchema.struct!.fields,
+          value,
+        );
+        if (subList.length) res.children = subList;
+      }
+    }
+    if (res.match || (res.children && res.children.length)) result.push(res);
+  }
+  return result;
 }
 
 //#endregion
 
 //#region scalar
 
-const scalarValueMap:{ [key:string]: ScalarValueType } = {}
+const scalarValueMap: { [key: string]: ScalarValueType } = {};
 
 /**
  * Gets the value type from scalar type
  * @param type The scalar type
  * @returns the value type
  */
-export function getScalarValueType(type: string):ScalarValueType {
-    if ((getCachedSchema(type))?.type !== SchemaType.Scalar) return ScalarValueType.None
+export function getScalarValueType(type: string): ScalarValueType {
+  if (getCachedSchema(type)?.type !== SchemaType.Scalar)
+    return ScalarValueType.None;
 
-    let valueType = 0
-    type = type.toLowerCase()
-    if (scalarValueMap[type]) return scalarValueMap[type]
+  let valueType = 0;
+  type = type.toLowerCase();
+  if (scalarValueMap[type]) return scalarValueMap[type];
 
-    // check by name
-    let typeName: string | undefined = type
-    while (typeName) {
-        switch (typeName) {
-            case NS_SYSTEM_BOOL:
-                valueType |= ScalarValueType.Boolean
-                break;
-            case NS_SYSTEM_STRING:
-                valueType |= ScalarValueType.String
-                break;
-            case NS_SYSTEM_DATE:
-                valueType |= ScalarValueType.Date
-                break;
-            case NS_SYSTEM_YEAR:
-                valueType |= ScalarValueType.Date
-                valueType |= ScalarValueType.Year
-                break;
-            case NS_SYSTEM_FULLDATE:
-                valueType |= ScalarValueType.FullDate
-                break;
-            case NS_SYSTEM_YEARMONTH:
-                valueType |= ScalarValueType.YearMonth
-                break;
-            case NS_SYSTEM_NUMBER:
-                valueType |= ScalarValueType.Number
-                break;
-            case NS_SYSTEM_INT:
-                valueType |= ScalarValueType.Integer
-                break;
-            case NS_SYSTEM_GUID:
-                valueType |= ScalarValueType.String
-                break;
-        }
-        typeName = (getCachedSchema(typeName))?.scalar?.base
+  // check by name
+  let typeName: string | undefined = type;
+  while (typeName) {
+    switch (typeName) {
+      case NS_SYSTEM_BOOL:
+        valueType |= ScalarValueType.Boolean;
+        break;
+      case NS_SYSTEM_STRING:
+        valueType |= ScalarValueType.String;
+        break;
+      case NS_SYSTEM_DATE:
+        valueType |= ScalarValueType.Date;
+        break;
+      case NS_SYSTEM_YEAR:
+        valueType |= ScalarValueType.Date;
+        valueType |= ScalarValueType.Year;
+        break;
+      case NS_SYSTEM_FULLDATE:
+        valueType |= ScalarValueType.FullDate;
+        break;
+      case NS_SYSTEM_YEARMONTH:
+        valueType |= ScalarValueType.YearMonth;
+        break;
+      case NS_SYSTEM_NUMBER:
+        valueType |= ScalarValueType.Number;
+        break;
+      case NS_SYSTEM_INT:
+        valueType |= ScalarValueType.Integer;
+        break;
+      case NS_SYSTEM_GUID:
+        valueType |= ScalarValueType.String;
+        break;
     }
-    scalarValueMap[type] = valueType
-    return valueType
+    typeName = getCachedSchema(typeName)?.scalar?.base;
+  }
+  scalarValueMap[type] = valueType;
+  return valueType;
 }
 
 //#endregion
@@ -1127,89 +1248,99 @@ export function getScalarValueType(type: string):ScalarValueType {
  * @param deep query deep sub list
  * @returns the sub list of the given enum value
  */
-export async function getEnumSubList(name: string, value?: any, deep?: boolean): Promise<IEnumValueInfo[]> {
-    const schema = await getSchema(name)
-    if (!schema?.enum || schema?.type !== SchemaType.Enum) return []
+export async function getEnumSubList(
+  name: string,
+  value?: any,
+  deep?: boolean,
+): Promise<IEnumValueInfo[]> {
+  const schema = await getSchema(name);
+  if (!schema?.enum || schema?.type !== SchemaType.Enum) return [];
 
-    // root list
-    if (isNull(value))
-    {
-        if (schema.enum.values && schema.enum.values.length) return schema.enum.values
-        
-        // check load state
-        if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
+  // root list
+  if (isNull(value)) {
+    if (schema.enum.values && schema.enum.values.length)
+      return schema.enum.values;
 
-        let provider = getSchemaProvider()
-        if (!provider) throw new Error("Schema provider not provided")
-        const einfos = await provider.loadEnumSubList(name, value, deep)
-        prepareEnumValueInfos(schema.enum.type, einfos)
-        schema.enum.values = einfos
-        return einfos
-    }
-    
-    let search = searchEnumValue(schema.enum.values, value)
-    let einfo = search.length ? search[search.length - 1] : undefined
-    if (einfo) {
-        if (einfo.hasSubList === false || einfo.subList && einfo.subList.length) return einfo.subList || []
-    }
-    
     // check load state
-    if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
+    if (
+      schema.loadState &&
+      (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server
+    )
+      return [];
 
-    let provider = getSchemaProvider()
-    if (!provider) throw new Error("Schema provider not provided")
+    let provider = getSchemaProvider();
+    if (!provider) throw new Error("Schema provider not provided");
+    const einfos = await provider.loadEnumSubList(name, value, deep);
+    prepareEnumValueInfos(schema.enum.type, einfos);
+    schema.enum.values = einfos;
+    return einfos;
+  }
 
-    // only require sub list
-    if (einfo)
-    {
-        const einfos = await provider.loadEnumSubList(name, value, deep)
-        prepareEnumValueInfos(schema.enum.type, einfos)
-        einfo.subList = einfos
-        einfo.hasSubList = einfos.length > 0
-        return einfos
+  let search = searchEnumValue(schema.enum.values, value);
+  let einfo = search.length ? search[search.length - 1] : undefined;
+  if (einfo) {
+    if (einfo.hasSubList === false || (einfo.subList && einfo.subList.length))
+      return einfo.subList || [];
+  }
+
+  // check load state
+  if (
+    schema.loadState &&
+    (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server
+  )
+    return [];
+
+  let provider = getSchemaProvider();
+  if (!provider) throw new Error("Schema provider not provided");
+
+  // only require sub list
+  if (einfo) {
+    const einfos = await provider.loadEnumSubList(name, value, deep);
+    prepareEnumValueInfos(schema.enum.type, einfos);
+    einfo.subList = einfos;
+    einfo.hasSubList = einfos.length > 0;
+    return einfos;
+  }
+
+  // need full access
+  const access = await provider.loadEnumAccessList(name, value, false, true);
+  if (!access?.length) return [];
+  prepareEnumAccesses(schema.enum.type, access);
+
+  // combine
+  schema.enum.values ||= [];
+  let root = schema.enum.values;
+  for (let i = 0; i < access.length; i++) {
+    if (!root.length) root.splice(0, 0, ...access[i].subList);
+
+    if (access[i].value) {
+      let match = root.find((r) => r.value == access[i].value);
+      if (!match) {
+        // rebuild all
+        root.splice(0, 0, ...access[i].subList);
+        match = root.find((r) => r.value == access[i].value);
+      }
+      if (!match) continue;
+
+      if (i < access.length - 1) {
+        match.hasSubList = true;
+        match.subList ||= [];
+        root = match.subList;
+      }
     }
+  }
 
-    // need full access
-    const access = await provider.loadEnumAccessList(name, value, false, true)
-    if (!access?.length) return []
-    prepareEnumAccesses(schema.enum.type, access)
-    
-    // combine
-    schema.enum.values ||= []
-    let root = schema.enum.values
-    for(let i = 0; i < access.length; i++)
-    {
-        if (!root.length)
-            root.splice(0, 0, ...access[i].subList)
+  // check
+  search = searchEnumValue(schema.enum.values, value);
+  einfo = search.length ? search[search.length - 1] : undefined;
+  if (!einfo || !einfo.hasSubList) return [];
+  if (einfo.subList?.length) return einfo.subList;
 
-        if (access[i].value){
-            let match = root.find(r => r.value == access[i].value)
-            if (!match) {
-                // rebuild all
-                root.splice(0, 0, ...access[i].subList)
-                match = root.find(r => r.value == access[i].value)
-            }
-            if (!match) continue
-            
-            if (i < access.length - 1) {
-                match.hasSubList = true
-                match.subList ||= []
-                root = match.subList
-            }
-        }
-    }
-    
-    // check
-    search = searchEnumValue(schema.enum.values, value)
-     einfo = search.length ? search[search.length - 1] : undefined
-    if (!einfo || !einfo.hasSubList) return []
-    if (einfo.subList?.length) return einfo.subList
-
-    // try reload
-    einfo.subList = await provider.loadEnumSubList(name, value, deep)
-    if (!einfo.subList.length) einfo.hasSubList = false
-    prepareEnumValueInfos(schema.enum.type, einfo.subList)
-    return einfo.subList
+  // try reload
+  einfo.subList = await provider.loadEnumSubList(name, value, deep);
+  if (!einfo.subList.length) einfo.hasSubList = false;
+  prepareEnumValueInfos(schema.enum.type, einfo.subList);
+  return einfo.subList;
 }
 
 /**
@@ -1217,102 +1348,117 @@ export async function getEnumSubList(name: string, value?: any, deep?: boolean):
  * @param name The enum schema name
  * @param value the enum value
  */
-export async function getEnumAccessList(name: string, value: any): Promise<IEnumValueAccess[]> {
-    const schema = await getSchema(name)
-    if (!schema?.enum || schema.type !== SchemaType.Enum) return []
-    
-    // search
-    const search = searchEnumValue(schema.enum.values, value)
-    if (search.length)
-    {
-        return search.map((s, i) => ({
-            name: schema.enum!.cascade?.length ? schema.enum?.cascade[i]! : _LS(""),
-            value: s.value,
-            subList: (i == 0 ? schema.enum?.values : search[i - 1].subList) || []
-        }))
+export async function getEnumAccessList(
+  name: string,
+  value: any,
+): Promise<IEnumValueAccess[]> {
+  const schema = await getSchema(name);
+  if (!schema?.enum || schema.type !== SchemaType.Enum) return [];
+
+  // search
+  const search = searchEnumValue(schema.enum.values, value);
+  if (search.length) {
+    return search.map((s, i) => ({
+      name: schema.enum!.cascade?.length ? schema.enum?.cascade[i]! : _LS(""),
+      value: s.value,
+      subList: (i == 0 ? schema.enum?.values : search[i - 1].subList) || [],
+    }));
+  }
+
+  // check load state
+  if (
+    schema.loadState &&
+    (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server
+  )
+    return [];
+
+  // query
+  let provider = getSchemaProvider();
+  if (!provider) throw new Error("Schema provider not provided");
+  const access = await provider.loadEnumAccessList(name, value);
+
+  // combine
+  if (!access?.length) return [];
+  prepareEnumAccesses(schema.enum.type, access);
+
+  // combine
+  schema.enum.values ||= [];
+  let root = schema.enum.values;
+  for (let i = 0; i < access.length; i++) {
+    if (!root.length) root.splice(0, 0, ...access[i].subList);
+
+    if (access[i].value) {
+      let match = root.find((r) => r.value == access[i].value);
+      if (!match) {
+        // rebuild all
+        root.splice(0, 0, ...access[i].subList);
+        match = root.find((r) => r.value == access[i].value);
+      }
+
+      if (!match) continue;
+
+      if (i < access.length - 1) {
+        match.hasSubList = true;
+        match.subList ||= [];
+        root = match.subList;
+      }
     }
+  }
 
-    // check load state
-    if (schema.loadState && (schema.loadState & SchemaLoadState.Server) !== SchemaLoadState.Server) return []
-
-    // query
-    let provider = getSchemaProvider()
-    if (!provider) throw new Error("Schema provider not provided")
-    const access = await provider.loadEnumAccessList(name, value)
-
-    // combine
-    if (!access?.length) return []
-    prepareEnumAccesses(schema.enum.type, access)
-    
-    // combine
-    schema.enum.values ||= []
-    let root = schema.enum.values
-    for(let i = 0; i < access.length; i++)
-    {
-        if (!root.length)
-            root.splice(0, 0, ...access[i].subList)
-
-        if (access[i].value){
-            let match = root.find(r => r.value == access[i].value)
-            if (!match) {
-                // rebuild all
-                root.splice(0, 0, ...access[i].subList)
-                match = root.find(r => r.value == access[i].value)
-            }
-            
-            if (!match) continue
-
-            if (i < access.length - 1) {
-                match.hasSubList = true
-                match.subList ||= []
-                root = match.subList
-            }
-        }
-    }
-
-    return access
+  return access;
 }
 
 /**
- * Save the enum sub list, only works for non-server schema 
+ * Save the enum sub list, only works for non-server schema
  */
-export function saveEnumSubList(name: string, value: any, subList: IEnumValueInfo[]): boolean {
-    if (isNull(value)) return false
+export function saveEnumSubList(
+  name: string,
+  value: any,
+  subList: IEnumValueInfo[],
+): boolean {
+  if (isNull(value)) return false;
 
-    const schema = getCachedSchema(name)
-    if (!schema?.enum || schema?.type !== SchemaType.Enum || ((schema.loadState || 0) & SchemaLoadState.System)) return false
-    
-    let search = searchEnumValue(schema.enum.values, value)
-    let einfo = search.length ? search[search.length - 1] : undefined
-    if (einfo) {
-        subList.forEach(s => {
-            const e = einfo.subList?.find(l => l.value == s.value)
-            if(e)
-            {
-                s.subList = s.subList || e.subList
-            }
-        })
+  const schema = getCachedSchema(name);
+  if (
+    !schema?.enum ||
+    schema?.type !== SchemaType.Enum ||
+    (schema.loadState || 0) & SchemaLoadState.System
+  )
+    return false;
 
-        einfo.subList = subList
-        return true
-    }
-    return false
+  let search = searchEnumValue(schema.enum.values, value);
+  let einfo = search.length ? search[search.length - 1] : undefined;
+  if (einfo) {
+    subList.forEach((s) => {
+      const e = einfo.subList?.find((l) => l.value == s.value);
+      if (e) {
+        s.subList = s.subList || e.subList;
+      }
+    });
+
+    einfo.subList = subList;
+    return true;
+  }
+  return false;
 }
 
 //#endregion
 
 //#region schema function call
 
-const shareFuncCallResult: { [key: string]: any } = {}
+const shareFuncCallResult: { [key: string]: any } = {};
 const pendingCall: {
-    [key: string]: {
-        resolve: Function,
-        reject: Function
-    }[]
-} = {}
-const pendingComplexCall: any = {}
+  [key: string]: {
+    resolve: Function;
+    reject: Function;
+  }[];
+} = {};
+const pendingComplexCall: any = {};
 
-const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], retType?: string, target?: string) => getSchemaProvider()!.callFunction(schemaName, args, retType, target))
+const callSchemaFunctionQueue = useQueueQuery(
+  (schemaName: string, args: any[], retType?: string, target?: string) =>
+    getSchemaProvider()!.callFunction(schemaName, args, retType, target),
+);
 
 /**
  * Call the function schema from the server with the arguments and type, gets the result
@@ -1321,115 +1467,131 @@ const callSchemaFunctionQueue = useQueueQuery((schemaName: string, args: any[], 
  * @param retType The return type of the function
  * @returns The schema information
  */
-export async function callSchemaFunction(schemaName: string, args: any[], retType?: string, target?: string): Promise<any> {
-    const schema = await getSchema(schemaName)
-    if (!schema || schema.type !== SchemaType.Func) throw Error(`${schemaName} is not a function schema`)
-    const funcInfo = schema.func!
+export async function callSchemaFunction(
+  schemaName: string,
+  args: any[],
+  retType?: string,
+  target?: string,
+): Promise<any> {
+  const schema = await getSchema(schemaName);
+  if (!schema || schema.type !== SchemaType.Func)
+    throw Error(`${schemaName} is not a function schema`);
+  const funcInfo = schema.func!;
 
-    // Pre-check the function arguments
-    for (let i = 0; i < funcInfo.args.length; i++) {
-        if (isNull(args[i]) && !funcInfo.args[i].nullable) return null
+  // Pre-check the function arguments
+  for (let i = 0; i < funcInfo.args.length; i++) {
+    if (isNull(args[i]) && !funcInfo.args[i].nullable) return null;
+  }
+
+  // Try build the function
+  if (!(funcInfo.func || serverCallOnly.has(schema.name))) {
+    if (!(await buildFunction(funcInfo))) serverCallOnly.add(schema.name);
+  }
+
+  // Client function call it direclty
+  if (funcInfo.func && (!funcInfo.server || !getSchemaProvider())) {
+    return await callFunc(funcInfo.func, args);
+  }
+
+  // Schema provider check
+  if (!getSchemaProvider()) throw new Error("Schema provider not provided");
+
+  // Combine and queue
+  let token =
+    !args || !args.length
+      ? schema.name
+      : args.findIndex((a) => a && typeof a === "object") < 0
+      ? `${schema.name}:${JSON.stringify(args)}`
+      : null;
+  if (token) {
+    if (target) token = `${token}->${target}`;
+
+    const result = shareFuncCallResult[token];
+    if (result !== undefined) return result;
+
+    // avoid repeat call in the same time
+    if (pendingCall[token])
+      return await new Promise((resolve, reject) =>
+        pendingCall[token!].push({ resolve, reject }),
+      );
+
+    // init
+    pendingCall[token] = [];
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    try {
+      const res = await callSchemaFunctionQueue(
+        schema.name,
+        args,
+        retType,
+        target,
+      );
+      if (!funcInfo.nocache) shareFuncCallResult[token] = res;
+      pendingCall[token].forEach((c) => c.resolve(res));
+      return res;
+    } catch (ex) {
+      pendingCall[token].forEach((c) => c.reject(ex));
+      throw ex;
+    } finally {
+      delete pendingCall[token];
+      if (!funcInfo.nocache && !args.length)
+        // reset
+        setTimeout(() => delete shareFuncCallResult[token!], 1000);
+    }
+  } else {
+    // Complex arguments
+    let root = pendingComplexCall[schema.name];
+    if (!root) {
+      root = new Map();
+      pendingComplexCall[schema.name] = root;
+    }
+    for (let i = 0; i < args.length; i++) {
+      const a = isNull(args[i]) ? "NULL_TOKEN" : args[i];
+      let next = root.get(a);
+      if (!next) {
+        next = new Map();
+        root.set(a, next);
+      }
+      root = next;
     }
 
-    // Try build the function
-    if (!(funcInfo.func || serverCallOnly.has(schema.name))) {
-        if (!await buildFunction(funcInfo)) serverCallOnly.add(schema.name)
+    if (target) {
+      let next = root.get(target);
+      if (!next) {
+        next = new Map();
+        root.set(target, next);
+      }
+      root = next;
     }
 
-    // Client function call it direclty
-    if (funcInfo.func && (!funcInfo.server || !getSchemaProvider())) {
-        return await callFunc(funcInfo.func, args)
+    // avoid multi call
+    let queue = root.get("CALL_QUEUE");
+    if (queue)
+      return await new Promise((resolve, reject) =>
+        queue.push({ resolve, reject }),
+      );
+
+    // init
+    queue = [];
+    root.set("CALL_QUEUE", queue);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // reset for next call
+    delete pendingComplexCall[schema.name];
+
+    try {
+      let res = await callSchemaFunctionQueue(
+        schema.name,
+        parseArgs(funcInfo, args),
+        retType,
+        target,
+      );
+      if (res === undefined) res = null;
+      queue.forEach((c: any) => c.resolve(res));
+      return res;
+    } catch (ex) {
+      queue.forEach((c: any) => c.reject(ex));
     }
-    
-    // Schema provider check
-    if (!getSchemaProvider()) throw new Error("Schema provider not provided")
-
-    // Combine and queue
-    let token = (!args || !args.length) 
-        ? schema.name
-        : args.findIndex(a => a && typeof a === "object") < 0
-            ? `${schema.name}:${JSON.stringify(args)}` 
-            : null
-    if (token) {
-        if (target) token = `${token}->${target}`
-
-        const result = shareFuncCallResult[token]
-        if (result !== undefined) return result
-
-        // avoid repeat call in the same time
-        if (pendingCall[token])
-            return await new Promise((resolve, reject) => pendingCall[token!].push({ resolve, reject }))
-
-        // init
-        pendingCall[token] = []
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        try {
-            const res = await callSchemaFunctionQueue(schema.name, args, retType, target)
-            if (!funcInfo.nocache) shareFuncCallResult[token] = res
-            pendingCall[token].forEach(c => c.resolve(res))
-            return res
-        }
-        catch (ex) {
-            pendingCall[token].forEach(c => c.reject(ex))
-            throw ex
-        }
-        finally {
-            delete pendingCall[token]
-            if (!funcInfo.nocache && !args.length) // reset
-                setTimeout(() => delete shareFuncCallResult[token!], 1000);
-        }
-    }
-    else
-    {
-        // Complex arguments
-        let root = pendingComplexCall[schema.name]
-        if (!root) {
-            root = new Map()
-            pendingComplexCall[schema.name] = root
-        }
-        for (let i = 0; i < args.length; i++) {
-            const a = isNull(args[i]) ? "NULL_TOKEN" : args[i]
-            let next = root.get(a)
-            if (!next) {
-                next = new Map()
-                root.set(a, next)
-            }
-            root = next
-        }
-
-        if (target) {
-            let next = root.get(target)
-            if (!next) {
-                next = new Map()
-                root.set(target, next)
-            }
-            root = next
-        }
-
-        // avoid multi call
-        let queue = root.get("CALL_QUEUE")
-        if (queue) return await new Promise((resolve, reject) => queue.push({ resolve, reject }))
-
-        // init
-        queue = []
-        root.set("CALL_QUEUE", queue)
-        await new Promise(resolve => setTimeout(resolve, 50))
-
-        // reset for next call
-        delete pendingComplexCall[schema.name]
-
-        try 
-        {
-            let res = await callSchemaFunctionQueue(schema.name, parseArgs(funcInfo, args), retType, target)
-            if (res === undefined) res = null
-            queue.forEach((c:any) => c.resolve(res))
-            return res
-        }
-        catch (ex) 
-        {
-            queue.forEach((c:any) => c.reject(ex))
-        }
-    }
+  }
 }
 
 /**
@@ -1437,14 +1599,15 @@ export async function callSchemaFunction(schemaName: string, args: any[], retTyp
  * @param name the schema name
  * @returns deletable
  */
-export function isSchemaDeletable(name: string)
-{
-    const schema = getCachedSchema(name)
-    if (!schema) return false
-    if (schema.loadState && (schema.loadState & SchemaLoadState.System)) return false
-    if (schemaRefs[schema.name.toLowerCase()]) return false
-    if (schema.type === SchemaType.Namespace && schema.schemas?.length) return false
-    return !schema.used
+export function isSchemaDeletable(name: string) {
+  const schema = getCachedSchema(name);
+  if (!schema) return false;
+  if (schema.loadState && schema.loadState & SchemaLoadState.System)
+    return false;
+  if (schemaRefs[schema.name.toLowerCase()]) return false;
+  if (schema.type === SchemaType.Namespace && schema.schemas?.length)
+    return false;
+  return !schema.used;
 }
 
 /**
@@ -1452,17 +1615,15 @@ export function isSchemaDeletable(name: string)
  * @param name the schema name
  * @return abstract
  */
-export function isAbstractSchema(name: string)
-{
-    const schema = getCachedSchema(name)
-    switch (schema?.type)
-    {
-        case SchemaType.Array:
-            return !schema.array?.element
-        case SchemaType.Struct:
-            return !schema.struct?.fields?.length
-    }
-    return false
+export function isAbstractSchema(name: string) {
+  const schema = getCachedSchema(name);
+  switch (schema?.type) {
+    case SchemaType.Array:
+      return !schema.array?.element;
+    case SchemaType.Struct:
+      return !schema.struct?.fields?.length;
+  }
+  return false;
 }
 
 //#endregion
@@ -1470,450 +1631,480 @@ export function isAbstractSchema(name: string)
 //#region helper
 
 // Add sub schema
-function addSchema(root: INodeSchema, schema: INodeSchema)
-{
-    root.schemas = root.schemas || []
-    root.schemas.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)
-    
-    const name = schema.name.toLowerCase()
-    for (let j = 0; j < root.schemas.length; j++)
-    {
-        const n = root.schemas[j].name.toLowerCase()
-        if (name === n) return
-        if (name < n)
-        {
-            root.schemas.splice(j, 0, schema)
-            return
-        }
+function addSchema(root: INodeSchema, schema: INodeSchema) {
+  root.schemas = root.schemas || [];
+  root.schemas.sort((a, b) =>
+    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
+  );
+
+  const name = schema.name.toLowerCase();
+  for (let j = 0; j < root.schemas.length; j++) {
+    const n = root.schemas[j].name.toLowerCase();
+    if (name === n) return;
+    if (name < n) {
+      root.schemas.splice(j, 0, schema);
+      return;
     }
-    root.schemas.push(schema)
+  }
+  root.schemas.push(schema);
 }
 
 const getExpValue = (name: string, expValues: { [key: string]: any }) => {
-    if (isNull(name)) return null
-    const paths = name.split(".").filter(p => !isNull(p))
-    let val = expValues[paths[0]]
-    for (let i = 1; i < paths.length; i++) {
-        if (isNull(val)) return null
-        val = val[paths[i]]
-    }
-    return val
-}
+  if (isNull(name)) return null;
+  const paths = name.split(".").filter((p) => !isNull(p));
+  let val = expValues[paths[0]];
+  for (let i = 1; i < paths.length; i++) {
+    if (isNull(val)) return null;
+    val = val[paths[i]];
+  }
+  return val;
+};
 
 // build the function schema to function
 async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
-    // server-side function
-    if (!funcInfo.exps.length || (funcInfo.server && getSchemaProvider())) return false
+  // server-side function
+  if (!funcInfo.exps.length || (funcInfo.server && getSchemaProvider()))
+    return false;
 
-    // arg or exp type map
-    const exptypes: { [key: string]: INodeSchema } = {}
-    for (let i = 0; i < funcInfo.args.length; i++) {
-        const expSchema = await getSchema(funcInfo.args[i].type, funcInfo.generic)
-        if (expSchema) exptypes[funcInfo.args[i].name] = expSchema
+  // arg or exp type map
+  const exptypes: { [key: string]: INodeSchema } = {};
+  for (let i = 0; i < funcInfo.args.length; i++) {
+    const expSchema = await getSchema(funcInfo.args[i].type, funcInfo.generic);
+    if (expSchema) exptypes[funcInfo.args[i].name] = expSchema;
+  }
+
+  const getExpType = async (name: string) => {
+    const paths = name.split(".").filter((p) => !isNull(p));
+    let schema: INodeSchema | undefined = exptypes[paths[0]];
+    for (let i = 1; i < paths.length; i++) {
+      if (schema?.type === SchemaType.Struct) {
+        const field = schema.struct!.fields.find((f) => f.name === paths[i]);
+        if (!field) return undefined;
+        schema = await getSchema(field.type);
+      } else {
+        return undefined;
+      }
+    }
+    return schema;
+  };
+
+  // build expressions
+  const exps: Expression[] = [];
+  for (let i = 0; i < funcInfo.exps.length; i++) {
+    const fexp = funcInfo.exps[i];
+    const retSchema = await getSchema(fexp.return); // every expression must have a result type
+    exptypes[fexp.name] = retSchema!;
+
+    // get the call func
+    const cfinfo = await getSchema(fexp.func);
+    if (
+      !cfinfo ||
+      !cfinfo.func ||
+      serverCallOnly.has(cfinfo.name) ||
+      (cfinfo.func.server && getSchemaProvider())
+    )
+      return false;
+
+    // try buil the call func
+    const cfuncInfo = cfinfo.func;
+    if (!cfuncInfo.func && !(await buildFunction(cfuncInfo))) {
+      serverCallOnly.add(cfinfo.name);
+      return false;
     }
 
-    const getExpType = async (name: string) => {
-        const paths = name.split(".").filter(p => !isNull(p))
-        let schema = exptypes[paths[0]]
-        for (let i = 1; i < paths.length; i++) {
-            if (schema?.type === SchemaType.Struct) {
-                const field = schema.struct!.fields.find(f => f.name === paths[i])
-                if (!field) return undefined
-                schema = await getSchema(field.type)
+    // array index
+    let arrayIndex: number = -1;
+    if (fexp.type !== ExpressionType.Call) {
+      // generic type check
+      const generic = cfuncInfo.generic
+        ? Array.isArray(cfuncInfo.generic)
+          ? [...cfuncInfo.generic]
+          : [cfuncInfo.generic]
+        : [];
+
+      // use exp type if the ret type is generic
+      if (/^[tT]\d*$/.test(cfuncInfo.return)) {
+        const gidx =
+          cfuncInfo.return.length > 1
+            ? parseInt(cfuncInfo.return.substring(1)) - 1
+            : 0;
+        if (retSchema) generic[gidx] = retSchema.name;
+      }
+
+      // argument check
+      for (
+        let j = 0;
+        j < Math.min(cfuncInfo.args.length, fexp.args.length);
+        j++
+      ) {
+        const carg = cfuncInfo.args[j];
+        let cargSchema = await getSchema(carg.type, generic); // null means any
+        const exp = fexp.args[j];
+        if (exp.name) {
+          const expschema = await getExpType(exp.name);
+          if (expschema) {
+            // Check if the exp is array for the arg, no type validation, should be done when define the exp
+            if (
+              expschema.type === SchemaType.Array &&
+              cargSchema?.type !== SchemaType.Array
+            ) {
+              arrayIndex = j;
             }
-            else {
-                return undefined
-            }
+          }
+          // for argument without type, write back
+          else if (cargSchema) {
+            exptypes[exp.name] = cargSchema;
+          }
         }
-        return schema
+      }
     }
 
-    // build expressions
-    const exps: Expression[] = []
-    for (let i = 0; i < funcInfo.exps.length; i++) {
-        const fexp = funcInfo.exps[i]
-        const retSchema = await getSchema(fexp.return) // every expression must have a result type
-        exptypes[fexp.name] = retSchema!
+    // prepare
+    exps.push({
+      name: fexp.name,
+      type: fexp.type,
+      func: cfuncInfo.func!,
+      args: fexp.args?.map((f, i) => ({
+        ...f,
+        require: !(cfuncInfo.args.length > i && cfuncInfo.args[i]?.nullable),
+      })),
+      return: retSchema!,
+      arrIndex: arrayIndex,
+    });
+  }
 
-        // get the call func
-        const cfinfo = await getSchema(fexp.func)
-        if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && getSchemaProvider())) return false
+  // check the return type if the func works as struct constructor
+  let objFields: string[] = [];
+  if (funcInfo.return) {
+    const retSchema = await getSchema(funcInfo.return, funcInfo.generic);
+    if (
+      retSchema?.type === SchemaType.Struct &&
+      !(await isSchemaCanBeUseAs(
+        exps[exps.length - 1].return.name,
+        retSchema.name,
+      ))
+    ) {
+      objFields = retSchema.struct!.fields.map((f) => f.name);
+    }
+  }
 
-        // try buil the call func
-        const cfuncInfo = cfinfo.func
-        if (!cfuncInfo.func && !await buildFunction(cfuncInfo)) {
-            serverCallOnly.add(cfinfo.name)
-            return false
-        }
+  // build the function
+  const args = funcInfo.args.map((a) => a.name);
+  funcInfo.func = async function () {
+    const expValues: { [key: string]: any } = {};
 
-        // array index
-        let arrayIndex: number = -1
-        if (fexp.type !== ExpressionType.Call) {
-            // generic type check
-            const generic = cfuncInfo.generic ? Array.isArray(cfuncInfo.generic) ? [...cfuncInfo.generic] : [cfuncInfo.generic] : []
-
-            // use exp type if the ret type is generic
-            if (/^[tT]\d*$/.test(cfuncInfo.return)) {
-                const gidx = cfuncInfo.return.length > 1 ? parseInt(cfuncInfo.return.substring(1)) - 1 : 0
-                if (retSchema) generic[gidx] = retSchema.name
-            }
-
-            // argument check
-            for (let j = 0; j < Math.min(cfuncInfo.args.length, fexp.args.length); j++) {
-                const carg = cfuncInfo.args[j]
-                let cargSchema = await getSchema(carg.type, generic) // null means any
-                const exp = fexp.args[j]
-                if (exp.name) {
-                    const expschema = await getExpType(exp.name)
-                    if (expschema) {
-                        // Check if the exp is array for the arg, no type validation, should be done when define the exp
-                        if (expschema.type === SchemaType.Array && cargSchema?.type !== SchemaType.Array) {
-                            arrayIndex = j
-                        }
-                    }
-                    // for argument without type, write back
-                    else if (cargSchema) {
-                        exptypes[exp.name] = cargSchema
-                    }
-                }
-            }
-        }
-
-        // prepare
-        exps.push({
-            name: fexp.name,
-            type: fexp.type,
-            func: cfuncInfo.func!,
-            args: fexp.args?.map((f, i) => ({ ...f, require: !(cfuncInfo.args.length > i && cfuncInfo.args[i]?.nullable) })),
-            return: retSchema!,
-            arrIndex: arrayIndex
-        })
+    // gets the arguments
+    for (let i = 0; i < args.length; i++) {
+      expValues[args[i]] = arguments[i];
     }
 
-    // check the return type if the func works as struct constructor
-    let objFields: string[] = []
-    if (funcInfo.return) {
-        const retSchema = await getSchema(funcInfo.return, funcInfo.generic)
-        if (retSchema?.type === SchemaType.Struct && !(await isSchemaCanBeUseAs(exps[exps.length - 1].return.name, retSchema.name))) {
-            objFields = retSchema.struct!.fields.map(f => f.name)
+    // process
+    for (let i = 0; i < exps.length; i++) {
+      const exp = exps[i];
+      const val = [];
+
+      if (exp.args) {
+        let valid = true;
+
+        for (let j = 0; j < exp.args.length; j++) {
+          const e = exp.args[j];
+          const v = e.name ? getExpValue(e.name, expValues) : e.value;
+
+          if (
+            isNull(v) &&
+            e.require &&
+            !(exp.type == ExpressionType.Reduce && j == 1)
+          ) {
+            valid = false;
+            break;
+          }
+
+          val.push(v);
         }
+
+        // not valid, pass
+        if (!valid) {
+          expValues[exp.name] = null;
+          continue;
+        }
+      }
+
+      // special case for ifret
+      switch (exp.func.name) {
+        case NS_SYSTEM_LOGIC_IFRET:
+          if (val[0]) return val[1];
+          break;
+        case NS_SYSTEM_LOGIC_IFNOT:
+          if (!val[0]) return val[1];
+          break;
+        case NS_SYSTEM_LOGIC_IFNULL:
+          if (isNull(val[0])) return val[1];
+          break;
+        case NS_SYSTEM_LOGIC_IFEMPTY:
+          if (isEmpty(val[0])) return val[1];
+          break;
+      }
+
+      // call
+      switch (exp.type) {
+        // direct call
+        case ExpressionType.Call:
+          expValues[exp.name] = await callFunc(exp.func, val);
+          break;
+
+        // map
+        case ExpressionType.Map:
+          {
+            const result = [];
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              result.push(await callFunc(exp.func, val));
+            }
+            expValues[exp.name] = result;
+          }
+          break;
+
+        // reduce
+        case ExpressionType.Reduce:
+          {
+            let array = val[exp.arrIndex];
+            let sumIndex = exp.arrIndex == 1 ? 0 : 1;
+            let hasInit = !isNull(val[sumIndex]);
+
+            if (!hasInit) {
+              val[sumIndex] = array[0];
+            }
+
+            for (let j = hasInit ? 0 : 1; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              val[sumIndex] = await callFunc(exp.func, val);
+            }
+            expValues[exp.name] = val[sumIndex];
+          }
+          break;
+
+        // first match
+        case ExpressionType.First:
+          {
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              if (await callFunc(exp.func, val)) {
+                expValues[exp.name] = array[j];
+                break;
+              }
+            }
+          }
+          break;
+
+        // last match
+        case ExpressionType.Last:
+          {
+            const array = val[exp.arrIndex];
+            for (let j = array.length - 1; j >= 0; j--) {
+              val[exp.arrIndex] = array[j];
+              if (await callFunc(exp.func, val)) {
+                expValues[exp.name] = array[j];
+                break;
+              }
+            }
+          }
+          break;
+
+        // filter
+        case ExpressionType.Filter:
+          {
+            const result = [];
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              if (await callFunc(exp.func, val)) result.push(array[j]);
+            }
+            expValues[exp.name] = result;
+          }
+          break;
+
+        // count
+        case ExpressionType.Count:
+          {
+            let count = 0;
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              if (await callFunc(exp.func, val)) count++;
+            }
+            expValues[exp.name] = count;
+          }
+          break;
+
+        // all
+        case ExpressionType.All:
+          {
+            let all = true;
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              if (!(await callFunc(exp.func, val))) {
+                all = false;
+                break;
+              }
+            }
+            expValues[exp.name] = all;
+          }
+          break;
+
+        // any
+        case ExpressionType.Any:
+          {
+            let any = false;
+            const array = val[exp.arrIndex];
+            for (let j = 0; j < array.length; j++) {
+              val[exp.arrIndex] = array[j];
+              if (await callFunc(exp.func, val)) {
+                any = true;
+                break;
+              }
+            }
+            expValues[exp.name] = any;
+          }
+          break;
+      }
     }
 
-    // build the function
-    const args = funcInfo.args.map(a => a.name)
-    funcInfo.func = async function () {
-        const expValues: { [key: string]: any } = {}
-
-        // gets the arguments
-        for (let i = 0; i < args.length; i++) {
-            expValues[args[i]] = arguments[i]
-        }
-
-        // process
-        for (let i = 0; i < exps.length; i++) {
-            const exp = exps[i]
-            const val = []
-
-            if (exp.args) {
-                let valid = true
-
-                for (let j = 0; j < exp.args.length; j++) {
-                    const e = exp.args[j]
-                    const v = e.name ? getExpValue(e.name, expValues) : e.value
-
-                    if (isNull(v) && e.require && !(exp.type == ExpressionType.Reduce && j == 1)) {
-                        valid = false
-                        break
-                    }
-
-                    val.push(v)
-                }
-
-                // not valid, pass
-                if (!valid) {
-                    expValues[exp.name] = null
-                    continue
-                }
-            }
-
-            // special case for ifret
-            switch (exp.func.name) {
-                case NS_SYSTEM_LOGIC_IFRET:
-                    if (val[0]) return val[1]
-                    break
-                case NS_SYSTEM_LOGIC_IFNOT:
-                    if (!val[0]) return val[1]
-                    break
-                case NS_SYSTEM_LOGIC_IFNULL:
-                    if (isNull(val[0])) return val[1]
-                    break
-                case NS_SYSTEM_LOGIC_IFEMPTY:
-                    if (isEmpty(val[0])) return val[1]
-                    break
-            }
-
-            // call
-            switch (exp.type) {
-                // direct call
-                case ExpressionType.Call:
-                    expValues[exp.name] = await callFunc(exp.func, val)
-                    break
-
-                // map
-                case ExpressionType.Map:
-                    {
-                        const result = []
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            result.push(await callFunc(exp.func, val))
-                        }
-                        expValues[exp.name] = result
-                    }
-                    break
-
-                // reduce
-                case ExpressionType.Reduce:
-                    {
-                        let array = val[exp.arrIndex]
-                        let sumIndex = exp.arrIndex == 1 ? 0 : 1
-                        let hasInit = !isNull(val[sumIndex])
-
-                        if (!hasInit) {
-                            val[sumIndex] = array[0]
-                        }
-
-                        for (let j = hasInit ? 0 : 1; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            val[sumIndex] = await callFunc(exp.func, val)
-                        }
-                        expValues[exp.name] = val[sumIndex]
-                    }
-                    break
-
-                // first match
-                case ExpressionType.First:
-                    {
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            if (await callFunc(exp.func, val)) {
-                                expValues[exp.name] = array[j]
-                                break
-                            }
-                        }
-                    }
-                    break
-
-                // last match
-                case ExpressionType.Last:
-                    {
-                        const array = val[exp.arrIndex]
-                        for (let j = array.length - 1; j >= 0; j--) {
-                            val[exp.arrIndex] = array[j]
-                            if (await callFunc(exp.func, val)) {
-                                expValues[exp.name] = array[j]
-                                break
-                            }
-                        }
-                    }
-                    break
-
-                // filter
-                case ExpressionType.Filter:
-                    {
-                        const result = []
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            if (await callFunc(exp.func, val))
-                                result.push(array[j])
-                        }
-                        expValues[exp.name] = result
-                    }
-                    break
-
-                // count
-                case ExpressionType.Count:
-                    {
-                        let count = 0
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            if (await callFunc(exp.func, val))
-                                count++
-                        }
-                        expValues[exp.name] = count
-                    }
-                    break
-
-                // all
-                case ExpressionType.All:
-                    {
-                        let all = true
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            if (!await callFunc(exp.func, val)) {
-                                all = false
-                                break
-                            }
-                        }
-                        expValues[exp.name] = all
-                    }
-                    break
-
-                // any
-                case ExpressionType.Any:
-                    {
-                        let any = false
-                        const array = val[exp.arrIndex]
-                        for (let j = 0; j < array.length; j++) {
-                            val[exp.arrIndex] = array[j]
-                            if (await callFunc(exp.func, val)) {
-                                any = true
-                                break
-                            }
-                        }
-                        expValues[exp.name] = any
-                    }
-                    break
-            }
-        }
-
-        // generate result
-        if (objFields.length > 0) {
-            const result: any = {}
-            objFields.forEach(f => result[f] = expValues[f])
-            return result
-        }
-        else {
-            return expValues[exps[exps.length - 1].name]
-        }
+    // generate result
+    if (objFields.length > 0) {
+      const result: any = {};
+      objFields.forEach((f) => (result[f] = expValues[f]));
+      return result;
+    } else {
+      return expValues[exps[exps.length - 1].name];
     }
+  };
 
-    return true
+  return true;
 }
 
 // parse args, reduce the size
 async function parseArgs(funcInfo: IFunctionSchema, args: any[]) {
-    if (!(funcInfo && funcInfo.args && funcInfo.args.length)) return args
+  if (!(funcInfo && funcInfo.args && funcInfo.args.length)) return args;
 
-    const retArgs: any[] = []
-    for (let i = 0; i < funcInfo.args.length; i++) {
-        if (args.length <= i) break
-        retArgs[i] = args[i]
+  const retArgs: any[] = [];
+  for (let i = 0; i < funcInfo.args.length; i++) {
+    if (args.length <= i) break;
+    retArgs[i] = args[i];
 
-        // only struct or struct array requrie conversion
-        let typeInfo = funcInfo.args[i].type ? await getSchema(funcInfo.args[i].type) : null
-        let isArray = false
-        if (typeInfo?.type === SchemaType.Array) {
-            isArray = true
-            typeInfo = typeInfo.array?.element ? await getSchema(typeInfo.array.element) : null
-        }
-        if (typeInfo?.type !== SchemaType.Struct || !typeInfo.struct || !typeInfo.struct.fields || !typeInfo.struct.fields.length) continue
-
-        // conversion
-        const fields = typeInfo.struct.fields.map(f => f.name)
-        const origin = args[i]
-        if (isArray) {
-            const maps: any[] = []
-            if (origin && Array.isArray(origin)) {
-                for (let j = 0; j < origin.length; j++) {
-                    const data = origin[j]
-                    if (data && typeof (data) === "object") {
-                        const map: any = {}
-                        for (let k = 0; k < fields.length; k++) {
-                            map[fields[k]] = data[fields[k]]
-                        }
-                        maps.push(map)
-                    }
-                }
-            }
-            retArgs[i] = maps
-        }
-        else if (origin && typeof (origin) == "object") {
-            const map: any = {}
-            for (let k = 0; k < fields.length; k++) {
-                map[fields[k]] = origin[fields[k]]
-            }
-            retArgs[i] = map
-        }
+    // only struct or struct array requrie conversion
+    let typeInfo = funcInfo.args[i].type
+      ? await getSchema(funcInfo.args[i].type)
+      : null;
+    let isArray = false;
+    if (typeInfo?.type === SchemaType.Array) {
+      isArray = true;
+      typeInfo = typeInfo.array?.element
+        ? await getSchema(typeInfo.array.element)
+        : null;
     }
-    return retArgs
+    if (
+      typeInfo?.type !== SchemaType.Struct ||
+      !typeInfo.struct ||
+      !typeInfo.struct.fields ||
+      !typeInfo.struct.fields.length
+    )
+      continue;
+
+    // conversion
+    const fields = typeInfo.struct.fields.map((f) => f.name);
+    const origin = args[i];
+    if (isArray) {
+      const maps: any[] = [];
+      if (origin && Array.isArray(origin)) {
+        for (let j = 0; j < origin.length; j++) {
+          const data = origin[j];
+          if (data && typeof data === "object") {
+            const map: any = {};
+            for (let k = 0; k < fields.length; k++) {
+              map[fields[k]] = data[fields[k]];
+            }
+            maps.push(map);
+          }
+        }
+      }
+      retArgs[i] = maps;
+    } else if (origin && typeof origin == "object") {
+      const map: any = {};
+      for (let k = 0; k < fields.length; k++) {
+        map[fields[k]] = origin[fields[k]];
+      }
+      retArgs[i] = map;
+    }
+  }
+  return retArgs;
 }
 
 async function callFunc(func: Function, args: any[]): Promise<any> {
-    const res = func(...args)
-    if (res instanceof Promise)
-        return await res
-    else
-        return res
+  const res = func(...args);
+  if (res instanceof Promise) return await res;
+  else return res;
 }
 
-function searchEnumValue(values: IEnumValueInfo[], value: any): IEnumValueInfo[] {
-    for(let i = 0; i < values.length; i++)
-    {
-        if (values[i].value == value) return [ values[i] ]
-        if (values[i].subList?.length)
-        {
-            const r = searchEnumValue(values[i].subList!, value)
-            if (r.length) return [ values[i], ...r ]
-        }
+function searchEnumValue(
+  values: IEnumValueInfo[],
+  value: any,
+): IEnumValueInfo[] {
+  for (let i = 0; i < values.length; i++) {
+    if (values[i].value == value) return [values[i]];
+    if (values[i].subList?.length) {
+      const r = searchEnumValue(values[i].subList!, value);
+      if (r.length) return [values[i], ...r];
     }
-    return []
+  }
+  return [];
 }
 
-function updateRef(name?: string, add?: boolean)
-{
-    if (!name) return
-    name = name.toLowerCase()
-    if (add)
-    {
-        schemaRefs[name] = (schemaRefs[name] || 0) + 1
-    }
-    else if (schemaRefs[name])
-    {
-        schemaRefs[name]--
-    }
+function updateRef(name?: string, add?: boolean) {
+  if (!name) return;
+  name = name.toLowerCase();
+  if (add) {
+    schemaRefs[name] = (schemaRefs[name] || 0) + 1;
+  } else if (schemaRefs[name]) {
+    schemaRefs[name]--;
+  }
 }
 
-function updateSchemaRefs(schema: INodeSchema, add: boolean)
-{
-    switch (schema.type)
-    {
-        case SchemaType.Scalar:
-            updateRef(schema.scalar?.base, add)
-            break
+function updateSchemaRefs(schema: INodeSchema, add: boolean) {
+  switch (schema.type) {
+    case SchemaType.Scalar:
+      updateRef(schema.scalar?.base, add);
+      break;
 
-        case SchemaType.Struct:
-            schema.struct?.fields?.forEach(f => updateRef(f.type, add))
-            schema.struct?.relations?.forEach(r => updateRef(r.func, add))
-            break
+    case SchemaType.Struct:
+      schema.struct?.fields?.forEach((f) => updateRef(f.type, add));
+      schema.struct?.relations?.forEach((r) => updateRef(r.func, add));
+      break;
 
-        case SchemaType.Array:
-            updateRef(schema.array?.element, add)
-            schema.array?.relations?.forEach(r => updateRef(r.func, add))
-            break
+    case SchemaType.Array:
+      updateRef(schema.array?.element, add);
+      schema.array?.relations?.forEach((r) => updateRef(r.func, add));
+      break;
 
-        case SchemaType.Func:
-            updateRef(schema.func?.return, add)
-            schema.func?.args?.forEach(a => updateRef(a.type, add))
-            schema.func?.exps?.forEach(e => {
-                updateRef(e.return, add)
-                updateRef(e.type, add)
-                updateRef(e.func, add)
-            })
-            break
-    }
+    case SchemaType.Func:
+      updateRef(schema.func?.return, add);
+      schema.func?.args?.forEach((a) => updateRef(a.type, add));
+      schema.func?.exps?.forEach((e) => {
+        updateRef(e.return, add);
+        updateRef(e.type, add);
+        updateRef(e.func, add);
+      });
+      break;
+  }
 }
 
-function updateAppSchemaRefs(schema: IAppSchema, add: boolean)
-{
-    schema.fields?.forEach(f => {
-        updateRef(f.type, add)
-        updateRef(f.func, add)
-    })
+function updateAppSchemaRefs(schema: IAppSchema, add: boolean) {
+  schema.fields?.forEach((f) => {
+    updateRef(f.type, add);
+    updateRef(f.func, add);
+  });
 }
 
 //#endregion
@@ -1922,226 +2113,229 @@ function updateAppSchemaRefs(schema: IAppSchema, add: boolean)
 
 // Scalar value type
 export enum ScalarValueType {
-    None = 0,
-    String = 1,
-    Number = 2,
-    Single = 4,
-    Double = 8,
-    Integer = 16,
-    Boolean = 32,
-    Date = 64,
-    Year = 128,
-    FullDate = 256,
-    YearMonth = 512,
-    Guid = 1024,
+  None = 0,
+  String = 1,
+  Number = 2,
+  Single = 4,
+  Double = 8,
+  Integer = 16,
+  Boolean = 32,
+  Date = 64,
+  Year = 128,
+  FullDate = 256,
+  YearMonth = 512,
+  Guid = 1024,
 }
 
-const INDEX_VALUE_TYPE = ScalarValueType.Integer | 
-    ScalarValueType.Boolean | 
-    ScalarValueType.Date |
-    ScalarValueType.Year |
-    ScalarValueType.FullDate |
-    ScalarValueType.YearMonth |
-    ScalarValueType.Guid
+const INDEX_VALUE_TYPE =
+  ScalarValueType.Integer |
+  ScalarValueType.Boolean |
+  ScalarValueType.Date |
+  ScalarValueType.Year |
+  ScalarValueType.FullDate |
+  ScalarValueType.YearMonth |
+  ScalarValueType.Guid;
 
 interface Expression {
-    /**
-     * The exp name
-     */
-    name: string
+  /**
+   * The exp name
+   */
+  name: string;
 
-    /**
-     * The call type
-     */
-    type: ExpressionTypeValue
+  /**
+   * The call type
+   */
+  type: ExpressionTypeValue;
 
-    /**
-     * The call func
-     */
-    func: Function
+  /**
+   * The call func
+   */
+  func: Function;
 
-    /**
-     * The arguments
-     */
-    args: IExpressionArg[]
+  /**
+   * The arguments
+   */
+  args: IExpressionArg[];
 
-    /**
-     * The return type
-     */
-    return: INodeSchema
+  /**
+   * The return type
+   */
+  return: INodeSchema;
 
-    /**
-     * The array index
-     */
-    arrIndex: number
+  /**
+   * The array index
+   */
+  arrIndex: number;
 }
 
 /**
  * The expression argument
  */
 interface IExpressionArg {
-    /**
-     * The exp name
-    */
-    name?: string
+  /**
+   * The exp name
+   */
+  name?: string;
 
-    /**
-     * the const value
-    */
-    value?: any
+  /**
+   * the const value
+   */
+  value?: any;
 
-    /**
-     * require
-     */
-    require: boolean
+  /**
+   * require
+   */
+  require: boolean;
 }
 
 //#endregion
 
 //#region Api schema Protocol
 
-export interface ISchemaApiProtocolRequestMeta
-{
-    wrap?: string
-    fields?: Record<string, any>
+export interface ISchemaApiProtocolRequestMeta {
+  wrap?: string;
+  fields?: Record<string, any>;
 }
 
-export interface ISchemaApiProtocolResponseMeta
-{
-    unwrap?: string
-    fields?: Record<string, any>
+export interface ISchemaApiProtocolResponseMeta {
+  unwrap?: string;
+  fields?: Record<string, any>;
 }
 
-export interface ISchemaApiProtocolMeta
-{
-    name?: string
-    request?: ISchemaApiProtocolRequestMeta
-    response?: ISchemaApiProtocolResponseMeta
-    error?: string[]
+export interface ISchemaApiProtocolMeta {
+  name?: string;
+  request?: ISchemaApiProtocolRequestMeta;
+  response?: ISchemaApiProtocolResponseMeta;
+  error?: string[];
+  plugins: string[];
 }
 
-let schemaApiHeaders = [] as { key: string, value: string }[]
-let schemaApiHeaderSetter: Function | null = null
+let schemaApiHeaders = [] as { key: string; value: string }[];
+let schemaApiHeaderSetter: Function | null = null;
 
-export function setSchemaApiHeaders(headers: { key: string, value: string }[] | Function ) {
-    if (typeof headers === 'function') {
-        schemaApiHeaderSetter = headers
-        schemaApiHeaders = []
-        return
-    }
-    schemaApiHeaders = headers
+export function setSchemaApiHeaders(
+  headers: { key: string; value: string }[] | Function,
+) {
+  if (typeof headers === "function") {
+    schemaApiHeaderSetter = headers;
+    schemaApiHeaders = [];
+    return;
+  }
+  schemaApiHeaders = headers;
 }
 
 axios.interceptors.request.use(async (config) => {
-    // add frontend auth headers
-    if (schemaApiHeaderSetter) {
-       const result =  schemaApiHeaderSetter(config)
-       if (result instanceof Promise) await result
+  // add frontend auth headers
+  if (schemaApiHeaderSetter) {
+    const result = schemaApiHeaderSetter(config);
+    if (result instanceof Promise) await result;
+  } else if (schemaApiHeaders.length) {
+    for (const header of schemaApiHeaders) {
+      if (header.key && header.value) {
+        config.headers[header.key] = header.value;
+      }
     }
-    else if (schemaApiHeaders.length) {
-        for (const header of schemaApiHeaders) {
-            if (header.key && header.value) {
-                config.headers[header.key] = header.value
-            }
-        }
-    }
-    return config
-})
+  }
+  return config;
+});
 
 // The schema api base url
 if (document.querySelector('meta[name="schema-api-base-url"]'))
-    schemaApiBaseUrl = document.querySelector('meta[name="schema-api-base-url"]')?.getAttribute('content') || undefined
+  schemaApiBaseUrl =
+    document
+      .querySelector('meta[name="schema-api-base-url"]')
+      ?.getAttribute("content") || undefined;
 
 // check protocol from meta tag
-let apiProtocol: ISchemaApiProtocolMeta | undefined = undefined
+let apiProtocol: ISchemaApiProtocolMeta | undefined = undefined;
 
 function scanErrorPaths(fields?: Record<string, any>): string[] {
-    if (fields)
-    {
-        for (let field in fields)
-        {
-            const fieldFmt = fields[field]
-            if (typeof fieldFmt === 'string' && fieldFmt.indexOf('[error]') >= 0)
-            {
-                return [field]
-            }
-            else if (typeof(fieldFmt) === 'object')
-            {
-                const subPaths = scanErrorPaths(fieldFmt)
-                if (subPaths.length)
-                {
-                    return [field, ...subPaths]
-                }
-            }
+  if (fields) {
+    for (let field in fields) {
+      const fieldFmt = fields[field];
+      if (typeof fieldFmt === "string" && fieldFmt.indexOf("[error]") >= 0) {
+        return [field];
+      } else if (typeof fieldFmt === "object") {
+        const subPaths = scanErrorPaths(fieldFmt);
+        if (subPaths.length) {
+          return [field, ...subPaths];
         }
+      }
     }
-    return []
+  }
+  return [];
 }
 
-function generateField(url: string, fmt: any): any | undefined
-{
-    if (typeof(fmt) !== 'string') return undefined
-    const match = fmt.match(/^(\w+)\[?(\w*)\]?:?(.*)?$/)
-    if (!match) return undefined
-    if (match.length >= 2)
-    {
-        if (match[1] == "string")
-        {
-            if (match[2] == "uuid")
-            {
-                return generateGuid()
-            }
-            else if(match[2] == "timestamp")
-            {
-                return new Date().toISOString()
-            }
-            else if(match[2] == "date")
-            {
-                return new Date().toISOString().split('T')[0]
-            }
-            else if(match[2] == "url")
-            {
-                return url.startsWith("/") ? url.substring(1) : url
-            }
-            return match[3] || ""
-        }
-        else if (match[1] == "integer")
-        {
-            return !isNull(match[3]) ? match[3] : Math.floor(Math.random() * 10000)
-        }
+function generateField(url: string, fmt: any): any | undefined {
+  if (typeof fmt !== "string") return undefined;
+  const match = fmt.match(/^(\w+)\[?(\w*)\]?:?(.*)?$/);
+  if (!match) return undefined;
+  if (match.length >= 2) {
+    if (match[1] == "string") {
+      if (match[2] == "uuid") {
+        return generateGuid();
+      } else if (match[2] == "timestamp") {
+        return new Date().toISOString();
+      } else if (match[2] == "date") {
+        return new Date().toISOString().split("T")[0];
+      } else if (match[2] == "url") {
+        return url.startsWith("/") ? url.substring(1) : url;
+      }
+      return match[3] || "";
+    } else if (match[1] == "integer") {
+      return !isNull(match[3]) ? match[3] : Math.floor(Math.random() * 10000);
     }
-    return undefined
+  }
+  return undefined;
 }
 
 function setSchemaApiProtocol(protocol: any): boolean {
-    if (protocol && typeof protocol === 'object' 
-        && protocol.name && typeof protocol.name === 'string'
-        && (!protocol.request || typeof protocol.request === 'object')
-        && (!protocol.response || typeof protocol.response === 'object'))
-    {
-        apiProtocol = {
-            name: protocol.name,
-            request: protocol.request,
-            response: protocol.response,
-            error: scanErrorPaths(protocol.response?.fields)
-        }
-        return true
-    }
-    return false
+  if (
+    protocol &&
+    typeof protocol === "object" &&
+    protocol.name &&
+    typeof protocol.name === "string" &&
+    (!protocol.request || typeof protocol.request === "object") &&
+    (!protocol.response || typeof protocol.response === "object")
+  ) {
+    apiProtocol = {
+      name: protocol.name,
+      request: protocol.request,
+      response: protocol.response,
+      error: scanErrorPaths(protocol.response?.fields),
+      plugins: protocol.plugins || [],
+    };
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Checks whether the schema plugin is enabled
+ * @param identity The plugin identity
+ * @returns Whether the plugin is enabled
+ */
+export function isSchemaPluginEnabled(identity: string): boolean {
+  return apiProtocol?.plugins
+    ? (
+      apiProtocol.plugins.indexOf(identity) >= 0 ||
+      identity.indexOf("*") >= 0 &&
+      apiProtocol.plugins.find(p => new RegExp(identity.replace("*", ".*") + "$").test(p)) && true
+    )
+    : false;
 }
 
 // Read protocol meta if defined
-if (document.querySelector('meta[name="schema-api-protocol"]'))
-{
-    try
-    {
-        let content = document.querySelector('meta[name="schema-api-protocol"]')?.getAttribute('content') || ''
-        if (content) setSchemaApiProtocol(JSON.parse(content))
-    }
-    catch(ex)
-    {
-        console.warn("Invalid schema-api-protocol meta tag content.")
-    }
+if (document.querySelector('meta[name="schema-api-protocol"]')) {
+  try {
+    let content =
+      document
+        .querySelector('meta[name="schema-api-protocol"]')
+        ?.getAttribute("content") || "";
+    if (content) setSchemaApiProtocol(JSON.parse(content));
+  } catch (ex) {
+    console.warn("Invalid schema-api-protocol meta tag content.");
+  }
 }
 
 /**
@@ -2149,7 +2343,7 @@ if (document.querySelector('meta[name="schema-api-protocol"]'))
  * @param url The schema api base url
  */
 export function setSchemaApiBaseUrl(url: string | undefined): void {
-    schemaApiBaseUrl = !isNull(url) ? url : undefined
+  schemaApiBaseUrl = !isNull(url) ? url : undefined;
 }
 
 /**
@@ -2157,7 +2351,7 @@ export function setSchemaApiBaseUrl(url: string | undefined): void {
  * @returns The schema api base url
  */
 export function getSchemaApiBaseUrl(): string | undefined {
-    return schemaApiBaseUrl
+  return schemaApiBaseUrl;
 }
 
 /**
@@ -2167,85 +2361,134 @@ export function getSchemaApiBaseUrl(): string | undefined {
  * @param noProtocol whether to ignore protocol processing
  * @returns the result
  */
-export async function postSchemaApi(url: string, param: any, noProtocol: boolean = false): Promise<any> {
-    try
+export async function postSchemaApi(
+  url: string,
+  param: any,
+  noProtocol: boolean = false,
+  blob: boolean = false,
+  file: File | undefined = undefined
+): Promise<any> {
+  try {
+    let site: string = schemaApiBaseUrl || "";
+    if (!site) return null;
+
+    if (site.endsWith("/")) site = site.substring(0, site.length - 1);
+    if (url.startsWith("/")) url = url.substring(1);
+
+    // Read protocol meta if not yet defined
+    if (!noProtocol) {
+      if (!apiProtocol) {
+        try {
+          const provider = getSchemaProvider();
+          if (provider) {
+            const response = await provider.protocol();
+            if (response) setSchemaApiProtocol(response);
+          }
+
+          // use default if not provided
+          if (!apiProtocol) setSchemaApiProtocol({ name: "Default" });
+        } catch (ex) {
+          console.warn("Invalid schema-api-protocol meta tag content.");
+          setSchemaApiProtocol({ name: "Default" });
+        }
+      }
+
+      // build request according to protocol
+      if (apiProtocol?.request && apiProtocol.request.wrap) {
+        let requestParam: any = { [apiProtocol.request.wrap]: param };
+        for (let field in apiProtocol.request.fields || {}) {
+          const fieldFmt = apiProtocol.request.fields![field];
+          requestParam[field] = generateField(url, fieldFmt);
+        }
+        param = requestParam;
+      }
+    }
+
+    let headers: any = {};
+    if (file) {
+      const formData = new FormData();
+
+      Object.entries(param).forEach(([key, value]) => {
+        if (value == null) return;
+
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      // file
+      formData.append("file", file);
+
+      param = formData;
+    }
+    else
     {
-        let site: string = schemaApiBaseUrl || ''
-        if (!site) return null
+      headers["Content-Type"] = "application/json";
+    }
 
-        if (site.endsWith("/")) site = site.substring(0, site.length - 1)
-        if (url.startsWith("/")) url = url.substring(1)
+    const response: any = await axios.post(`${site}/${url}`, param, {
+      headers,
+      responseType: blob ? 'blob' : 'json',
+    });
 
-        // Read protocol meta if not yet defined
-        if (!noProtocol)
-        {
-            if (!apiProtocol)
-            {
-                try
-                {
-                    const provider = getSchemaProvider()
-                    if (provider)
-                    {
-                        const response = await provider.protocol()
-                        if (response) setSchemaApiProtocol(response)
-                    }
+    headers = response?.headers
+    const contentType = headers["content-type"] || ""
+    const disposition = headers["content-disposition"] || "";
+    if(disposition && disposition.includes("attachment"))
+    {
+        let filename = "template.xlsx";
 
-                    // use default if not provided
-                    if (!apiProtocol) setSchemaApiProtocol({ name: "Default" })
-                }
-                catch(ex)
-                {
-                    console.warn("Invalid schema-api-protocol meta tag content.")
-                    setSchemaApiProtocol({ name: "Default" })
-                }
-            }
+        console.log("disposition", disposition);
 
-            // build request according to protocol
-            if (apiProtocol?.request && apiProtocol.request.wrap)
-            {
-                let requestParam: any = { [apiProtocol.request.wrap]: param }
-                for (let field in apiProtocol.request.fields || {})
-                {
-                    const fieldFmt = apiProtocol.request.fields![field]
-                    requestParam[field] = generateField(url, fieldFmt)
-                }
-                param = requestParam
-            }
+        // RFC 5987: filename*=UTF-8''xxx
+        const utf8Match = disposition.match(/filename\*\=UTF-8''(.+)/i);
+        if (utf8Match?.[1]) {
+          filename = decodeURIComponent(utf8Match[1]);
+        } else {
+          // filename="xxx.xlsx"
+          const normalMatch = disposition.match(/filename="?([^"]+)"?/i);
+          if (normalMatch?.[1]) {
+            filename = normalMatch[1];
+          }
         }
         
-        const result: any = await axios.post(`${site}/${url}`, param, {
-            headers: { 'Content-Type': 'application/json' }
-        })
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename); //or any other extension
+        document.body.appendChild(link);
+        link.click();
 
-        let data = result?.data
-        
-        // unwrap response according to protocol
-        if (!noProtocol && apiProtocol?.response && apiProtocol.response.unwrap)
-        {
-            // check error protocol
-            if (apiProtocol.error && apiProtocol.error.length)
-            {
-                let errorCheck = data
-                for (let i = 0; i < apiProtocol.error.length; i++) 
-                {
-                    if (errorCheck && typeof(errorCheck) === 'object')
-                    {
-                        errorCheck = errorCheck[apiProtocol.error[i]]
-                    }
-                }
-                if (errorCheck) // 0 or "" means no error
-                    throw new Error(errorCheck)
-            }
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        return;
+    }
 
-            data = data[apiProtocol.response.unwrap]
+    let data = response?.data;
+    // unwrap response according to protocol
+    if (!noProtocol && apiProtocol?.response && apiProtocol.response.unwrap) {
+      // check error protocol
+      if (apiProtocol.error && apiProtocol.error.length) {
+        let errorCheck = data;
+        for (let i = 0; i < apiProtocol.error.length; i++) {
+          if (errorCheck && typeof errorCheck === "object") {
+            errorCheck = errorCheck[apiProtocol.error[i]];
+          }
         }
-        return data
+        if (errorCheck)
+          // 0 or "" means no error
+          throw new Error(errorCheck);
+      }
+
+      data = data[apiProtocol.response.unwrap];
     }
-    catch(ex)
-    {
-        console.log(ex)
-        throw ex
-    }
+    return data;
+  } catch (ex) {
+    console.log(ex);
+    throw ex;
+  }
 }
 
 //#endregion
@@ -2257,38 +2500,43 @@ export async function postSchemaApi(url: string, param: any, noProtocol: boolean
  * @param name The schema name
  */
 export function mockSchemaData(name: string): any {
-    if (isNull(name)) return null
-    const schema = getCachedSchema(name)
-    if (!schema) return null
-    
-    switch(schema.type) {
-        case SchemaType.Scalar:
-            const valueType = getScalarValueType(name)
-            if (!valueType) return null
-            if (valueType & ScalarValueType.Boolean) return false
-            if (valueType & ScalarValueType.Date) return new Date()
-            if (valueType & ScalarValueType.Integer) return 0
-            if (valueType & ScalarValueType.Number) return 0.0
-            if (valueType & ScalarValueType.String) return schema.name == NS_SYSTEM_GUID ? generateGuid() : ""
-            return null
-        case SchemaType.Enum:
-            if (schema.enum?.values && schema.enum.values.length)
-                return schema.enum.values[0].value
-            return null
-        case SchemaType.Struct:
-            const obj: any = {}
-            schema.struct?.fields?.forEach(f => {
-                const data = mockSchemaData(f.type!)
-                obj[f.name] = isNull(data) ? (f.display?.key ? _L(f.display.key) : f.name) : data
-            })
-            return obj
-        case SchemaType.Array:
-            if (schema.array?.element) {
-                return [ mockSchemaData(schema.array.element) ]
-            }
-            return []
-    }
-    return null
+  if (isNull(name)) return null;
+  const schema = getCachedSchema(name);
+  if (!schema) return null;
+
+  switch (schema.type) {
+    case SchemaType.Scalar:
+      const valueType = getScalarValueType(name);
+      if (!valueType) return null;
+      if (valueType & ScalarValueType.Boolean) return false;
+      if (valueType & ScalarValueType.Date) return new Date();
+      if (valueType & ScalarValueType.Integer) return 0;
+      if (valueType & ScalarValueType.Number) return 0.0;
+      if (valueType & ScalarValueType.String)
+        return schema.name == NS_SYSTEM_GUID ? generateGuid() : "";
+      return null;
+    case SchemaType.Enum:
+      if (schema.enum?.values && schema.enum.values.length)
+        return schema.enum.values[0].value;
+      return null;
+    case SchemaType.Struct:
+      const obj: any = {};
+      schema.struct?.fields?.forEach((f) => {
+        const data = mockSchemaData(f.type!);
+        obj[f.name] = isNull(data)
+          ? f.display?.key
+            ? _L(f.display.key)
+            : f.name
+          : data;
+      });
+      return obj;
+    case SchemaType.Array:
+      if (schema.array?.element) {
+        return [mockSchemaData(schema.array.element)];
+      }
+      return [];
+  }
+  return null;
 }
 
 //#endregion

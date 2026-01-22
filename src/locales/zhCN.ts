@@ -113,5 +113,8 @@ export default {
     QUERY: "查询",
     RESET: "重置",
 
+    "Download Template": "下载模板",
+    "Upload Data": "上传数据",
+
     //#endregion
 };

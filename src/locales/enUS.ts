@@ -112,4 +112,7 @@ export default {
     QUERY: "Query",
     RESET: "Reset",
     //#endregion
+
+    "Download Template": "Download Template",
+    "Upload Data": "Upload Data",
 };
