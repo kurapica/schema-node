@@ -2440,8 +2440,6 @@ export async function postSchemaApi(
     {
         let filename = "template.xlsx";
 
-        console.log("disposition", disposition);
-
         // RFC 5987: filename*=UTF-8''xxx
         const utf8Match = disposition.match(/filename\*\=UTF-8''(.+)/i);
         if (utf8Match?.[1]) {
