@@ -1,3 +1,4 @@
+//#region Imports
 import { EnumValueType } from "../enum/enumValueType";
 import {
   ExpressionType,
@@ -32,7 +33,9 @@ import { type IAppSchema } from "../schema/appSchema";
 import { _L, _LS, combineLocaleString, type ILocaleString } from "./locale";
 import axios from "axios";
 import { PolicyScope } from "../enum/policyScope";
+//#endregion
 
+//#region Constants
 export const NS_SYSTEM = "system";
 
 export const REGEX_GENERIC_TYPE = /^T\d*$/;
@@ -86,6 +89,7 @@ export const NS_SYSTEM_LOGIC_IFRET = "system.logic.ifret";
 export const NS_SYSTEM_LOGIC_IFNOT = "system.logic.ifnot";
 export const NS_SYSTEM_LOGIC_IFNULL = "system.logic.ifnull";
 export const NS_SYSTEM_LOGIC_IFEMPTY = "system.logic.ifempty";
+//#endregion
 
 //#region Schema Provider
 
@@ -1485,7 +1489,7 @@ export async function callSchemaFunction(
 
   // Try build the function
   if (!(funcInfo.func || serverCallOnly.has(schema.name))) {
-    if (!(await buildFunction(funcInfo))) serverCallOnly.add(schema.name);
+    if (!(await buildFunction(schema))) serverCallOnly.add(schema.name);
   }
 
   // Client function call it direclty
@@ -1661,9 +1665,11 @@ const getExpValue = (name: string, expValues: { [key: string]: any }) => {
 };
 
 // build the function schema to function
-async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
+async function buildFunction(info: INodeSchema): Promise<boolean> {
+  const funcInfo = info.func
+
   // server-side function
-  if (!funcInfo.exps.length || (funcInfo.server && getSchemaProvider()))
+  if (!funcInfo?.exps?.length || (funcInfo.server && getSchemaProvider()))
     return false;
 
   // arg or exp type map
@@ -1673,91 +1679,66 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     if (expSchema) exptypes[funcInfo.args[i].name] = expSchema;
   }
 
-  const getExpType = async (name: string) => {
+  // get the array source for operater expression
+  const getArrayExp = async(name: string): Promise<string | undefined> => {
     const paths = name.split(".").filter((p) => !isNull(p));
     let schema: INodeSchema | undefined = exptypes[paths[0]];
+    if (schema?.type === SchemaType.Array) return paths[0];
+
     for (let i = 1; i < paths.length; i++) {
       if (schema?.type === SchemaType.Struct) {
         const field = schema.struct!.fields.find((f) => f.name === paths[i]);
         if (!field) return undefined;
         schema = await getSchema(field.type);
+        if (schema?.type === SchemaType.Array) return paths.slice(0, i + 1).join(".");
       } else {
         return undefined;
       }
     }
-    return schema;
-  };
+    return undefined;
+  }
 
   // build expressions
   const exps: Expression[] = [];
   for (let i = 0; i < funcInfo.exps.length; i++) {
     const fexp = funcInfo.exps[i];
-    const retSchema = await getSchema(fexp.return); // every expression must have a result type
-    exptypes[fexp.name] = retSchema!;
 
     // get the call func
     const cfinfo = await getSchema(fexp.func);
-    if (
-      !cfinfo ||
-      !cfinfo.func ||
-      serverCallOnly.has(cfinfo.name) ||
-      (cfinfo.func.server && getSchemaProvider())
-    )
+    if (!cfinfo || !cfinfo.func || serverCallOnly.has(cfinfo.name) || (cfinfo.func.server && getSchemaProvider()))
       return false;
 
     // try buil the call func
     const cfuncInfo = cfinfo.func;
-    if (!cfuncInfo.func && !(await buildFunction(cfuncInfo))) {
+    if (!cfuncInfo.func && !(await buildFunction(cfinfo))) {
       serverCallOnly.add(cfinfo.name);
       return false;
     }
 
     // array index
-    let arrayIndex: number = -1;
+    let arrayIndexes: number[] | undefined = undefined;
+    let arrayName: string | undefined = undefined
     if (fexp.type !== ExpressionType.Call) {
-      // generic type check
-      const generic = cfuncInfo.generic
-        ? Array.isArray(cfuncInfo.generic)
-          ? [...cfuncInfo.generic]
-          : [cfuncInfo.generic]
-        : [];
-
-      // use exp type if the ret type is generic
-      if (/^[tT]\d*$/.test(cfuncInfo.return)) {
-        const gidx =
-          cfuncInfo.return.length > 1
-            ? parseInt(cfuncInfo.return.substring(1)) - 1
-            : 0;
-        if (retSchema) generic[gidx] = retSchema.name;
-      }
-
       // argument check
-      for (
-        let j = 0;
-        j < Math.min(cfuncInfo.args.length, fexp.args.length);
-        j++
-      ) {
-        const carg = cfuncInfo.args[j];
-        let cargSchema = await getSchema(carg.type, generic); // null means any
-        const exp = fexp.args[j];
-        if (exp.name) {
-          const expschema = await getExpType(exp.name);
-          if (expschema) {
-            // Check if the exp is array for the arg, no type validation, should be done when define the exp
-            if (
-              expschema.type === SchemaType.Array &&
-              cargSchema?.type !== SchemaType.Array
-            ) {
-              arrayIndex = j;
-            }
-          }
-          // for argument without type, write back
-          else if (cargSchema) {
-            exptypes[exp.name] = cargSchema;
-          }
+      for (let j = 0; j < Math.min(cfuncInfo.args.length, fexp.args.length); j++) {
+        const exp = fexp.args[j]
+        if (!exp.name || (await getSchema(cfuncInfo.args[j].type))?.type === SchemaType.Array) continue
+        const arrayExpName = await getArrayExp(exp.name)
+        if (!arrayExpName) continue
+        if (arrayName && arrayName !== arrayExpName)
+        {
+          console.warn(`Multiple array source in expression ${fexp.name} of ${info.name}`)
+          return false
         }
+
+        arrayName = arrayExpName
+        arrayIndexes ??= []
+        arrayIndexes.push(j)
       }
     }
+
+    const retSchema = await getSchema(fexp.return) // every expression must have a result type
+    exptypes[fexp.name] = retSchema!
 
     // prepare
     exps.push({
@@ -1769,7 +1750,8 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         require: !(cfuncInfo.args.length > i && cfuncInfo.args[i]?.nullable),
       })),
       return: retSchema!,
-      arrIndex: arrayIndex,
+      arrayName,
+      arrayIndexes,
     });
   }
 
@@ -1802,17 +1784,21 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
     for (let i = 0; i < exps.length; i++) {
       const exp = exps[i];
       const val = [];
+      const arrayVal = exp.arrayName ? (getExpValue(exp.arrayName, expValues) ?? []) : null;
 
       if (exp.args) {
         let valid = true;
 
         for (let j = 0; j < exp.args.length; j++) {
+          if (exp.arrayIndexes && exp.arrayIndexes.indexOf(j) >= 0 && arrayVal) {
+            val.push(arrayVal); // just take position, replace later
+            continue;
+          }
+
           const e = exp.args[j];
           const v = e.name ? getExpValue(e.name, expValues) : e.value;
 
-          if (
-            isNull(v) &&
-            e.require &&
+          if (isNull(v) && e.require &&
             !(exp.type == ExpressionType.Reduce && j == 1)
           ) {
             valid = false;
@@ -1845,20 +1831,40 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
           break;
       }
 
+      // direct call
+      if (exp.type === ExpressionType.Call) {
+        expValues[exp.name] = await callFunc(exp.func, val);
+        continue;
+      }
+
+      const replaceArray = (index: number) => {
+        const element = arrayVal![index];
+        for (let i = 0; i < exp.arrayIndexes!.length; i++) {
+          const arrIdx = exp.arrayIndexes![i];
+          const arg = exp.args![arrIdx];
+          if (arg.name === exp.arrayName) 
+            val[arrIdx] = element;
+          else
+          {
+            const paths = arg.name.substring(exp.arrayName!.length).split(".").filter((p) => !isNull(p));
+            let subVal = element;
+            for (let p = 0; p < paths.length; p++) {
+              if (isNull(subVal)) break;
+              subVal = subVal[paths[p]];
+            }
+            val[arrIdx] = subVal;
+          }
+        }
+      }
+
       // call
       switch (exp.type) {
-        // direct call
-        case ExpressionType.Call:
-          expValues[exp.name] = await callFunc(exp.func, val);
-          break;
-
         // map
         case ExpressionType.Map:
           {
             const result = [];
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = 0; j < arrayVal!.length; j++) {
+              replaceArray(j);
               result.push(await callFunc(exp.func, val));
             }
             expValues[exp.name] = result;
@@ -1868,16 +1874,15 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         // reduce
         case ExpressionType.Reduce:
           {
-            let array = val[exp.arrIndex];
-            let sumIndex = exp.arrIndex == 1 ? 0 : 1;
+            let sumIndex = exp.arrayIndexes.includes(1) ? 0 : 1;
             let hasInit = !isNull(val[sumIndex]);
 
             if (!hasInit) {
-              val[sumIndex] = array[0];
+              val[sumIndex] = arrayVal[0];
             }
 
-            for (let j = hasInit ? 0 : 1; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = hasInit ? 0 : 1; j < arrayVal.length; j++) {
+              replaceArray(j);
               val[sumIndex] = await callFunc(exp.func, val);
             }
             expValues[exp.name] = val[sumIndex];
@@ -1887,11 +1892,10 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         // first match
         case ExpressionType.First:
           {
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = 0; j < arrayVal.length; j++) {
+              replaceArray(j);
               if (await callFunc(exp.func, val)) {
-                expValues[exp.name] = array[j];
+                expValues[exp.name] = arrayVal[j];
                 break;
               }
             }
@@ -1901,11 +1905,10 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         // last match
         case ExpressionType.Last:
           {
-            const array = val[exp.arrIndex];
-            for (let j = array.length - 1; j >= 0; j--) {
-              val[exp.arrIndex] = array[j];
+            for (let j = arrayVal.length - 1; j >= 0; j--) {
+              replaceArray(j);
               if (await callFunc(exp.func, val)) {
-                expValues[exp.name] = array[j];
+                expValues[exp.name] = arrayVal[j];
                 break;
               }
             }
@@ -1916,10 +1919,9 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         case ExpressionType.Filter:
           {
             const result = [];
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
-              if (await callFunc(exp.func, val)) result.push(array[j]);
+            for (let j = 0; j < arrayVal.length; j++) {
+              replaceArray(j);
+              if (await callFunc(exp.func, val)) result.push(arrayVal[j]);
             }
             expValues[exp.name] = result;
           }
@@ -1929,9 +1931,8 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         case ExpressionType.Count:
           {
             let count = 0;
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = 0; j < arrayVal.length; j++) {
+              replaceArray(j);
               if (await callFunc(exp.func, val)) count++;
             }
             expValues[exp.name] = count;
@@ -1942,9 +1943,8 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         case ExpressionType.All:
           {
             let all = true;
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = 0; j < arrayVal.length; j++) {
+              replaceArray(j);
               if (!(await callFunc(exp.func, val))) {
                 all = false;
                 break;
@@ -1958,9 +1958,8 @@ async function buildFunction(funcInfo: IFunctionSchema): Promise<boolean> {
         case ExpressionType.Any:
           {
             let any = false;
-            const array = val[exp.arrIndex];
-            for (let j = 0; j < array.length; j++) {
-              val[exp.arrIndex] = array[j];
+            for (let j = 0; j < arrayVal.length; j++) {
+              replaceArray(j);
               if (await callFunc(exp.func, val)) {
                 any = true;
                 break;
@@ -2163,9 +2162,14 @@ interface Expression {
   return: INodeSchema;
 
   /**
+   * The array expression name
+   */
+  arrayName: string | undefined;
+
+  /**
    * The array index
    */
-  arrIndex: number;
+  arrayIndexes: number[] | undefined;
 }
 
 /**
