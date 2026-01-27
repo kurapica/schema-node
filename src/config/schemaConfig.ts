@@ -59,4 +59,9 @@ export interface ISchemaConfig
      * The default value of the node.
      */
     default?: any
+
+    /**
+     * Unpack/pack the json object for additional properties. 
+     */
+    unpack?: boolean
 }

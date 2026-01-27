@@ -824,6 +824,7 @@ export class ArrayNode extends SchemaNode<IArrayConfig, ArrayRule> { //#region I
             if (!eleNode) continue;
             this._elements.push(eleNode);
             this._data[i] = eleNode.rawData;
+            if (this._rule._actived) eleNode.activeRule();
           } else {
             eleNode = this._elements[i];
             eleNode.data = data[i];

@@ -57,7 +57,24 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
     set data(data: any)
     {
         if (!data || Array.isArray(data) || typeof data !== "object") data = {}
-        this._fields.forEach(f => f.data = data[f.name])
+
+        this._fields.forEach(f => {
+            let fconf = this._schema.struct!.fields.find(c => c.name === f.name)
+            let packdata = data[f.name]
+            if (fconf?.unpack && isNull(packdata))
+            {
+                const fieldNames = this._schema.struct!.fields.map(f => f.name)
+                for (let k in data)
+                {
+                    if (!fieldNames.includes(k))
+                    {
+                        packdata = packdata || {}
+                        packdata[k] = data[k]
+                    }
+                }
+            }
+            f.data = packdata
+        })
     }
 
     // override methods
@@ -171,6 +188,19 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
                 field = new ArrayNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
                 break
             case SchemaType.Json:
+                let packData = this._data[fconf.name]
+                if (fconf.unpack && isNull(packData))
+                {
+                    const fieldNames = this._schema.struct!.fields.map(f => f.name)
+                    for (let k in this._data)
+                    {
+                        if (!fieldNames.includes(k))
+                        {
+                            packData = packData || {}
+                            packData[k] = this._data[k]
+                        }
+                    }
+                }
                 field = new JsonNode({...fconf, readonly: this._config.readonly || fconf.readonly}, this._data[fconf.name], this)
                 break
         }
@@ -249,7 +279,20 @@ export class StructNode extends SchemaNode<ISchemaConfig, StructRule> {
                     field = new ArrayNode({...fconf, readonly: config.readonly || fconf.readonly || fconf.displayOnly}, data[fconf.name], this)
                     break
                 case SchemaType.Json:
-                    field = new JsonNode({...fconf, readonly: config.readonly || fconf.readonly || fconf.displayOnly}, data[fconf.name], this)
+                    let packData = data[fconf.name]
+                    if (fconf.unpack && isNull(packData))
+                    {
+                        const fieldNames = this._schema.struct!.fields.map(f => f.name)
+                        for (let k in data)
+                        {
+                            if (!fieldNames.includes(k))
+                            {
+                                packData = packData || {}
+                                packData[k] = data[k]
+                            }
+                        }
+                    }
+                    field = new JsonNode({...fconf, readonly: config.readonly || fconf.readonly || fconf.displayOnly}, packData, this)
                     break
             }
             if (field)

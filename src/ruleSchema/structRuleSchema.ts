@@ -108,7 +108,7 @@ export class StructRuleSchema extends RuleSchema
 
         // locate the refs
         const args: ISchemaNodePushArgSchema[] = []
-        relation.args.forEach(a => {
+        relation.args?.forEach(a => {
             if (a.name) {
                 // access path
                 const accessPaths = getAccessPath(this, a.name, rootTypeInfo!)
@@ -126,7 +126,7 @@ export class StructRuleSchema extends RuleSchema
             }
         })
 
-        if (args.length < relation.args.length)
+        if (args.length < (relation.args?.length || 0))
             return
 
         // register
