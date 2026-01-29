@@ -590,7 +590,11 @@ export function registerSchema(
         case SchemaType.Func:
           // keep the frontend implementation
           if (!((exist.loadState || 0) & SchemaLoadState.System) || !exist.func)
+          {
             exist.func = schema.func || exist.func;
+          }
+          exist.func.server = schema.func?.server || exist.func?.server;
+          exist.func.nocache = schema.func?.nocache || exist.func?.nocache;
           break;
 
         case SchemaType.Policy:
@@ -1450,7 +1454,7 @@ export function saveEnumSubList(
 
 //#region schema function call
 
-const shareFuncCallResult: { [key: string]: any } = {};
+const shareFuncCallResult: { [key: string]: any } = { };
 const pendingCall: {
   [key: string]: {
     resolve: Function;
@@ -1537,9 +1541,9 @@ export async function callSchemaFunction(
       throw ex;
     } finally {
       delete pendingCall[token];
-      if (!funcInfo.nocache && !args.length)
+      //if (!funcInfo.nocache && !args.length)
         // reset
-        setTimeout(() => delete shareFuncCallResult[token!], 1000);
+        //setTimeout(() => delete shareFuncCallResult[token!], 1000);
     }
   } else {
     // Complex arguments

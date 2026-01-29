@@ -1,11 +1,17 @@
+import { IEntry } from "../config/scalarConfig"
 import { Rule } from "./rule"
 
 export class ScalarRule extends Rule
 {
     /**
+     * The entries for enum-like scalar values.
+     */
+    entries?: IEntry[]
+
+    /**
      * The scalar white list
      */
-    whiteList?: number[] | string[] | { value: any, label: string }[]
+    whiteList?: number[] | string[] | IEntry[]
 
     /**
      * The black list

@@ -1,4 +1,4 @@
-import { type IScalarConfig } from "../config/scalarConfig"
+import { IEntry, type IScalarConfig } from "../config/scalarConfig"
 import { ScalarNode } from "../node/scalarNode"
 import { NODE_SELF, regRuleSchema, RuleSchema } from "./ruleSchema"
 import { type INodeSchema } from "../schema/nodeSchema"
@@ -10,9 +10,14 @@ import { RelationType } from "../enum/relationType"
 export class ScalarRuleSchema extends RuleSchema
 {
     /**
+     * The entries for enum-like scalar values.
+     */
+    entries?: IEntry[]
+
+    /**
      * The scalar white list
      */
-    whiteList?: number[] | string[] | { value: any, label: string }[]
+    whiteList?: number[] | string[] | IEntry[]
 
     /**
      * The black list
@@ -51,8 +56,9 @@ export class ScalarRuleSchema extends RuleSchema
     {
         super.initNode(node)
         const rule = node.rule
-        rule.whiteList = this.whiteList ? [...this.whiteList] as any : undefined
-        rule.blackList = this.blackList ? [...this.blackList] as any : undefined
+        rule.whiteList = this.whiteList?.length ? [...this.whiteList] as any : undefined
+        rule.blackList = this.blackList?.length ? [...this.blackList] as any : undefined
+        rule.entries =  this.entries?.length ? [...this.entries] : undefined
         rule.lowLimit = this.lowLimit
         rule.upLimit = this.upLimit
         rule.asSuggest = this.asSuggest
@@ -75,8 +81,9 @@ export class ScalarRuleSchema extends RuleSchema
      */
     override loadConfig(config: IScalarConfig): void {
         super.loadConfig(config)
-        this.whiteList = config.whiteList ? [...config.whiteList] as any : undefined
-        this.blackList = config.blackList ? [...config.blackList] as any : undefined
+        this.whiteList = config.whiteList?.length ? [...config.whiteList] as any : undefined
+        this.blackList = config.blackList?.length ? [...config.blackList] as any : undefined
+        this.entries = config.entries?.length ? [...config.entries] : undefined
         this.lowLimit = config.lowLimit
         this.upLimit = config.upLimit
         this.asSuggest = this.asSuggest || config.asSuggest

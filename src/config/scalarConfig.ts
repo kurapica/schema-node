@@ -1,11 +1,23 @@
+import { ILocaleString } from "../utils/locale"
 import { type ISchemaConfig } from "./schemaConfig"
+
+export interface IEntry {
+    value: any,
+    label: ILocaleString,
+    children?: IEntry[]
+}
 
 export interface IScalarConfig extends ISchemaConfig
 {
     /**
+     * The entries for enum-like scalar values.
+     */
+    entries?: IEntry[]
+
+    /**
      * The white list
     */
-    whiteList?: number[] | string[] | { value: any, label: string }[]
+    whiteList?: number[] | string[] | IEntry[]
 
     /**
      * The root value.

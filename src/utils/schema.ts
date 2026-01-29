@@ -234,7 +234,7 @@ registerSchema([
             }),
 
             // Require backend, no data guid generation in frontend
-            // newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], generateGuid),
+            newSystemFunc("system.str.newguid", NS_SYSTEM_GUID, [], generateGuid),
 
             newSystemFunc("system.str.replace", NS_SYSTEM_STRING, [
                 { name: "str", type: NS_SYSTEM_STRING },
