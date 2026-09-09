@@ -20,6 +20,7 @@ export interface ISchemaApiProtocolMeta {
   request?: ISchemaApiProtocolRequestMeta;
   response?: ISchemaApiProtocolResponseMeta;
   schemaFormat?: string[];
+  kindProperties?: Record<string, string[]>;
   error?: string[];
 }
 

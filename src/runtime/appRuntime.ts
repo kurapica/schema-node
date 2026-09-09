@@ -108,7 +108,7 @@ async function loadAppSchema(root: IAppType | undefined, segment: string, reload
 
 /** Gets the application full name */
 export function getAppSchemaName(schema: AppSchema): string {
-  return schema.container ? `${schema.container}.${schema.name}` : schema.name;
+  return schema?.container ? `${schema.container}.${schema.name}` : schema?.name ?? '';
 }
 
 /** Export the app schema by its full name, for frontend-only mode schema download(system schema ignored) */

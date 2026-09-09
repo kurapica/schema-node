@@ -10,7 +10,6 @@ import { NS_SYSTEM_SCHEMA_REFLECT_WORKFLOW, NS_SYSTEM_SCHEMA_WORKFLOW } from "..
 export class SystemReflectWorkflow
 {
   /** Whether the workflow kind is the same */
-  @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_REFLECT_WORKFLOW}.iskind`)
   @Meta(Return, NS_SYSTEM_BOOL)
   static async iskind(
     @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_WORKFLOW}.type`)
@@ -27,7 +26,6 @@ export class SystemReflectWorkflow
   }
 
   /** Whether the workflow has args */
-  @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_REFLECT_WORKFLOW}.hasargs`)
   @Meta(Return, NS_SYSTEM_BOOL)
   static async hasargs(
     @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_WORKFLOW}.type`)
@@ -40,7 +38,6 @@ export class SystemReflectWorkflow
   }
 
   /** Whether the workflow is forkable */
-  @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_REFLECT_WORKFLOW}.isforkable`)
   @Meta(Return, NS_SYSTEM_BOOL)
   static async isforkable(
     @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_WORKFLOW}.type`)

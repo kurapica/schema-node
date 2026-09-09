@@ -8,11 +8,12 @@ import { SCHEMA_KIND_PROPERTY, SCHEMA_KIND_NODE, NODE_SELF, SCHEMA_KIND_STRING, 
 import { SCHEMA_KIND_APP, SCHEMA_KIND_APP_FIELD, SCHEMA_KIND_APP_WORKFLOW, NS_SYSTEM_SCHEMA_PRO_APP, NS_SYSTEM_SCHEMA_APP } from "../../utils/constant";
 
 export interface PolicyItem {
-    scope: PolicyScope;
-    evaluator: string;
-    combine: PolicyCombine;
+  scope: PolicyScope;
+  evaluator: string;
+  combine: PolicyCombine;
 }
 
+/** The auths property for node schema and app schema. */
 @Meta(ForSchema, [SCHEMA_KIND_NODE, SCHEMA_KIND_APP, SCHEMA_KIND_APP_FIELD, SCHEMA_KIND_APP_WORKFLOW])
 @Meta(OfSchema, SCHEMA_KIND_PROPERTY)
 @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_PRO_APP}.auths`)
@@ -34,7 +35,7 @@ class EvaluatorTypeMeta {}
 @Meta(Static, true)
 @Meta(InVisible, true)
 class PolicyScopeResolver extends Property<boolean> {
-  override effect(target: IValueAccess, newValue?: unknown, oldValue?: unknown, source?: IValueAccess): void {
+  override effect(target: IValueAccess): void {
     setTimeout(() => {
       let curr = target;
       while (curr && curr instanceof DataNode) {
@@ -56,6 +57,7 @@ class PolicyScopeResolver extends Property<boolean> {
   }
 }
 
+/** The policy item property for node schema and app schema. */
 @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_APP}.policy.item`)
 class PolicyItemMeta implements PolicyItem {
   @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_APP}.policy.scope`)

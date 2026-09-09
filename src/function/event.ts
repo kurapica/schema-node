@@ -9,7 +9,6 @@ import { NS_SYSTEM_EVENT, NS_SYSTEM_SCHEMA_REFLECT_EVENT } from "../utils";
 export class SystemReflectEvent
 {
   /** Get app field data change event payload type */
-  @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_REFLECT_EVENT}.getappfieldpayload`)
   @Meta(Return, NS_SYSTEM_STRING)
   static async getappfieldpayload(
     @Meta(SchemaType, NS_SYSTEM_SCHEMA)
@@ -24,7 +23,6 @@ export class SystemReflectEvent
   }
 
   /** Get app field data change event payload type */
-  @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_REFLECT_EVENT}.getappfieldupdatepayload`)
   @Meta(Return, NS_SYSTEM_STRING)
   static async getappfieldupdatepayload(
     @Meta(SchemaType, NS_SYSTEM_SCHEMA)

@@ -2,7 +2,7 @@
 // Schema provider protocol
 // =============================================================================
 import axios from "axios";
-import { generateGuid, getLanguage, isNull } from "schema-node-core";
+import { generateGuid, getLanguage, isNull, setSchemaKindServerProperties } from "schema-node-core";
 import { getAppSchemaProvider } from "./appSchemaProvider";
 import { getSchemaApiBaseUrl } from "./baseUrl";
 
@@ -95,8 +95,10 @@ export function setSchemaApiProtocol(protocol: ISchemaApiProtocolMeta): boolean 
       request: protocol.request,
       response: protocol.response,
       schemaFormat: protocol.schemaFormat,
+      kindProperties: protocol.kindProperties,
       error: scanErrorPaths(protocol.response?.fields),
     };
+    setSchemaKindServerProperties(protocol.kindProperties || {});
     return true;
   }
   return false;
@@ -119,7 +121,7 @@ if (document.querySelector('meta[name="schema-api-protocol"]')) {
  * Gets the app schema format for downloading
  * @returns The app schema format for downloading
  */
-export function getSchemaFormats(): string[] {
+export function getSchemaProtocolFormats(): string[] {
   return apiProtocol?.schemaFormat || [];
 }
 

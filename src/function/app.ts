@@ -126,7 +126,9 @@ export class SystemReflectApp
     @Meta(ArgName, "name")
     @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_APP}.type`)
     name?: string, 
-    @Meta(EntryRoot, true) root?: string)
+    @Meta(EntryRoot, true) 
+    @Meta(SchemaType, `${NS_SYSTEM_SCHEMA_APP}.type`)
+    root?: string): Promise<EntryAccess<string>[]>
   {
     name = name?.toLowerCase() ?? '';
     root = root?.toLowerCase() ?? '';
