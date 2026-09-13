@@ -1,4 +1,4 @@
-import { AccessValueTypeProvider, Append, Attach, Base, buildFuncCall, Description, Display, EntrySource, EntrySourceProvider, Meta, OfSchema, PrimaryIndex, SchemaKind, SchemaType, UpLimitString } from "schema-node-core";
+import { AccessValueTypeProvider, Append, Attach, Base, buildFuncCall, Description, Display, EntrySource, EntrySourceProvider, Meta, OfSchema, PrimaryIndex, Relations, SchemaKind, SchemaType, SystemDefined, UpLimitString } from "schema-node-core";
 
 import type { AppSchema } from "./type";
 
@@ -7,7 +7,7 @@ import { NS_SYSTEM_SCHEMA_APP, NS_SYSTEM_SCHEMA_REFLECT_APP, SCHEMA_KIND_APP, SC
 
 /** Declare the application schema kind */
 @Meta(SchemaKind, [SCHEMA_KIND_APP, SCHEMA_KIND_ORDER_APP])
-@Meta(Append, [Display, Description])
+@Meta(Append, [Display, Description, Relations, SystemDefined])
 class AppKind {}
 
 /** The application schema metadata */

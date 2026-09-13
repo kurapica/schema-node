@@ -17,6 +17,21 @@ export interface AppSchema {
   /** Whether the app has fields */
   hasFields?: boolean;
 
+  /** Whether the app is a system app */
+  system?: boolean;
+  
+  /** Whether the app can create schemas */
+  schemaCreate?: boolean,
+
+  /** Whether the app can read schemas */
+  schemaRead?: boolean,
+  
+  /** Whether the app can update schemas */
+  schemaUpdate?: boolean,
+  
+  /** Whether the app can delete schemas */
+  schemaDelete?: boolean
+
   /** The sub-apps of the app */
   apps?: AppSchema[];
 
@@ -31,9 +46,6 @@ export interface AppSchema {
 
   /** The error message */
   error?: string;
-
-  /** The load state of the app */
-  loadState?: SchemaLoadState;
 }
 
 /** The application interface */
@@ -48,11 +60,17 @@ export interface IAppType extends IValueTypeAccess, IPropertyProvider {
 
   get hasSubApps(): boolean;
 
+  /** Whether the app has fields */
+  get hasFields(): boolean;
+
   /** The application is loaded */
   loaded?: boolean;
 
   /** Save an application schema */
   saveSubAppSchema(schema: AppSchema | AppSchema[], reload?:boolean): void;
+
+  /** Remove a sub-application schema */
+  removeSubAppSchema(name: string): void;
 
   /** Get a sub-application type by name */
   getSubAppType(name: string): IAppType | undefined;
@@ -71,11 +89,27 @@ export interface IAppType extends IValueTypeAccess, IPropertyProvider {
 
   getFields(): Generator<IAppFieldType>;
 
+  /** Get a field by name */
   getField(name: string): IAppFieldType | undefined;
 
+  /** Remove a field */
+  removeField(name: string): void;
+
+  /** Swap two fields */
+  swapField(field: string, other: string): void;
+
+  /** Save a field */
+  saveField(field: AppFieldSchema): Promise<boolean>;
+  
   getWorkflows(): Generator<IAppWorkflowType>;
 
   getWorkflow(name: string): IAppWorkflowType | undefined;
+
+  /** Remove a workflow */
+  removeWorkflow(name: string): boolean;
+
+  /** Save a workflow */
+  saveWorkflow(workflow: AppWorkflowSchema): Promise<boolean>;
 
   getRelations(): Generator<IRelation>;
 

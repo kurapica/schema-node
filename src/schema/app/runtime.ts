@@ -87,8 +87,8 @@ export class AppType implements IValueTypeAccess, IRelationProvider, IAppType {
   /** Whether this application type is referenced by any other type. */
   get isUsed(): boolean { return (this._fields?.length ?? 0) > 0 || (this._schemas?.size ?? 0) > 0; }
 
-  /** The load state of the application */
-  get loadState(): SchemaLoadState { return this._schema?.loadState ?? SchemaLoadState.None; }
+  /** Whether the app has fields */
+  get hasFields(): boolean { return this._fields?.length ? true : false; }
 
   /** Whether this application type is assignable to the other type. */
   isAssignableTo(other: IValueTypeAccess): boolean { return false; }

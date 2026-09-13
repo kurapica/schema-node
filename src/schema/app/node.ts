@@ -12,7 +12,7 @@ import { WorkflowStatus } from "../../enum/workflowStatus";
 import { getAppType } from "../../runtime/appRuntime";
 import { queryAppData } from "../../runtime/batchQuery";
 
-import type { IConstraintProperty, IProperty, IRelationInfo, IValueAccess, IValueTypeAccess } from "schema-node-core";
+import type { IConstraintProperty, IProperty, IRelationInfo, IValueAccess, IValueTypeAccess, Observer, PropertyCtor } from "schema-node-core";
 import type { IAppDataPushResult, IAppDataQuery, IAppDataResult, IAppInteractionWorkflow, IAppWorkflowState } from "../provider/interface";
 import type { AppScopePolicy } from "./property";
 import type { IAppNode, IAppType } from "./type";
@@ -122,6 +122,7 @@ export class AppNode implements IValueAccess, IAppNode {
 
   // subscription
   subscribe(func: Function, immediate?: boolean): Function { return () => {}; }
+  subscribeProperty(propCtor: PropertyCtor, func: Observer<[IValueAccess, PropertyCtor, unknown, unknown]>, immediate?: boolean): Function {return () => {}; }
   recordSubscription(subscription: Function, source: unknown): void {}
   clearSubscription(source: unknown): void {}
 

@@ -74,7 +74,7 @@ async function loadAppType(root: IAppType, segment?: string, reload = false, isL
 
   if (root != result)
   {
-    result.saveSubAppSchema(schema, true);
+    root.saveSubAppSchema(schema, true);
     root.saveSubAppType(segment, result);
   }
   result.loaded = true;
@@ -87,8 +87,7 @@ async function loadAppType(root: IAppType, segment?: string, reload = false, isL
 }
 
 async function loadAppSchema(root: IAppType | undefined, segment: string, reload?: boolean): Promise<AppSchema | undefined> {
-  let schema = reload ? null : root?.getSubAppSchema(segment);
-  if (schema) return deepClone(schema);
+  let schema: AppSchema | undefined = undefined;
 
   const provider = getAppSchemaProvider();
   const schemaName = root?.name ? `${root?.name}.${segment}` : segment;
